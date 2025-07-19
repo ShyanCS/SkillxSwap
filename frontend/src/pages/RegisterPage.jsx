@@ -12,9 +12,15 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,13 +29,99 @@ const RegisterPage = () => {
     });
   };
 
-  const handleVerify = async (e) => {
-    
-  }
+  const handleOtpChange = (e) => {
+    setOtp(e.target.value);
+  };
+
+  const handleRequestOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!formData.email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsRequestingOtp(true);
+    try {
+      const response = await fetch('/api/auth/request-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowOtpInput(true);
+        setSuccess('OTP sent to your email address');
+      } else {
+        setError(data.error || 'Failed to send OTP');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setIsRequestingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!otp) {
+      setError('Please enter the OTP');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          otp: otp 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsOtpVerified(true);
+        setSuccess('Email verified successfully!');
+        setShowOtpInput(false);
+      } else {
+        setError(data.error || 'Invalid OTP');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!isOtpVerified) {
+      setError('Please verify your email with OTP first');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -73,6 +165,12 @@ const RegisterPage = () => {
               </div>
             )}
 
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+                {success}
+              </div>
+            )}
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
@@ -95,14 +193,16 @@ const RegisterPage = () => {
             <div>
               <div className='flex justify-between items-center'>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <button 
-                className='block text-xs font-bold text-gray-700 mb-2'
-                onClick={handleVerify}
+                  Email Address
+                </label>
+                <button 
+                  type="button"
+                  className='text-xs font-bold text-blue-600 hover:text-blue-700'
+                  onClick={handleRequestOtp}
+                  disabled={isRequestingOtp || isOtpVerified}
                 >
-                Verify
-              </button>
+                  {isRequestingOtp ? 'Sending...' : isOtpVerified ? 'Verified ✓' : 'Verify'}
+                </button>
               </div>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -118,6 +218,38 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
+
+            {/* OTP Input Section */}
+            {showOtpInput && !isOtpVerified && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter OTP
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    id="otp"
+                    name="otp"
+                    type="text"
+                    value={otp}
+                    onChange={handleOtpChange}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter 6-digit OTP"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={isVerifyingOtp || !otp}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                  >
+                    {isVerifyingOtp ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Check your email for the 6-digit OTP code
+                </p>
+              </div>
+            )}
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
@@ -192,8 +324,8 @@ const RegisterPage = () => {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || !isOtpVerified}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
             >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
