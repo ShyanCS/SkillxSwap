@@ -23,6 +23,10 @@ const RegisterPage = () => {
     });
   };
 
+  const handleVerify = async (e) => {
+    
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -89,9 +93,17 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className='flex justify-between items-center'>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
+              <button 
+                className='block text-xs font-bold text-gray-700 mb-2'
+                onClick={handleVerify}
+                >
+                Verify
+              </button>
+              </div>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
