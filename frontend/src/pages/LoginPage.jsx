@@ -6,10 +6,12 @@ import { Users, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,12 +25,12 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email, formData.password); // comes from AuthContext
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Login failed. Please try again.');
     }
   };
 

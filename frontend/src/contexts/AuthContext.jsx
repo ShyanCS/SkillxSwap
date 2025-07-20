@@ -10,93 +10,141 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock user data for demo
-const mockUser = {
-  id: '1',
-  email: 'demo@skillswap.com',
-  name: 'John Doe',
-  bio: 'Passionate learner and teacher with expertise in web development and design.',
-  region: 'North America',
-  timezone: 'EST',
-  profilePictureUrl: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=400',
-  karmaPoints: 450,
-  skillsOffered: [],
-  skillsRequested: [],
-  learningGoals: ['Master React', 'Learn Machine Learning', 'Improve Design Skills'],
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-15T00:00:00Z'
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch current user from backend on initial load (optional route: /me)
   useEffect(() => {
-    // Check for stored auth token
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setUser(mockUser);
-    }
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`http://127.0.0.1:5000/api/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUser();
   }, []);
 
+  // ✅ Actual login using backend
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      // Mock login - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      localStorage.setItem('authToken', 'mock-token');
-      setUser(mockUser);
+      const res = await fetch(`http://127.0.0.1:5000/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Optionally: Fetch user after login
+      await fetchUserDetails();
     } catch (error) {
-      throw new Error('Invalid credentials');
+      throw new Error(error.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ✅ Optional API to fetch logged-in user (if not using /me in useEffect)
+  const fetchUserDetails = async () => {
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user details:', error);
+    }
+  };
+
+  // ✅ Actual logout
+  const logout = async () => {
+    try {
+      await fetch(`http://127.0.0.1:5000/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e) {
+      console.warn('Logout API failed silently');
+    }
+    setUser(null);
   };
 
   const register = async (userData) => {
     setIsLoading(true);
     try {
-      // Mock registration - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const newUser = { ...mockUser, ...userData, id: Math.random().toString() };
-      localStorage.setItem('authToken', 'mock-token');
-      setUser(newUser);
+      const res = await fetch(`http://127.0.0.1:5000/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      await fetchUserDetails(); // Optionally fetch user after registration
     } catch (error) {
-      throw new Error('Registration failed');
+      throw new Error(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    setUser(null);
-  };
-
   const updateProfile = async (profileData) => {
     setIsLoading(true);
     try {
-      // Mock profile update - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      if (user) {
-        setUser({ ...user, ...profileData });
-      }
+      const res = await fetch(`http://127.0.0.1:5000/api/auth/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(profileData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Profile update failed');
+      setUser(data.user);
     } catch (error) {
-      throw new Error('Profile update failed');
+      throw new Error(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      register,
-      logout,
-      updateProfile,
-      isLoading
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        updateProfile,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

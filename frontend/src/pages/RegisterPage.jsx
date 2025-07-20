@@ -57,7 +57,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: formData.email }),
+        body: JSON.stringify({ email: formData.email, purpose:'register'}),
       });
 
       const data = await response.json();

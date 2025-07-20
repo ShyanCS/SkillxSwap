@@ -21,28 +21,17 @@ const ForgotPasswordPage = () => {
     setError('');
     setSuccess('');
 
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
-
-    // Basic email validation
+    if (!email) return setError('Please enter your email address');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
+    if (!emailRegex.test(email)) return setError('Please enter a valid email address');
 
     setIsRequestingOtp(true);
     try {
       const response = await fetch('/api/auth/request-otp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, purpose: 'reset' }),
       });
-
       const data = await response.json();
 
       if (response.ok) {
@@ -51,7 +40,7 @@ const ForgotPasswordPage = () => {
       } else {
         setError(data.error || 'Failed to send OTP');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsRequestingOtp(false);
@@ -63,24 +52,15 @@ const ForgotPasswordPage = () => {
     setError('');
     setSuccess('');
 
-    if (!otp) {
-      setError('Please enter the OTP');
-      return;
-    }
+    if (!otp) return setError('Please enter the OTP');
 
     setIsVerifyingOtp(true);
     try {
       const response = await fetch('/api/auth/verify-otp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: email, 
-          otp: otp 
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
       });
-
       const data = await response.json();
 
       if (response.ok) {
@@ -89,7 +69,7 @@ const ForgotPasswordPage = () => {
       } else {
         setError(data.error || 'Invalid OTP');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsVerifyingOtp(false);
@@ -101,44 +81,32 @@ const ForgotPasswordPage = () => {
     setError('');
     setSuccess('');
 
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
+    if (newPassword !== confirmPassword) return setError('Passwords do not match');
+    if (newPassword.length < 6) return setError('Password must be at least 6 characters long');
 
     setIsLoading(true);
     try {
-      // Here you would call your reset password API
-      // For now, we'll simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setSuccess('Password reset successfully! Redirecting to sign in...');
-      
-      // Wait a moment to show the success message, then redirect
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-      
-    } catch (err) {
-      setError('Failed to reset password. Please try again.');
+      const response = await fetch(`/api/auth/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: newPassword }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('Password reset successfully! Redirecting to sign in...');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(data.error || 'Failed to reset password');
+      }
+    } catch {
+      setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getSubmitHandler = () => {
-    if (isOtpVerified) {
-      return handleResetPassword;
-    } else if (showOtpInput) {
-      return handleVerifyOtp;
-    } else {
-      return handleRequestOtp;
-    }
-  };
+  const getSubmitHandler = () => isOtpVerified ? handleResetPassword : showOtpInput ? handleVerifyOtp : handleRequestOtp;
 
   const getSubmitButtonText = () => {
     if (isLoading) return 'Resetting Password...';
@@ -159,7 +127,6 @@ const ForgotPasswordPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -171,25 +138,13 @@ const ForgotPasswordPage = () => {
           <p className="mt-2 text-gray-600">Enter your email to receive a verification code</p>
         </div>
 
-        {/* Form */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <form onSubmit={getSubmitHandler()} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
-                {success}
-              </div>
-            )}
+            {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">{error}</div>}
+            {success && <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">{success}</div>}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -206,12 +161,9 @@ const ForgotPasswordPage = () => {
               </div>
             </div>
 
-            {/* OTP Input Section */}
             {showOtpInput && !isOtpVerified && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
-                  Enter OTP
-                </label>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
                 <input
                   id="otp"
                   name="otp"
@@ -222,19 +174,14 @@ const ForgotPasswordPage = () => {
                   placeholder="Enter 6-digit OTP"
                   maxLength="6"
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  Check your email for the 6-digit OTP code
-                </p>
+                <p className="text-xs text-gray-500 mt-2">Check your email for the 6-digit OTP code</p>
               </div>
             )}
 
-            {/* New Password Section */}
             {isOtpVerified && (
               <>
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                    New Password
-                  </label>
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
                   <input
                     id="newPassword"
                     name="newPassword"
@@ -248,9 +195,7 @@ const ForgotPasswordPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm New Password
-                  </label>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -275,10 +220,7 @@ const ForgotPasswordPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <Link 
-              to="/login" 
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
-            >
+            <Link to="/login" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Sign In
             </Link>
@@ -289,4 +231,4 @@ const ForgotPasswordPage = () => {
   );
 };
 
-export default ForgotPasswordPage; 
+export default ForgotPasswordPage;
