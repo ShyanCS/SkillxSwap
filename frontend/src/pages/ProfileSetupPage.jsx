@@ -8,13 +8,15 @@ const ProfileSetupPage = () => {
   const { user, updateProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
+    profilePictureUrl: user?.profilePictureUrl || '',
     bio: user?.bio || '',
     region: user?.region || '',
     timezone: user?.timezone || '',
-    learningGoals: user?.learningGoals || [],
     skillsToTeach: [],
     skillsToLearn: [],
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const [skillInput, setSkillInput] = useState({
     teach: { name: '', description: '', proficiency: 'Intermediate', availability: [] },
@@ -45,15 +47,59 @@ const ProfileSetupPage = () => {
     }));
   };
 
-  const addLearningGoal = (goal) => {
-    if (goal && !formData.learningGoals.includes(goal)) {
-      handleInputChange('learningGoals', [...formData.learningGoals, goal]);
-    }
-  };
+  const handleProfileImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  setUploading(true);
+  setUploadError('');
 
-  const removeLearningGoal = (goal) => {
-    handleInputChange('learningGoals', formData.learningGoals.filter(g => g !== goal));
-  };
+  try {
+    // 1. Request an upload signature from your backend (GET request)
+    const apiRes = await fetch('http://127.0.0.1:5000/api/auth/cloudinary-sign', {
+      method: 'GET',
+      credentials: 'include' // Important: Include cookies in the request
+    });
+    
+    if (!apiRes.ok) {
+      throw new Error(`Failed to get upload signature: ${apiRes.status}`);
+    }
+    
+    const signData = await apiRes.json();
+
+    // 2. Prepare form data for Cloudinary
+    const form = new FormData();
+    form.append('file', file);
+    form.append('api_key', signData.apiKey);
+    form.append('timestamp', signData.timestamp);
+    form.append('signature', signData.signature);
+    form.append('folder', signData.folder);
+
+    // 3. Upload to Cloudinary
+    const cloudinaryRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, 
+      {
+        method: 'POST',
+        body: form
+      }
+    );
+
+    const data = await cloudinaryRes.json();
+    if (!data.secure_url) throw new Error('Upload failed');
+
+    // 4. Save URL to the form state
+    setFormData((prev) => ({
+      ...prev,
+      profilePictureUrl: data.secure_url,
+    }));
+
+  } catch (err) {
+    setUploadError('Could not upload image. Try again.');
+    console.error(err);
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   const addSkillToTeach = () => {
     const { name, description, proficiency, availability } = skillInput.teach;
@@ -132,6 +178,26 @@ const ProfileSetupPage = () => {
 
   const renderStep1 = () => (
     <div className="space-y-6">
+      {/* Profile Picture */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+        <div className="flex items-center space-x-4">
+          <img
+            src={formData.profilePictureUrl || 'https://ui-avatars.com/api/?name=User'}
+            alt="Profile"
+            className="w-20 h-20 rounded-full object-cover border"
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleProfileImageChange}
+            className="block text-sm text-gray-600"
+          />
+          {uploading && <span className="text-xs text-blue-600">Uploading...</span>}
+        </div>
+        {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Bio
@@ -176,52 +242,6 @@ const ProfileSetupPage = () => {
               <option key={tz} value={tz}>{tz}</option>
             ))}
           </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Learning Goals
-        </label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {formData.learningGoals.map((goal, index) => (
-            <span
-              key={index}
-              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
-            >
-              {goal}
-              <button
-                onClick={() => removeLearningGoal(goal)}
-                className="ml-2 text-blue-600 hover:text-blue-800"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Add a learning goal..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                addLearningGoal(e.target.value);
-                e.target.value = '';
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={(e) => {
-              const input = e.target.previousElementSibling;
-              addLearningGoal(input.value);
-              input.value = '';
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>
