@@ -128,7 +128,6 @@ const ProfileSetupPage = () => {
     const { name, description, urgency, desiredProficiency } = skillInput.learn;
     if (name && description) {
       const newSkill = {
-        id: Date.now().toString(),
         name,
         description,
         type: 'request',

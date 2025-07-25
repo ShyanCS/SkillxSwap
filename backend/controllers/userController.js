@@ -1,11 +1,62 @@
 const User = require('../models/User');
+const Skill = require('../models/Skill');
 const cloudinary = require("cloudinary")
 
 exports.updateProfile = async (req, res) => {
-    user = await User.findById(req.user._id);
-    console.log(req.body);
-    return res.status(200);
-}
+  try {
+    const {
+      profilePictureUrl,
+      bio,
+      region,
+      timezone,
+      skillsToTeach,
+      skillsToLearn
+    } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let skillsOfferedIds = [];
+    let skillsRequestedIds = []; 
+
+    // Process skills to teach
+    for (let skillData of skillsToTeach) {
+      const skill = new Skill({ userId: user._id, ...skillData });
+      const savedSkill = await skill.save();
+      skillsOfferedIds.push(savedSkill._id);
+    }
+
+    // Process skills to learn
+    for (let skillData of skillsToLearn) {
+      const skill = new Skill({ userId: user._id, ...skillData });
+      const savedSkill = await skill.save();
+      skillsRequestedIds.push(savedSkill._id);
+    }
+
+    // Update user
+    user.profilePictureUrl = profilePictureUrl;
+    user.bio = bio;
+    user.region = region;
+    user.timezone = timezone;
+    user.skillsOfferedIds = skillsOfferedIds;
+    user.skillsRequestedIds = skillsRequestedIds;
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return res.status(200).json({ 
+      message: 'Profile updated successfully',
+      user: user
+    });
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 exports.cloudinarySign = async (req, res) => {
   try {
@@ -15,10 +66,7 @@ exports.cloudinarySign = async (req, res) => {
     // Define upload parameters
     const uploadParams = {
       timestamp: timestamp,
-      folder: 'profiles', // Optional: organize uploads in folders
-      // Add other parameters as needed:
-      // transformation: 'w_400,h_400,c_fill',
-      // resource_type: 'auto'
+      folder: 'profiles', 
     };
 
     // Generate signature using Cloudinary's api_sign_request method

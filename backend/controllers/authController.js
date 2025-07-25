@@ -4,7 +4,7 @@ const otpGenerator = require('otp-generator')
 const sendEmail = require("../controllers/sendEmail")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-// bcrypt, jwt, etc.
+
 
 function capitalizeName(name) {
   return name
