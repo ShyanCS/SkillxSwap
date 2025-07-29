@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const MySkillsPage = () => {
-  const { user, addSkill, getSkill,delSkill } = useAuth();
+  const { user, addSkill, getSkill,delSkill,updateSkill } = useAuth();
   const [activeTab, setActiveTab] = useState("offered");
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalType, setModalType] = useState("offer");
@@ -23,6 +23,9 @@ const MySkillsPage = () => {
   // Mock data - replace with actual data from API
   const [offeredSkills, setOfferedSkills] = useState([]);
   const [requestedSkills, setRequestedSkills] = useState([]);
+
+  const [editSkillId, setEditSkillId] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -104,7 +107,12 @@ const MySkillsPage = () => {
       setRequestedSkills((prev) => [...prev, newSkill]);
     }
 
-    await addSkill({ ...formData, type: modalType });
+    if (isEditMode) {
+      await updateSkill(editSkillId, { ...formData, type: modalType });
+    } else {
+     await addSkill({ ...formData, type: modalType });
+    }
+    setReloadFlag(prev => !prev);
     // Reset form
     setFormData({
       name: "",
@@ -122,16 +130,24 @@ const MySkillsPage = () => {
     setShowAddModal(true);
   };
 
+  const openEditModal = (skill) => {
+    setModalType(skill.type);
+    setFormData({
+      name: skill.name,
+      description: skill.description,
+      proficiencyLevel: skill.proficiencyLevel || "Intermediate",
+      desiredProficiency: skill.desiredProficiency || "Intermediate",
+      urgency: skill.urgency || "Medium",
+      availability: skill.availability || [],
+    });
+    setEditSkillId(skill._id);
+    setIsEditMode(true);
+    setShowAddModal(true);
+  };
+
   const deleteSkill = async (skillId, type) => {
     await delSkill(skillId);
     setReloadFlag((prev)=> !prev);
-    if (type === "offer") {
-      setOfferedSkills((prev) => prev.filter((skill) => skill.id !== skillId));
-    } else {
-      setRequestedSkills((prev) =>
-        prev.filter((skill) => skill.id !== skillId)
-      );
-    }
   };
 
   const SkillCard = ({ skill, type, onDelete }) => (
@@ -204,9 +220,12 @@ const MySkillsPage = () => {
         </div>
 
         <div className="flex gap-2">
-          <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+          <button 
+            onClick={() => openEditModal(skill)} 
+            className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
             <Edit3 className="w-4 h-4" />
           </button>
+
           <button
             onClick={() => onDelete(skill._id)}
             className="p-2 text-gray-400 hover:text-red-600 transition-colors"

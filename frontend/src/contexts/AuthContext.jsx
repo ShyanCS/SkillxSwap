@@ -175,6 +175,33 @@ const getSkill = async (type) => {
   }
 };
 
+const updateSkill = async (skillId, updatedData) => {
+  try {
+    console.log("Updating skill...", skillId, updatedData);
+
+    const res = await fetch(`http://127.0.0.1:5000/api/auth/skills/${skillId}`, {
+      method: "PUT",
+     headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(updatedData)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to update skill: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+
+  } catch (error) {
+    console.error("Error updating skill:", error);
+    throw error;
+  }
+};
+
+
 const delSkill = async (skillId) => {
   setIsLoading(true);
   try {
@@ -204,6 +231,7 @@ const delSkill = async (skillId) => {
         addSkill,
         getSkill,
         delSkill,
+        updateSkill,
         isLoading,
       }}
     >

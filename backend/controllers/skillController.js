@@ -90,3 +90,44 @@ exports.deleteSkill = async (req, res) => {
     return res.status(500).json({ message: 'Error deleting skill', error });
   }
 };
+
+exports.updateSkill = async (req, res) => {
+  try {
+    const skillId = req.params.id;
+    const userId = req.user._id;
+
+    const skill = await Skill.findById(skillId);
+    if (!skill) return res.status(404).json({ message: 'Skill not found' });
+    console.log(skill);
+    // Check ownership
+    if (skill.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'Unauthorized to update this skill' });
+    }
+
+    // Extract fields
+    const { name, description, urgency, proficiencyLevel, desiredProficiency, availability, status } = req.body;
+
+    // ✅ Update fields safely
+    if (name !== undefined) skill.name = name;
+    if (description !== undefined) skill.description = description;
+    if (status !== undefined) skill.status = status;
+
+    if (skill.type === 'request') {
+      if (urgency !== undefined) skill.urgency = urgency;
+      if (desiredProficiency !== undefined) skill.desiredProficiency = desiredProficiency;
+    } else if (skill.type === 'offer') {
+      if (proficiencyLevel !== undefined) skill.proficiencyLevel = proficiencyLevel;
+      if (availability !== undefined) skill.availability = availability;
+    }
+
+    await skill.save();
+    console.log(req.body);
+
+    const updatedSkill = await Skill.findById(skillId);
+    return res.status(200).json({ message: 'Skill updated successfully', skill: updatedSkill });
+
+  } catch (error) {
+    console.error('Update skill error:', error);
+    return res.status(500).json({ message: 'Error updating skill', error: error.message });
+  }
+};

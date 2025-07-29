@@ -16,6 +16,7 @@ const {
   addSkill,
   getSkill,
   deleteSkill,
+  updateSkill,
 } = require('../controllers/skillController');
 
 router.post('/request-otp', requestOTP);      
@@ -31,5 +32,5 @@ router.put('/update-profile', authenticateUser, updateProfile);
 router.post('/add-skill', authenticateUser, addSkill);
 router.get('/get-skill', authenticateUser, getSkill);
 router.delete('/skills/:id', authenticateUser, deleteSkill);
-
+router.put('/skills/:id', authenticateUser, updateSkill);
 module.exports = router;
