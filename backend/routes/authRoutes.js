@@ -12,6 +12,11 @@ const {
   updateProfile,
   cloudinarySign,
 } = require('../controllers/userController');
+const {
+  addSkill,
+  getSkill,
+  deleteSkill,
+} = require('../controllers/skillController');
 
 router.post('/request-otp', requestOTP);      
 router.post('/verify-otp', verifyOTP);        
@@ -23,5 +28,8 @@ router.get('/me', authenticateUser, (req, res) => {
   res.status(200).json({ user: req.user });
 });
 router.put('/update-profile', authenticateUser, updateProfile);
+router.post('/add-skill', authenticateUser, addSkill);
+router.get('/get-skill', authenticateUser, getSkill);
+router.delete('/skills/:id', authenticateUser, deleteSkill);
 
 module.exports = router;

@@ -134,6 +134,65 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+    const addSkill = async (skillData) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/auth/add-skill`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(skillData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      await fetchUserDetails(); // Optionally fetch user after registration
+    } catch (error) {
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+const getSkill = async (type) => {
+  setIsLoading(true);
+  try {
+    const res = await fetch(`http://127.0.0.1:5000/api/auth/get-skill?type=${type}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Cannot Get data');
+    return data; // ✅ return parsed JSON instead of whole response
+  } catch (error) {
+    throw new Error(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const delSkill = async (skillId) => {
+  setIsLoading(true);
+  try {
+    const res = await fetch(`http://127.0.0.1:5000/api/auth/skills/${skillId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Cannot Delete data');
+  } catch (error) {
+    throw new Error(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <AuthContext.Provider
       value={{
@@ -142,6 +201,9 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
+        addSkill,
+        getSkill,
+        delSkill,
         isLoading,
       }}
     >

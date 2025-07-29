@@ -170,7 +170,6 @@ const ProfileSetupPage = () => {
     const { name, description, proficiency, availability } = skillInput.teach;
     if (name && description && availability.length > 0) {
       const newSkill = {
-        id: Date.now().toString(),
         name,
         description,
         type: "offer",
