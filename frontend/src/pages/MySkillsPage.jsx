@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useSkills } from "../contexts/SkillsContext";
 import {
   Plus,
   Edit3,
@@ -13,7 +14,8 @@ import {
 } from "lucide-react";
 
 const MySkillsPage = () => {
-  const { user, addSkill, getSkill,delSkill,updateSkill } = useAuth();
+  const { user, fetchUserDetails } = useAuth();
+  const { addSkill, getSkill, deleteSkill, updateSkill } = useSkills();
   const [activeTab, setActiveTab] = useState("offered");
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalType, setModalType] = useState("offer");
@@ -112,6 +114,8 @@ const MySkillsPage = () => {
     } else {
      await addSkill({ ...formData, type: modalType });
     }
+    // Refresh user data to get updated skill arrays
+    await fetchUserDetails();
     setReloadFlag(prev => !prev);
     // Reset form
     setFormData({
@@ -145,8 +149,10 @@ const MySkillsPage = () => {
     setShowAddModal(true);
   };
 
-  const deleteSkill = async (skillId, type) => {
-    await delSkill(skillId);
+  const handleDeleteSkill = async (skillId, type) => {
+    await deleteSkill(skillId);
+    // Refresh user data to get updated skill arrays
+    await fetchUserDetails();
     setReloadFlag((prev)=> !prev);
   };
 
@@ -369,7 +375,7 @@ const MySkillsPage = () => {
                       key={skill._id}
                       skill={skill}
                       type="offer"
-                      onDelete={(id) => deleteSkill(id, "offer")}
+                      onDelete={(id) => handleDeleteSkill(id, "offer")}
                     />
                   ))
                 ) : (
@@ -395,7 +401,7 @@ const MySkillsPage = () => {
                     key={skill._id}
                     skill={skill}
                     type="request"
-                    onDelete={(id) => deleteSkill(id, "request")}
+                    onDelete={(id) => handleDeleteSkill(id, "request")}
                   />
                 ))
               ) : (
