@@ -21,6 +21,7 @@
     "googleapis": "^153.0.0",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.18.0",
     "mongoose": "^8.16.3",
     "nodemailer": "^7.0.5",
     "otp-generator": "^4.0.1",

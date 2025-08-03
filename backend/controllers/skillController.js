@@ -1,17 +1,16 @@
 const User = require('../models/User');
 const Skill = require('../models/Skill');
+const UserSkill = require('../models/UserSkill');
 
 exports.addSkill = async (req, res) => {
   try {
     console.log(req.body);
-    const { type,name, description, urgency,proficiencyLevel,desiredProficiency,availability } = req.body;
+    const { type,name,skillId,description, urgency,proficiencyLevel,desiredProficiency,availability } = req.body;
     const user = await User.findById(req.user._id);
-    let skillsOfferedIds = user.skillsOfferedIds;
-    let skillsRequestedIds = user.skillsRequestedIds;
     let skillData = {};
     if(type !== 'offer'){
         skillData = {
-        name,
+        skillId,
         description,
         type,
         urgency,
@@ -20,7 +19,7 @@ exports.addSkill = async (req, res) => {
         }
     }else{
         skillData = {
-        name,
+        skillId,
         description,
         type,
         proficiencyLevel,
@@ -28,16 +27,8 @@ exports.addSkill = async (req, res) => {
         status: "Active",
         }
     }
-    const skill = new Skill({ userId: user._id, ...skillData });
-    const savedSkill = await skill.save();
-    if(type !== 'offer'){
-        skillsRequestedIds.push(savedSkill._id);
-        user.skillsRequestedIds = skillsRequestedIds;
-    }else{
-        skillsOfferedIds.push(savedSkill._id);
-        user.skillsOfferedIds = skillsOfferedIds;
-    }
-    await user.save();
+    const userSkill = new UserSkill({ userId: user._id, ...skillData });
+    await userSkill.save();
     return res.status(200).json({ 
       message: 'Skill added successfully',
       user: user
@@ -54,36 +45,34 @@ exports.getSkill = async (req, res) => {
   const userId = req.user._id; // set by authenticateUser middleware
 
   try {
-    const skills = await Skill.find({ userId, type });
-    return res.json(skills);
+    const skills = await UserSkill.find({ userId, type }).populate('skillId').exec();
+    const formattedSkill = skills.map(skill => ({
+      _id: skill._id,
+      type: skill.type,
+      description: skill.description,
+      status: skill.status,
+      createdAt: skill.createdAt,
+      name: skill.skillId?.name || null, // pulled from populated skill
+      proficiencyLevel: skill.proficiencyLevel,
+      desiredProficiency: skill.desiredProficiency,
+      urgency: skill.urgency,
+      availability: skill.availability
+    }))
+    return res.json(formattedSkill);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching skills', error });
   }
 };
 
 exports.deleteSkill = async (req, res) => {
-  const skillId = req.params.id;
-  const userId = req.user._id;
+    const userSkillId = req.params.id; // UserSkill document _id
+    const userId = req.user._id;
 
   try {
-    const skill = await Skill.findByIdAndDelete(skillId);
+    const skill = await UserSkill.deleteOne({ _id: userSkillId, userId });
     if (!skill) {
       return res.status(404).json({ message: 'Skill not found' });
     }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    if (skill.type === "offer") {
-      user.skillsOfferedIds = user.skillsOfferedIds.filter(id => id.toString() !== skillId);
-    } else {
-      user.skillsRequestedIds = user.skillsRequestedIds.filter(id => id.toString() !== skillId);
-    }
-
-    await user.save();
-
     return res.status(200).json({ message: 'Skill deleted successfully' });
   } catch (error) {
     console.error('Delete skill error:', error);
@@ -93,21 +82,23 @@ exports.deleteSkill = async (req, res) => {
 
 exports.updateSkill = async (req, res) => {
   try {
-    const skillId = req.params.id;
+    const userSkillId = req.params.id; // UserSkill document _id
     const userId = req.user._id;
 
-    const skill = await Skill.findById(skillId);
+    const skill = await UserSkill.findOne({ _id: userSkillId, userId });
     if (!skill) return res.status(404).json({ message: 'Skill not found' });
-    console.log(skill);
+
     // Check ownership
     if (skill.userId.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Unauthorized to update this skill' });
     }
 
     // Extract fields
-    const { name, description, urgency, proficiencyLevel, desiredProficiency, availability, status } = req.body;
+    const { name, description, urgency, proficiencyLevel, desiredProficiency, availability, status, newSkillId } = req.body;
 
-    // ✅ Update fields safely
+    // Update skillId if newSkillId is provided
+    if (newSkillId) skill.skillId = newSkillId;
+
     if (name !== undefined) skill.name = name;
     if (description !== undefined) skill.description = description;
     if (status !== undefined) skill.status = status;
@@ -121,13 +112,19 @@ exports.updateSkill = async (req, res) => {
     }
 
     await skill.save();
-    console.log(req.body);
 
-    const updatedSkill = await Skill.findById(skillId);
+    const updatedSkill = await UserSkill.findById(userSkillId);
     return res.status(200).json({ message: 'Skill updated successfully', skill: updatedSkill });
 
   } catch (error) {
     console.error('Update skill error:', error);
     return res.status(500).json({ message: 'Error updating skill', error: error.message });
   }
+};
+
+exports.listSkills = async (req, res) => {
+  console.log(req);
+  const skills = await Skill.find({});
+  console.log(skills);
+  res.json(skills);
 };

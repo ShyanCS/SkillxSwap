@@ -15,16 +15,17 @@ import {
 
 const MySkillsPage = () => {
   const { user, fetchUserDetails } = useAuth();
-  const { addSkill, getSkill, deleteSkill, updateSkill } = useSkills();
+  const { addSkill, getSkill, deleteSkill, updateSkill, listSkill } = useSkills();
   const [activeTab, setActiveTab] = useState("offered");
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalType, setModalType] = useState("offer");
   const [reloadFlag, setReloadFlag] = useState(false);
 
-
   // Mock data - replace with actual data from API
   const [offeredSkills, setOfferedSkills] = useState([]);
   const [requestedSkills, setRequestedSkills] = useState([]);
+  const [allSkills, setAllSkills] = useState([]);
+  const [skillSearch, setSkillSearch] = useState("");
 
   const [editSkillId, setEditSkillId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -45,10 +46,27 @@ const MySkillsPage = () => {
     };
 
     if (user) fetchSkills();
-  }, [user,reloadFlag]);
+  }, [user, reloadFlag]);
+
+  useEffect(() => {
+    const fetchAllSkills = async () => {
+      if (showAddModal) {
+        try {
+          const data = await listSkill(); // This calls the imported function
+          setAllSkills(Array.isArray(data) ? data : []);
+          console.log("Fetched skills:", data);
+        } catch (err) {
+          setAllSkills([]);
+          console.error("Failed to fetch skills:", err);
+        }
+      }
+    };
+    fetchAllSkills();
+  }, [showAddModal]);
 
   const [formData, setFormData] = useState({
     name: "",
+    skillId: "", // <-- Add this line
     description: "",
     proficiencyLevel: "Intermediate",
     desiredProficiency: "Intermediate",
@@ -93,33 +111,34 @@ const MySkillsPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const selectedSkill = allSkills.find((s) => s.name === formData.name);
+    if (!selectedSkill) {
+      alert("Please select a skill from the suggestions.");
+      return;
+    }
 
     const newSkill = {
-      id: Date.now().toString(),
-      ...formData,
+      ...formData, // includes name and skillId
       type: modalType,
       status: "Active",
       matchCount: 0,
       sessionCount: modalType === "offer" ? 0 : undefined,
+      newSkillId: formData.skillId, // <-- send new skillId in body
     };
 
-    if (modalType === "offer") {
-      setOfferedSkills((prev) => [...prev, newSkill]);
-    } else {
-      setRequestedSkills((prev) => [...prev, newSkill]);
-    }
-
     if (isEditMode) {
-      await updateSkill(editSkillId, { ...formData, type: modalType });
+      // Pass previous UserSkill _id as param, send newSkillId in body
+      await updateSkill(editSkillId, newSkill);
     } else {
-     await addSkill({ ...formData, type: modalType });
+      await addSkill(newSkill);
     }
     // Refresh user data to get updated skill arrays
     await fetchUserDetails();
-    setReloadFlag(prev => !prev);
+    setReloadFlag((prev) => !prev);
     // Reset form
     setFormData({
       name: "",
+      skillId: "", // <-- Reset this field
       description: "",
       proficiencyLevel: "Intermediate",
       desiredProficiency: "Intermediate",
@@ -132,18 +151,32 @@ const MySkillsPage = () => {
   const openAddModal = (type) => {
     setModalType(type);
     setShowAddModal(true);
+    setSkillSearch(""); // Reset skill search input
+    setFormData({
+      name: "",
+      skillId: "", // <-- Reset this field
+      description: "",
+      proficiencyLevel: "Intermediate",
+      desiredProficiency: "Intermediate",
+      urgency: "Medium",
+      availability: [],
+    });
+    setIsEditMode(false);
+    setEditSkillId(null);
   };
 
   const openEditModal = (skill) => {
     setModalType(skill.type);
     setFormData({
       name: skill.name,
+      skillId: skill.skillId || "", // <-- Set skillId from skill object
       description: skill.description,
       proficiencyLevel: skill.proficiencyLevel || "Intermediate",
       desiredProficiency: skill.desiredProficiency || "Intermediate",
       urgency: skill.urgency || "Medium",
       availability: skill.availability || [],
     });
+    setSkillSearch(skill.name); // <-- Set skillSearch so input is filled
     setEditSkillId(skill._id);
     setIsEditMode(true);
     setShowAddModal(true);
@@ -153,7 +186,7 @@ const MySkillsPage = () => {
     await deleteSkill(skillId);
     // Refresh user data to get updated skill arrays
     await fetchUserDetails();
-    setReloadFlag((prev)=> !prev);
+    setReloadFlag((prev) => !prev);
   };
 
   const SkillCard = ({ skill, type, onDelete }) => (
@@ -226,9 +259,10 @@ const MySkillsPage = () => {
         </div>
 
         <div className="flex gap-2">
-          <button 
-            onClick={() => openEditModal(skill)} 
-            className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+          <button
+            onClick={() => openEditModal(skill)}
+            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+          >
             <Edit3 className="w-4 h-4" />
           </button>
 
@@ -444,12 +478,42 @@ const MySkillsPage = () => {
                   </label>
                   <input
                     type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    value={skillSearch}
+                    onChange={(e) => setSkillSearch(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., React Development, Machine Learning, Guitar"
+                    placeholder="Type to search skills..."
+                    autoComplete="off"
                   />
+                  {skillSearch &&
+                    !allSkills.some((s) => s.name.toLowerCase() === skillSearch.toLowerCase()) && (
+                      <div className="border rounded-lg bg-white mt-1 max-h-40 overflow-y-auto shadow-lg z-10">
+                        {allSkills
+                          .filter((s) =>
+                            s.name.toLowerCase().includes(skillSearch.toLowerCase())
+                          )
+                          .map((s) => (
+                            <div
+                              key={s._id}
+                              className="px-3 py-2 cursor-pointer hover:bg-blue-100"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  name: s.name,
+                                  skillId: s._id, // <-- Add this line
+                                }));
+                                setSkillSearch(s.name);
+                              }}
+                            >
+                              {s.name}
+                            </div>
+                          ))}
+                        {allSkills.filter((s) =>
+                          s.name.toLowerCase().includes(skillSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="px-3 py-2 text-gray-400">No matches found</div>
+                        )}
+                      </div>
+                    )}
                 </div>
 
                 <div>
@@ -563,7 +627,21 @@ const MySkillsPage = () => {
                 <div className="flex justify-end gap-4 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setSkillSearch(""); // Reset skill search input
+                      setFormData({
+                        name: "",
+                        skillId: "", // <-- Reset this field
+                        description: "",
+                        proficiencyLevel: "Intermediate",
+                        desiredProficiency: "Intermediate",
+                        urgency: "Medium",
+                        availability: [],
+                      });
+                      setIsEditMode(false);
+                      setEditSkillId(null);
+                    }}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
                     Cancel

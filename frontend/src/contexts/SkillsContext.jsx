@@ -46,6 +46,28 @@ export const SkillsProvider = ({ children }) => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Cannot get data');
+      console.log(data);
+      return data;
+    } catch (error) {
+      throw new Error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const listSkill = async (type) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/skills/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      console.log(data);
+      if (!res.ok) throw new Error(data.error || 'Cannot get data');
       return data;
     } catch (error) {
       throw new Error(error.message);
@@ -110,6 +132,7 @@ export const SkillsProvider = ({ children }) => {
         getSkill,
         updateSkill,
         deleteSkill,
+        listSkill,
         isLoading,
       }}
     >

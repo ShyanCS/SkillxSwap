@@ -9,8 +9,6 @@ exports.updateProfile = async (req, res) => {
       bio,
       region,
       timezone,
-      skillsToTeach,
-      skillsToLearn
     } = req.body;
 
     const user = await User.findById(req.user._id);
@@ -18,30 +16,12 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    let skillsOfferedIds = [];
-    let skillsRequestedIds = []; 
-
-    // Process skills to teach
-    for (let skillData of skillsToTeach) {
-      const skill = new Skill({ userId: user._id, ...skillData });
-      const savedSkill = await skill.save();
-      skillsOfferedIds.push(savedSkill._id);
-    }
-
-    // Process skills to learn
-    for (let skillData of skillsToLearn) {
-      const skill = new Skill({ userId: user._id, ...skillData });
-      const savedSkill = await skill.save();
-      skillsRequestedIds.push(savedSkill._id);
-    }
 
     // Update user
     user.profilePictureUrl = profilePictureUrl;
     user.bio = bio;
     user.region = region;
     user.timezone = timezone;
-    user.skillsOfferedIds = skillsOfferedIds;
-    user.skillsRequestedIds = skillsRequestedIds;
     user.updatedAt = new Date();
 
     await user.save();

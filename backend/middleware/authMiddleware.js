@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // Adjust path to your User model
 
 const authenticateUser = async (req, res, next) => {
-  console.log(req.cookies)
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
