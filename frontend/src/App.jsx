@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SkillsProvider } from './contexts/SkillsContext';
+import { MatchProvider } from './contexts/MatchContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -53,9 +54,11 @@ function App() {
   return (
     <AuthProvider>
       <SkillsProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <MatchProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </MatchProvider>
       </SkillsProvider>
     </AuthProvider>
   );

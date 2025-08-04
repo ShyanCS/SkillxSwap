@@ -1,6 +1,7 @@
 const express = require('express');
 const authRoutes = require('./routes/authRoutes');
 const skillRoutes = require('./routes/skillRoutes');
+const matchRoutes = require('./routes/matchRoutes');
 // const errorHandler = require('./middleware/errorHandler');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -15,6 +16,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/skills', skillRoutes);
+app.use('/api/match-requests', matchRoutes);
 // app.use('/api/users', authRoutes);
 // app.use(errorHandler); // global error handler
 

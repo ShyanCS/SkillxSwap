@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
+import { useMatch } from '../contexts/MatchContext';
 import { 
   Brain, 
   Star, 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 const MatchingPage = () => {
+  const { getMatches } = useMatch();
   const [filters, setFilters] = useState({
     skillName: '',
     proficiency: '',
@@ -21,115 +23,24 @@ const MatchingPage = () => {
     timezone: '',
     availability: ''
   });
+  const [matches, setMatches] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+    useEffect(() => {
+      const fetchMatches = async () => {
+        try {
+          const matchesData = await getMatches();
+  
+          setMatches(matchesData);
+        } catch (error) {
+          console.error("Failed to fetch skills:", error);
+        }
+      };
+  
+      fetchMatches();
+    }, []);
 
   // Mock matches data - replace with actual API data
-  const [matches, setMatches] = useState([
-    {
-      id: '1',
-      user: {
-        id: 'user1',
-        name: 'Sarah Chen',
-        bio: 'Full-stack developer with 5 years experience. Love teaching and learning new technologies.',
-        region: 'North America',
-        timezone: 'EST',
-        profilePictureUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-        karmaPoints: 520,
-        rating: 4.9
-      },
-      skillOffered: {
-        name: 'React Development',
-        proficiencyLevel: 'Advanced',
-        description: 'Modern React with hooks, context, and best practices'
-      },
-      skillRequested: {
-        name: 'UI/UX Design',
-        desiredProficiency: 'Intermediate',
-        description: 'Want to improve my design skills for better user interfaces'
-      },
-      compatibilityScore: 95,
-      mutualInterests: ['Web Development', 'JavaScript', 'Frontend'],
-      lastActive: '2 hours ago'
-    },
-    {
-      id: '2',
-      user: {
-        id: 'user2',
-        name: 'Miguel Rodriguez',
-        bio: 'Data scientist passionate about machine learning and Python. Always eager to share knowledge.',
-        region: 'South America',
-        timezone: 'EST',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        karmaPoints: 380,
-        rating: 4.7
-      },
-      skillOffered: {
-        name: 'Machine Learning',
-        proficiencyLevel: 'Advanced',
-        description: 'ML fundamentals, neural networks, and practical applications'
-      },
-      skillRequested: {
-        name: 'React Development',
-        desiredProficiency: 'Intermediate',
-        description: 'Want to build better web interfaces for my ML projects'
-      },
-      compatibilityScore: 88,
-      mutualInterests: ['Python', 'Data Science', 'Technology'],
-      lastActive: '1 day ago'
-    },
-    {
-      id: '3',
-      user: {
-        id: 'user3',
-        name: 'Emma Thompson',
-        bio: 'Product manager with design background. Love helping others grow their product skills.',
-        region: 'Europe',
-        timezone: 'GMT',
-        profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-        karmaPoints: 670,
-        rating: 5.0
-      },
-      skillOffered: {
-        name: 'Product Management',
-        proficiencyLevel: 'Advanced',
-        description: 'Product strategy, user research, and agile methodologies'
-      },
-      skillRequested: {
-        name: 'Data Analytics',
-        desiredProficiency: 'Beginner',
-        description: 'Want to use data to make better product decisions'
-      },
-      compatibilityScore: 82,
-      mutualInterests: ['Product Design', 'Strategy', 'User Experience'],
-      lastActive: '3 hours ago'
-    },
-    {
-      id: '4',
-      user: {
-        id: 'user4',
-        name: 'Alex Kim',
-        bio: 'Digital marketing specialist with expertise in SEO and content strategy.',
-        region: 'Asia',
-        timezone: 'JST',
-        profilePictureUrl: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=400',
-        karmaPoints: 290,
-        rating: 4.6
-      },
-      skillOffered: {
-        name: 'Digital Marketing',
-        proficiencyLevel: 'Intermediate',
-        description: 'SEO, content marketing, and social media strategies'
-      },
-      skillRequested: {
-        name: 'Python Programming',
-        desiredProficiency: 'Beginner',
-        description: 'Want to automate marketing tasks and analyze data'
-      },
-      compatibilityScore: 78,
-      mutualInterests: ['Marketing', 'Analytics', 'Growth'],
-      lastActive: '5 hours ago'
-    }
-  ]);
+
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
@@ -201,30 +112,36 @@ const MatchingPage = () => {
       <div className="border-t border-gray-100 pt-4 mb-4">
         <div className="grid md:grid-cols-2 gap-4">
           {/* They Offer */}
-          <div className="bg-green-50 rounded-lg p-3">
+          {match.skillsOffered.map((skill)=>(
+            <div className="bg-green-50 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="text-sm font-medium text-green-800">They Offer</span>
             </div>
-            <h4 className="font-medium text-gray-900 mb-1">{match.skillOffered.name}</h4>
-            <p className="text-sm text-gray-600 mb-2">{match.skillOffered.description}</p>
+            <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
+            <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
             <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-              {match.skillOffered.proficiencyLevel}
+              {skill.proficiencyLevel}
             </span>
           </div>
+          ))}
+          
 
           {/* You Want */}
-          <div className="bg-blue-50 rounded-lg p-3">
+          {match.skillsRequested.map((skill)=>(
+            <div className="bg-blue-50 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-800">You Want</span>
+              <span className="text-sm font-medium text-blue-800">They Want</span>
             </div>
-            <h4 className="font-medium text-gray-900 mb-1">{match.skillRequested.name}</h4>
-            <p className="text-sm text-gray-600 mb-2">{match.skillRequested.description}</p>
+            <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
+            <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
             <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-              Target: {match.skillRequested.desiredProficiency}
+              Target: {skill.desiredProficiency}
             </span>
           </div>
+          ))}
+          
         </div>
       </div>
 
