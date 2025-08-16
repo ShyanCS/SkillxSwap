@@ -51,6 +51,24 @@ export const MatchProvider = ({ children }) => {
     }
   };
 
+    const getSentRequest = async () => {
+    setIsLoading(true);
+    try {
+      return await apiGet('/match-requests/sent');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+    const getRecievedRequest = async () => {
+    setIsLoading(true);
+    try {
+      return await apiGet('/match-requests/incoming');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // ✅ Send a match request
   const sendMatchRequest = async (receiverId, skillsOffered = [], skillsRequested = []) => {
     return await apiSend('/match-requests', 'POST', {
@@ -97,6 +115,8 @@ export const MatchProvider = ({ children }) => {
         getIncomingRequests,
         respondToRequest,
         hasAlreadyRequested,
+        getRecievedRequest,
+        getSentRequest,
         isLoading,
       }}
     >

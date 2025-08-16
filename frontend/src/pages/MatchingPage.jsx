@@ -70,6 +70,8 @@ const MatchingPage = () => {
     const handleSendRequest = async () => {
       try {
         setSending(true);
+        console.log(match.skillsOffered);
+        console.log(match.skillsRequested);
         await sendMatchRequest(
           match.user.id,
           match.skillsOffered.map(skill => skill.id || skill.userSkillId),
@@ -149,8 +151,8 @@ const MatchingPage = () => {
                 </span>
               </div>
             ))}
-            {match.skillsRequested.map((skill, i) => (
-              <div key={i} className="bg-blue-50 rounded-lg p-3">
+            {match.skillsRequested.map((skill, id) => (
+              <div key={id} className="bg-blue-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <span className="text-sm font-medium text-blue-800">They Want</span>

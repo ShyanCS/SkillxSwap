@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
+import { useMatch } from '../contexts/MatchContext';
 import { 
   Send, 
   Inbox, 
@@ -14,141 +15,26 @@ import {
 } from 'lucide-react';
 
 const RequestsPage = () => {
+    const { getSentRequest, getRecievedRequest } = useMatch();
   const [activeTab, setActiveTab] = useState('received');
 
   // Mock data - replace with actual API calls
-  const [receivedRequests, setReceivedRequests] = useState([
-    {
-      id: '1',
-      sender: {
-        id: 'user1',
-        name: 'Alex Johnson',
-        profilePictureUrl: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.8,
-        karmaPoints: 320
-      },
-      skillWanted: {
-        name: 'React Development',
-        proficiencyLevel: 'Advanced'
-      },
-      skillOffered: {
-        name: 'Python Programming',
-        proficiencyLevel: 'Intermediate'
-      },
-      message: 'Hi! I\'m really interested in learning React from you. I have some Python experience and would love to teach you in exchange. Looking forward to connecting!',
-      sentAt: '2 hours ago',
-      status: 'pending'
-    },
-    {
-      id: '2',
-      sender: {
-        id: 'user2',
-        name: 'Maria Garcia',
-        profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.9,
-        karmaPoints: 580
-      },
-      skillWanted: {
-        name: 'UI/UX Design',
-        proficiencyLevel: 'Intermediate'
-      },
-      skillOffered: {
-        name: 'Digital Marketing',
-        proficiencyLevel: 'Advanced'
-      },
-      message: 'Hello! I saw your UI/UX design skills and I\'m very interested in learning from you. I can teach you digital marketing strategies in return.',
-      sentAt: '1 day ago',
-      status: 'pending'
-    },
-    {
-      id: '3',
-      sender: {
-        id: 'user3',
-        name: 'David Kim',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.6,
-        karmaPoints: 290
-      },
-      skillWanted: {
-        name: 'JavaScript ES6+',
-        proficiencyLevel: 'Advanced'
-      },
-      skillOffered: {
-        name: 'Data Analytics',
-        proficiencyLevel: 'Intermediate'
-      },
-      message: 'Hi there! I need help with advanced JavaScript concepts. I can help you with data analytics and visualization techniques.',
-      sentAt: '3 days ago',
-      status: 'accepted'
-    }
-  ]);
+  const [receivedRequests, setReceivedRequests] = useState([]);
 
-  const [sentRequests, setSentRequests] = useState([
-    {
-      id: '1',
-      recipient: {
-        id: 'user4',
-        name: 'Sarah Chen',
-        profilePictureUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.9,
-        karmaPoints: 520
-      },
-      skillWanted: {
-        name: 'Machine Learning',
-        proficiencyLevel: 'Advanced'
-      },
-      skillOffered: {
-        name: 'React Development',
-        proficiencyLevel: 'Advanced'
-      },
-      message: 'Hi Sarah! I\'m very interested in learning machine learning from you. I can teach you React development in exchange.',
-      sentAt: '1 hour ago',
-      status: 'pending'
-    },
-    {
-      id: '2',
-      recipient: {
-        id: 'user5',
-        name: 'Emma Thompson',
-        profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 5.0,
-        karmaPoints: 670
-      },
-      skillWanted: {
-        name: 'Product Management',
-        proficiencyLevel: 'Advanced'
-      },
-      skillOffered: {
-        name: 'Frontend Development',
-        proficiencyLevel: 'Intermediate'
-      },
-      message: 'Hello Emma! I would love to learn product management from you. I can help you with frontend development techniques.',
-      sentAt: '5 hours ago',
-      status: 'accepted'
-    },
-    {
-      id: '3',
-      recipient: {
-        id: 'user6',
-        name: 'Miguel Rodriguez',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.7,
-        karmaPoints: 380
-      },
-      skillWanted: {
-        name: 'DevOps',
-        proficiencyLevel: 'Intermediate'
-      },
-      skillOffered: {
-        name: 'JavaScript',
-        proficiencyLevel: 'Advanced'
-      },
-      message: 'Hi Miguel! I\'m interested in learning DevOps practices from you.',
-      sentAt: '2 days ago',
-      status: 'rejected'
-    }
-  ]);
-
+  const [sentRequests, setSentRequests] = useState([]);
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const sentRequests = await getSentRequest();
+        const recievedRequests = await getRecievedRequest();
+        setReceivedRequests(receivedRequests);
+        setSentRequests(sentRequests);
+      } catch (error) {
+        console.error("Failed to fetch skills:", error);
+      }
+    };
+    fetchRequests();
+  }, []);
   const handleAcceptRequest = (requestId) => {
     setReceivedRequests(prev =>
       prev.map(request =>
@@ -230,19 +116,22 @@ const RequestsPage = () => {
         {/* Skills Exchange */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-lg p-3">
+            {request.skillWanted.map((req)=>(
+              <div className="bg-blue-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <span className="text-sm font-medium text-blue-800">
                   {type === 'received' ? 'They Want to Learn' : 'You Want to Learn'}
                 </span>
               </div>
-              <h4 className="font-medium text-gray-900">{request.skillWanted.name}</h4>
+              <h4 className="font-medium text-gray-900">{req.name}</h4>
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                {request.skillWanted.proficiencyLevel}
+                {req.desiredProficiency}
               </span>
             </div>
+            ))}
 
+          {request.skillOffered.map((req)=>(
             <div className="bg-green-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -250,22 +139,14 @@ const RequestsPage = () => {
                   {type === 'received' ? 'They Offer' : 'You Offer'}
                 </span>
               </div>
-              <h4 className="font-medium text-gray-900">{request.skillOffered.name}</h4>
+              <h4 className="font-medium text-gray-900">{req.name}</h4>
               <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                {request.skillOffered.proficiencyLevel}
+                {req.proficiencyLevel}
               </span>
             </div>
+          ))}
           </div>
         </div>
-
-        {/* Message */}
-        {request.message && (
-          <div className="mb-4">
-            <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg italic">
-              "{request.message}"
-            </p>
-          </div>
-        )}
 
         {/* Actions */}
         <div className="flex justify-between items-center">

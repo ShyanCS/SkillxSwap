@@ -15,59 +15,45 @@ exports.sendMatchRequest = async (req, res) => {
       return res.status(400).json({ message: 'Cannot send request to yourself' });
     }
 
-    // Check if request already exists
+    // Check if a request already exists
     let existingRequest = await MatchRequest.findOne({
       senderId: req.user._id,
       receiverId,
       status: { $in: ['Pending', 'Accepted'] }
     });
 
-    // Fetch offered skills
-    const offeredDetails = await Promise.all(
-      skillsOffered.map(async (id) => {
-        const us = await UserSkill.findById(id).populate('skillId');
-        if (!us) throw new Error(`Offered UserSkill not found: ${id}`);
-        return {
-          userSkillId: us._id,
-          skillId: us.skillId._id,
-          skillName: us.skillId.name
-        };
+    // Fetch UserSkill IDs for offered skills
+    // Fetch UserSkill IDs for offered skills (sender’s skills)
+    const offeredIds = await Promise.all(
+      skillsOffered.map(async (skill) => {
+        const us = await UserSkill.findOne({ skillId: skill._id, userId: req.user._id });
+        if (!us) throw new Error(`Offered UserSkill not found: ${skill.name}`);
+        return us._id;
       })
     );
 
-    // Fetch requested skills
-    const requestedDetails = await Promise.all(
-      skillsRequested.map(async (id) => {
-        const us = await UserSkill.findById(id).populate('skillId');
-        if (!us) throw new Error(`Requested UserSkill not found: ${id}`);
-        return {
-          userSkillId: us._id,
-          skillId: us.skillId._id,
-          skillName: us.skillId.name
-        };
+    // Fetch UserSkill IDs for requested skills (receiver’s skills)
+    const requestedIds = await Promise.all(
+      skillsRequested.map(async (skill) => {
+        const us = await UserSkill.findOne({ skillId: skill._id, userId: receiverId });
+        if (!us) throw new Error(`Receiver does not have requested skill: ${skill.name}`);
+        return us._id;
       })
     );
+
 
     if (existingRequest) {
-      // Merge skills without duplicates
-      const mergeUnique = (existing, incoming) => {
-        const map = new Map(existing.map(s => [s.skillId.toString(), s]));
-        incoming.forEach(s => {
-          if (!map.has(s.skillId.toString())) {
-            map.set(s.skillId.toString(), s);
-          }
-        });
-        return Array.from(map.values());
-      };
-
-      existingRequest.skillsOffered = mergeUnique(existingRequest.skillsOffered, offeredDetails);
-      existingRequest.skillsRequested = mergeUnique(existingRequest.skillsRequested, requestedDetails);
+      // Merge new skills without duplicates
+      existingRequest.skillsOffered = Array.from(new Set([...existingRequest.skillsOffered, ...offeredIds]));
+      existingRequest.skillsRequested = Array.from(new Set([...existingRequest.skillsRequested, ...requestedIds]));
 
       await existingRequest.save();
 
       // Populate before sending back
-      existingRequest = await existingRequest.populate('receiverId', 'name email profilePictureUrl karmaPoints');
-      existingRequest = await existingRequest.populate('senderId', 'name email profilePictureUrl karmaPoints');
+      await existingRequest.populate('receiverId', 'name email profilePictureUrl karmaPoints');
+      await existingRequest.populate('senderId', 'name email profilePictureUrl karmaPoints');
+      await existingRequest.populate('skillsOffered', 'skillId');
+      await existingRequest.populate('skillsRequested', 'skillId');
 
       return res.status(200).json({
         message: 'Request updated with new skills.',
@@ -79,13 +65,15 @@ exports.sendMatchRequest = async (req, res) => {
     let newRequest = await MatchRequest.create({
       senderId: req.user._id,
       receiverId,
-      skillsOffered: offeredDetails,
-      skillsRequested: requestedDetails
+      skillsOffered: offeredIds,
+      skillsRequested: requestedIds
     });
 
     // Populate after creation
-    newRequest = await newRequest.populate('receiverId', 'name email profilePictureUrl karmaPoints');
-    newRequest = await newRequest.populate('senderId', 'name email profilePictureUrl karmaPoints');
+    await newRequest.populate('receiverId', 'name email profilePictureUrl karmaPoints');
+    await newRequest.populate('senderId', 'name email profilePictureUrl karmaPoints');
+    await newRequest.populate('skillsOffered', 'skillId');
+    await newRequest.populate('skillsRequested', 'skillId');
 
     res.status(201).json({
       message: 'New request created.',
@@ -98,24 +86,88 @@ exports.sendMatchRequest = async (req, res) => {
   }
 };
 
+
 // 📌 Get incoming match requests
 exports.getIncomingRequests = async (req, res) => {
   try {
     const requests = await MatchRequest.find({ receiverId: req.user._id })
-      .populate('senderId', 'name email profilePictureUrl karmaPoints');
-    res.json(requests);
+      .populate('senderId', 'name profilePictureUrl')  // only needed fields
+      .populate({
+        path: 'skillsOffered',
+        populate: { path: 'skillId', select: 'name' }
+      })
+      .populate({
+        path: 'skillsRequested',
+        populate: { path: 'skillId', select: 'name' }
+      });
+    // Map to frontend-friendly structure
+    const formattedRequests = requests.map(reqDoc => ({
+      id: reqDoc._id.toString(),
+      sender: {
+        id: reqDoc.senderId._id.toString(),
+        name: reqDoc.senderId.name,
+        profilePictureUrl: reqDoc.senderId.profilePictureUrl
+        // Optionally add karmaPoints if you want
+      },
+      skillOffered: reqDoc.skillsOffered.map(s => ({
+        name: s.skillId.name,
+        proficiencyLevel: s.desiredProficiency || 'N/A',  // from UserSkill
+        availability: s.availability || []    
+        // Optionally add proficiencyLevel here if available
+      })),
+      skillWanted: reqDoc.skillsRequested.map(s => ({
+        name: s.skillId.name,
+        desiredProficiency: s.desiredProficiency || 'N/A', // from UserSkill
+        urgency: s.urgency || 'Medium'
+      })),
+      sentAt: reqDoc.createdAt,
+      status: reqDoc.status.toLowerCase()  // pending, accepted, rejected
+    }));
+
+    res.json(formattedRequests);
   } catch (error) {
     console.error("Error fetching incoming requests:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// 📌 Get sent match requests
+
 exports.getSentRequests = async (req, res) => {
   try {
     const requests = await MatchRequest.find({ senderId: req.user._id })
-      .populate('receiverId', 'name email profilePictureUrl karmaPoints');
-    res.json(requests);
+      .populate('receiverId', 'name profilePictureUrl') // only needed fields
+      .populate({
+        path: 'skillsOffered',
+        populate: { path: 'skillId', select: 'name' }
+      })
+      .populate({
+        path: 'skillsRequested',
+        populate: { path: 'skillId', select: 'name' }
+      });
+      console.log(requests[0].skillsOffered);
+    // Map to frontend-friendly structure
+    const formattedRequests = requests.map(reqDoc => ({
+      id: reqDoc._id.toString(),
+      recipient: {
+        id: reqDoc.receiverId._id.toString(),
+        name: reqDoc.receiverId.name,
+        profilePictureUrl: reqDoc.receiverId.profilePictureUrl
+      },
+      skillOffered: reqDoc.skillsOffered.map(s => ({
+        name: s.skillId?.name,
+        proficiencyLevel: s.desiredProficiency || 'N/A',  // from UserSkill
+        availability: s.availability || []              // optional, if you want to send
+      })),
+      skillWanted: reqDoc.skillsRequested.map(s => ({
+        name: s.skillId?.name,
+        desiredProficiency: s.desiredProficiency || 'N/A', // from UserSkill
+        urgency: s.urgency || 'Medium'                     // optional
+      })),
+      sentAt: reqDoc.createdAt,
+      status: reqDoc.status.toLowerCase() // pending, accepted, rejected
+    }));
+
+    res.json(formattedRequests);
   } catch (error) {
     console.error("Error fetching sent requests:", error);
     res.status(500).json({ message: error.message });

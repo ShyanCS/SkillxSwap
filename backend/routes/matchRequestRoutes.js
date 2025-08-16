@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const  protect  = require('../middleware/authMiddleware');
 const authenticateUser = require('../middleware/authMiddleware');
 const {
   sendMatchRequest,
@@ -8,14 +7,12 @@ const {
   getSentRequests,
   respondToRequest
 } = require('../controllers/MatchRequestController');
-
-router.use(protect);
+router.use(authenticateUser);
 
 router.post('/', sendMatchRequest);
 router.get('/incoming', getIncomingRequests);
 router.get('/sent', getSentRequests);
 router.put('/:id', respondToRequest);
-router.use(authenticateUser);
 
 
 module.exports = router;

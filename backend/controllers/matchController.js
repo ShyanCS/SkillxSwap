@@ -51,6 +51,7 @@ exports.matches = async (req, res) => {
       if (type === 'offer') {
         // They offer a skill I want
         entry.skillsOffered.push({
+          id: userSkill.skillId,
           name: userSkill.skillId.name,
           proficiencyLevel: userSkill.proficiencyLevel,
           description: userSkill.description || userSkill.skillId.description
@@ -58,6 +59,7 @@ exports.matches = async (req, res) => {
       } else {
         // They want a skill I offer
         entry.skillsRequested.push({
+          id: userSkill.skillId,
           name: userSkill.skillId.name,
           desiredProficiency: userSkill.desiredProficiency,
           description: userSkill.description || userSkill.skillId.description
