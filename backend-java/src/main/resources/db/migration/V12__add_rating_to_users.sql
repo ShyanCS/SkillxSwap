@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ADD COLUMN average_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+    ADD COLUMN rating_count   INTEGER       NOT NULL DEFAULT 0;

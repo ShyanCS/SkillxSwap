@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const RequestsPage = () => {
-    const { getSentRequest, getRecievedRequest } = useMatch();
+    const { getSentRequest, getRecievedRequest, respondToRequest } = useMatch();
   const [activeTab, setActiveTab] = useState('received');
 
   // Mock data - replace with actual API calls
@@ -27,7 +27,9 @@ const RequestsPage = () => {
       try {
         const sentRequests = await getSentRequest();
         const recievedRequests = await getRecievedRequest();
-        setReceivedRequests(receivedRequests);
+        console.log(sentRequests);
+        console.log(recievedRequests);
+        setReceivedRequests(recievedRequests);
         setSentRequests(sentRequests);
       } catch (error) {
         console.error("Failed to fetch skills:", error);
@@ -35,24 +37,34 @@ const RequestsPage = () => {
     };
     fetchRequests();
   }, []);
-  const handleAcceptRequest = (requestId) => {
-    setReceivedRequests(prev =>
-      prev.map(request =>
-        request.id === requestId
-          ? { ...request, status: 'accepted' }
-          : request
-      )
-    );
+  const handleAcceptRequest = async (requestId) => {
+    try {
+      await respondToRequest(requestId, 'Accepted');
+      setReceivedRequests(prev =>
+        prev.map(request =>
+          request.id === requestId
+            ? { ...request, status: 'accepted' }
+            : request
+        )
+      );
+    } catch (error) {
+      console.error('Failed to accept request:', error);
+    }
   };
 
-  const handleRejectRequest = (requestId) => {
-    setReceivedRequests(prev =>
-      prev.map(request =>
-        request.id === requestId
-          ? { ...request, status: 'rejected' }
-          : request
-      )
-    );
+  const handleRejectRequest = async (requestId) => {
+    try {
+      await respondToRequest(requestId, 'Rejected');
+      setReceivedRequests(prev =>
+        prev.map(request =>
+          request.id === requestId
+            ? { ...request, status: 'rejected' }
+            : request
+        )
+      );
+    } catch (error) {
+      console.error('Failed to reject request:', error);
+    }
   };
 
   const getStatusColor = (status) => {

@@ -1,6 +1,6 @@
 const MatchRequest = require('../models/MatchRequest');
 const UserSkill = require('../models/UserSkill');
-
+const Match = require("../models/Match")
 // 📌 Send or Update a match request
 exports.sendMatchRequest = async (req, res) => {
   try {
@@ -100,30 +100,31 @@ exports.getIncomingRequests = async (req, res) => {
         path: 'skillsRequested',
         populate: { path: 'skillId', select: 'name' }
       });
-    // Map to frontend-friendly structure
-    const formattedRequests = requests.map(reqDoc => ({
-      id: reqDoc._id.toString(),
-      sender: {
-        id: reqDoc.senderId._id.toString(),
-        name: reqDoc.senderId.name,
-        profilePictureUrl: reqDoc.senderId.profilePictureUrl
-        // Optionally add karmaPoints if you want
-      },
-      skillOffered: reqDoc.skillsOffered.map(s => ({
-        name: s.skillId.name,
-        proficiencyLevel: s.desiredProficiency || 'N/A',  // from UserSkill
-        availability: s.availability || []    
-        // Optionally add proficiencyLevel here if available
-      })),
-      skillWanted: reqDoc.skillsRequested.map(s => ({
-        name: s.skillId.name,
-        desiredProficiency: s.desiredProficiency || 'N/A', // from UserSkill
-        urgency: s.urgency || 'Medium'
-      })),
-      sentAt: reqDoc.createdAt,
-      status: reqDoc.status.toLowerCase()  // pending, accepted, rejected
-    }));
-
+      // Map to frontend-friendly structure
+      const formattedRequests = requests.map(reqDoc => ({
+        id: reqDoc._id.toString(),
+        sender: {
+          id: reqDoc.senderId._id.toString(),
+          name: reqDoc.senderId.name,
+          profilePictureUrl: reqDoc.senderId.profilePictureUrl
+          // Optionally add karmaPoints if you want
+        },
+        skillOffered: reqDoc.skillsOffered.map(s => ({
+          name: s.skillId.name,
+          proficiencyLevel: s.desiredProficiency || 'N/A',  // from UserSkill
+          availability: s.availability || []    
+          // Optionally add proficiencyLevel here if available
+        })),
+        skillWanted: reqDoc.skillsRequested.map(s => ({
+          name: s.skillId.name,
+          desiredProficiency: s.desiredProficiency || 'N/A', // from UserSkill
+          urgency: s.urgency || 'Medium'
+        })),
+        sentAt: reqDoc.createdAt,
+        status: reqDoc.status.toLowerCase()  // pending, accepted, rejected
+      }));
+      
+    console.log(formattedRequests);
     res.json(formattedRequests);
   } catch (error) {
     console.error("Error fetching incoming requests:", error);
@@ -144,7 +145,6 @@ exports.getSentRequests = async (req, res) => {
         path: 'skillsRequested',
         populate: { path: 'skillId', select: 'name' }
       });
-      console.log(requests[0].skillsOffered);
     // Map to frontend-friendly structure
     const formattedRequests = requests.map(reqDoc => ({
       id: reqDoc._id.toString(),
@@ -193,9 +193,35 @@ exports.respondToRequest = async (req, res) => {
     request.status = status;
     await request.save();
 
-    res.json({ message: `Request ${status}`, request });
+    let match = null;
+
+    if (status === 'Accepted') {
+      // ✅ Create a new Match record
+      match = await Match.create({
+        user1Id: request.senderId,
+        user2Id: request.receiverId,
+        skillsExchanged: [
+          {
+            offeredBy: request.senderId,   // sender is offering skill
+            skillId: request.skillOfferedId
+          },
+          {
+            offeredBy: request.receiverId, // receiver is requesting/learning
+            skillId: request.skillRequestedId
+          }
+        ],
+        compatibilityScore: request.compatibilityScore || null, // optional
+      });
+    }
+
+    res.json({
+      message: `Request ${status}`,
+      request,
+      ...(match ? { match } : {})
+    });
   } catch (error) {
     console.error("Error responding to request:", error);
     res.status(500).json({ message: error.message });
   }
 };
+

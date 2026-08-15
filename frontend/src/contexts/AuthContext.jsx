@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 const AuthContext = createContext(undefined);
 
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`http://127.0.0.1:5000/api/auth/me`, {
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   // ✅ Optional API to fetch logged-in user (if not using /me in useEffect)
   const fetchUserDetails = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/auth/me`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -79,10 +80,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Actual logout
+  // Actual logout -- backed by a real endpoint now (Phase 1); the Node
+  // backend never implemented POST /api/auth/logout, so this used to 404.
   const logout = async () => {
     try {
-      await fetch(`http://127.0.0.1:5000/api/auth/logout`, {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -95,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/auth/register`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/auth/update-profile`, {
+      const res = await fetch(`${API_BASE_URL}/api/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

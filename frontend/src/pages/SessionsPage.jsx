@@ -1,121 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Clock, 
-  Video, 
-  MapPin, 
-  User, 
-  Star,
+import {
+  Calendar,
+  Clock,
+  Video,
+  MapPin,
+  User,
   CheckCircle,
   XCircle,
   PlayCircle,
   MessageCircle,
   Plus,
-  Filter
+  Star
 } from 'lucide-react';
+import { useSession } from '../contexts/SessionContext';
 
 const SessionsPage = () => {
+  const { getSessions, cancelSession, completeSession } = useSession();
   const [activeTab, setActiveTab] = useState('upcoming');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock session data - replace with actual API calls
-  const [sessions, setSessions] = useState([
-    {
-      id: '1',
-      partner: {
-        id: 'user1',
-        name: 'Sarah Chen',
-        profilePictureUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.9
-      },
-      skill: {
-        name: 'React Development',
-        description: 'Advanced React patterns and hooks'
-      },
-      role: 'learner', // 'learner' or 'teacher'
-      startTime: '2024-01-20T15:00:00Z',
-      endTime: '2024-01-20T16:00:00Z',
-      duration: 60,
-      type: 'online',
-      location: 'Zoom Meeting',
-      meetingLink: 'https://zoom.us/j/123456789',
-      status: 'scheduled',
-      notes: 'Focus on useEffect and performance optimization',
-      createdAt: '2024-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      partner: {
-        id: 'user2',
-        name: 'Miguel Rodriguez',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.7
-      },
-      skill: {
-        name: 'Machine Learning',
-        description: 'Python ML fundamentals and scikit-learn'
-      },
-      role: 'learner',
-      startTime: '2024-01-22T14:00:00Z',
-      endTime: '2024-01-22T15:30:00Z',
-      duration: 90,
-      type: 'online',
-      location: 'Google Meet',
-      meetingLink: 'https://meet.google.com/xyz-abc-def',
-      status: 'scheduled',
-      notes: 'Introduction to supervised learning algorithms',
-      createdAt: '2024-01-16T14:00:00Z'
-    },
-    {
-      id: '3',
-      partner: {
-        id: 'user3',
-        name: 'Emma Thompson',
-        profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 5.0
-      },
-      skill: {
-        name: 'UI/UX Design',
-        description: 'Design thinking and prototyping'
-      },
-      role: 'teacher',
-      startTime: '2024-01-18T10:00:00Z',
-      endTime: '2024-01-18T11:00:00Z',
-      duration: 60,
-      type: 'in-person',
-      location: 'Central Library, Study Room 3',
-      status: 'completed',
-      notes: 'Covered design principles and user research',
-      feedback: {
-        rating: 5,
-        comment: 'Excellent session! Very clear explanations.'
-      },
-      createdAt: '2024-01-10T09:00:00Z'
-    },
-    {
-      id: '4',
-      partner: {
-        id: 'user4',
-        name: 'Alex Johnson',
-        profilePictureUrl: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.8
-      },
-      skill: {
-        name: 'Python Programming',
-        description: 'Advanced Python concepts and best practices'
-      },
-      role: 'teacher',
-      startTime: '2024-01-16T16:00:00Z',
-      endTime: '2024-01-16T17:00:00Z',
-      duration: 60,
-      type: 'online',
-      location: 'Zoom Meeting',
-      status: 'cancelled',
-      notes: 'Student had to cancel due to emergency',
-      createdAt: '2024-01-14T11:00:00Z'
+  const fetchSessions = async () => {
+    try {
+      const data = await getSessions();
+      setSessions(data);
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -163,46 +82,40 @@ const SessionsPage = () => {
 
   const filterSessions = () => {
     return sessions.filter(session => {
-      const now = new Date();
-      const sessionDate = new Date(session.startTime);
-      
-      let statusMatch = true;
-      if (activeTab === 'upcoming') {
-        statusMatch = session.status === 'scheduled' && sessionDate >= now;
-      } else if (activeTab === 'completed') {
-        statusMatch = session.status === 'completed';
-      } else if (activeTab === 'cancelled') {
-        statusMatch = session.status === 'cancelled';
-      }
-
-      let filterMatch = true;
-      if (filterStatus !== 'all') {
-        filterMatch = session.status === filterStatus;
-      }
-
-      return statusMatch && filterMatch;
+      if (activeTab === 'upcoming') return session.status === 'scheduled';
+      if (activeTab === 'completed') return session.status === 'completed';
+      if (activeTab === 'cancelled') return session.status === 'cancelled';
+      return true;
     });
   };
 
   const handleJoinSession = (session) => {
-    if (session.meetingLink) {
-      window.open(session.meetingLink, '_blank');
+    if (session.type === 'online' && session.location) {
+      window.open(session.location, '_blank');
     }
   };
 
-  const handleCancelSession = (sessionId) => {
-    setSessions(prev =>
-      prev.map(session =>
-        session.id === sessionId
-          ? { ...session, status: 'cancelled' }
-          : session
-      )
-    );
+  const handleCancelSession = async (sessionId) => {
+    try {
+      await cancelSession(sessionId);
+      await fetchSessions();
+    } catch (error) {
+      console.error('Failed to cancel session:', error);
+    }
+  };
+
+  const handleCompleteSession = async (sessionId) => {
+    try {
+      await completeSession(sessionId);
+      await fetchSessions();
+    } catch (error) {
+      console.error('Failed to complete session:', error);
+    }
   };
 
   const SessionCard = ({ session }) => {
     const isUpcoming = new Date(session.startTime) > new Date();
-    const canJoin = session.status === 'scheduled' && 
+    const canJoin = session.status === 'scheduled' &&
                    Math.abs(new Date(session.startTime) - new Date()) <= 15 * 60 * 1000; // 15 minutes
 
     return (
@@ -211,7 +124,7 @@ const SessionsPage = () => {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
-              src={session.partner.profilePictureUrl}
+              src={session.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)}
               alt={session.partner.name}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -238,8 +151,7 @@ const SessionsPage = () => {
         {/* Session Info */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <h4 className="font-medium text-gray-900 mb-2">{session.skill.name}</h4>
-          <p className="text-sm text-gray-600 mb-3">{session.skill.description}</p>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
@@ -257,7 +169,7 @@ const SessionsPage = () => {
               ) : (
                 <MapPin className="w-4 h-4 text-gray-400" />
               )}
-              <span className="text-gray-600">{session.location}</span>
+              <span className="text-gray-600">{session.location || (session.type === 'online' ? 'Online' : '')}</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-gray-400" />
@@ -271,29 +183,6 @@ const SessionsPage = () => {
             </div>
           )}
         </div>
-
-        {/* Feedback (for completed sessions) */}
-        {session.status === 'completed' && session.feedback && (
-          <div className="bg-yellow-50 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="text-sm font-medium">Feedback Received</span>
-            </div>
-            <p className="text-sm text-gray-700">"{session.feedback.comment}"</p>
-            <div className="flex items-center gap-1 mt-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3 h-3 ${
-                    i < session.feedback.rating
-                      ? 'text-yellow-500 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Actions */}
         <div className="flex justify-between items-center">
@@ -317,7 +206,16 @@ const SessionsPage = () => {
                     Join Now
                   </button>
                 )}
-                
+
+                {!isUpcoming && (
+                  <button
+                    onClick={() => handleCompleteSession(session.id)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    Mark Completed
+                  </button>
+                )}
+
                 {isUpcoming && (
                   <button
                     onClick={() => handleCancelSession(session.id)}
@@ -329,7 +227,7 @@ const SessionsPage = () => {
               </>
             )}
 
-            {session.status === 'completed' && !session.feedback && (
+            {session.status === 'completed' && (
               <Link
                 to="/feedback"
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium flex items-center gap-1"
@@ -425,7 +323,7 @@ const SessionsPage = () => {
           </div>
         </div>
 
-        {/* Tabs and Filters */}
+        {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm mb-8">
           <div className="border-b border-gray-200">
             <div className="flex justify-between items-center px-6">
@@ -461,25 +359,13 @@ const SessionsPage = () => {
                   Cancelled ({sessions.filter(s => s.status === 'cancelled').length})
                 </button>
               </nav>
-
-              {/* <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Sessions</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div> */}
             </div>
           </div>
 
           <div className="p-6">
-            {filteredSessions.length > 0 ? (
+            {loading ? (
+              <p className="text-gray-500 text-center py-12">Loading sessions...</p>
+            ) : filteredSessions.length > 0 ? (
               <div className="space-y-6">
                 {filteredSessions.map(session => (
                   <SessionCard key={session.id} session={session} />
@@ -492,7 +378,7 @@ const SessionsPage = () => {
                   No {activeTab} sessions
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {activeTab === 'upcoming' 
+                  {activeTab === 'upcoming'
                     ? "You don't have any upcoming sessions scheduled."
                     : `You don't have any ${activeTab} sessions.`
                   }

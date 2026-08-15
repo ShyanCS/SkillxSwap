@@ -1,5 +1,6 @@
 // src/contexts/MatchContext.jsx
 import React, { createContext, useContext, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 const MatchContext = createContext(undefined);
 
@@ -14,7 +15,7 @@ export const useMatch = () => {
 export const MatchProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_BASE = 'http://127.0.0.1:5000/api';
+  const API_BASE = `${API_BASE_URL}/api`;
 
   /** Generic GET helper */
   const apiGet = async (endpoint) => {
@@ -93,13 +94,14 @@ export const MatchProvider = ({ children }) => {
     return await apiSend(`/match-requests/${requestId}`, 'PUT', { status });
   };
 
-  // ✅ Check if already requested (prevents duplicates)
+  // Check if already requested (prevents duplicates). Sent requests carry
+  // the target user under `recipient` (see MatchRequestResponse), and
+  // status is returned lowercase.
   const hasAlreadyRequested = async (receiverId) => {
     try {
       const sent = await getSentRequests();
       return sent.some((req) => {
-        const rid = req.receiverId?._id ?? req.receiverId;
-        return String(rid) === String(receiverId) && req.status === 'Pending';
+        return String(req.recipient?.id) === String(receiverId) && req.status === 'pending';
       });
     } catch {
       return false; // fail open to allow request if check fails

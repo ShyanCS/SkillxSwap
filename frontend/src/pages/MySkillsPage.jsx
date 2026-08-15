@@ -177,7 +177,7 @@ const MySkillsPage = () => {
       availability: skill.availability || [],
     });
     setSkillSearch(skill.name); // <-- Set skillSearch so input is filled
-    setEditSkillId(skill._id);
+    setEditSkillId(skill.id);
     setIsEditMode(true);
     setShowAddModal(true);
   };
@@ -267,7 +267,7 @@ const MySkillsPage = () => {
           </button>
 
           <button
-            onClick={() => onDelete(skill._id)}
+            onClick={() => onDelete(skill.id)}
             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
@@ -406,7 +406,7 @@ const MySkillsPage = () => {
                 offeredSkills.length > 0 ? (
                   offeredSkills.map((skill) => (
                     <SkillCard
-                      key={skill._id}
+                      key={skill.id}
                       skill={skill}
                       type="offer"
                       onDelete={(id) => handleDeleteSkill(id, "offer")}
@@ -432,7 +432,7 @@ const MySkillsPage = () => {
               ) : requestedSkills.length > 0 ? (
                 requestedSkills.map((skill) => (
                   <SkillCard
-                    key={skill._id}
+                    key={skill.id}
                     skill={skill}
                     type="request"
                     onDelete={(id) => handleDeleteSkill(id, "request")}
@@ -493,13 +493,13 @@ const MySkillsPage = () => {
                           )
                           .map((s) => (
                             <div
-                              key={s._id}
+                              key={s.id}
                               className="px-3 py-2 cursor-pointer hover:bg-blue-100"
                               onClick={() => {
                                 setFormData((prev) => ({
                                   ...prev,
                                   name: s.name,
-                                  skillId: s._id, // <-- Add this line
+                                  skillId: s.id,
                                 }));
                                 setSkillSearch(s.name);
                               }}

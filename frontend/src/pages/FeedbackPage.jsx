@@ -1,126 +1,45 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Star, 
-  User, 
-  Clock, 
+import React, { useState, useEffect } from 'react';
+import {
+  Star,
+  Clock,
   Calendar,
   Send,
   CheckCircle,
   MessageSquare
 } from 'lucide-react';
+import { useReview } from '../contexts/ReviewContext';
 
 const FeedbackPage = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { getReviewableSessions, getGivenReviews, submitReview } = useReview();
+
+  const [pendingSessions, setPendingSessions] = useState([]);
+  const [feedbackHistory, setFeedbackHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [selectedSession, setSelectedSession] = useState(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock data for sessions that need feedback - replace with actual API call
-  const [completedSessions, setCompletedSessions] = useState([
-    {
-      id: '1',
-      partner: {
-        id: 'user1',
-        name: 'Sarah Chen',
-        profilePictureUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.9
-      },
-      skill: {
-        name: 'React Development',
-        description: 'Advanced React patterns and hooks'
-      },
-      role: 'learner', // 'learner' or 'teacher'
-      startTime: '2024-01-18T15:00:00Z',
-      endTime: '2024-01-18T16:00:00Z',
-      duration: 60,
-      type: 'online',
-      location: 'Zoom Meeting',
-      notes: 'Covered useEffect optimization and custom hooks',
-      completedAt: '2024-01-18T16:00:00Z',
-      feedbackGiven: false
-    },
-    {
-      id: '2',
-      partner: {
-        id: 'user2',
-        name: 'Miguel Rodriguez',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.7
-      },
-      skill: {
-        name: 'Machine Learning',
-        description: 'Python ML fundamentals and scikit-learn'
-      },
-      role: 'learner',
-      startTime: '2024-01-17T14:00:00Z',
-      endTime: '2024-01-17T15:30:00Z',
-      duration: 90,
-      type: 'online',
-      location: 'Google Meet',
-      notes: 'Introduction to supervised learning algorithms',
-      completedAt: '2024-01-17T15:30:00Z',
-      feedbackGiven: false
-    },
-    {
-      id: '3',
-      partner: {
-        id: 'user3',
-        name: 'Alex Johnson',
-        profilePictureUrl: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=400',
-        rating: 4.8
-      },
-      skill: {
-        name: 'Python Programming',
-        description: 'Advanced Python concepts and best practices'
-      },
-      role: 'teacher',
-      startTime: '2024-01-16T16:00:00Z',
-      endTime: '2024-01-16T17:00:00Z',
-      duration: 60,
-      type: 'online',
-      location: 'Zoom Meeting',
-      notes: 'Taught decorators and context managers',
-      completedAt: '2024-01-16T17:00:00Z',
-      feedbackGiven: false
+  const fetchData = async () => {
+    try {
+      const [sessions, history] = await Promise.all([
+        getReviewableSessions(),
+        getGivenReviews(),
+      ]);
+      setPendingSessions(sessions);
+      setFeedbackHistory(history);
+    } catch (error) {
+      console.error('Failed to fetch feedback data:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  // Mock data for feedback history
-  const [feedbackHistory, setFeedbackHistory] = useState([
-    {
-      id: '1',
-      session: {
-        partner: {
-          name: 'Emma Thompson',
-          profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400'
-        },
-        skill: { name: 'UI/UX Design' },
-        role: 'teacher'
-      },
-      rating: 5,
-      comment: 'Excellent session! Very clear explanations and practical examples.',
-      givenAt: '2024-01-15T18:00:00Z'
-    },
-    {
-      id: '2',
-      session: {
-        partner: {
-          name: 'David Kim',
-          profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400'
-        },
-        skill: { name: 'JavaScript ES6+' },
-        role: 'learner'
-      },
-      rating: 4,
-      comment: 'Good session, learned a lot about arrow functions and promises.',
-      givenAt: '2024-01-14T19:30:00Z'
-    }
-  ]);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -147,43 +66,14 @@ const FeedbackPage = () => {
     }
 
     setIsSubmitting(true);
-
     try {
-      // Mock API call - replace with actual feedback submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update the session to mark feedback as given
-      setCompletedSessions(prev =>
-        prev.map(session =>
-          session.id === selectedSession.id
-            ? { ...session, feedbackGiven: true }
-            : session
-        )
-      );
-
-      // Add to feedback history
-      const newFeedback = {
-        id: Date.now().toString(),
-        session: {
-          partner: selectedSession.partner,
-          skill: selectedSession.skill,
-          role: selectedSession.role
-        },
-        rating,
-        comment,
-        givenAt: new Date().toISOString()
-      };
-
-      setFeedbackHistory(prev => [newFeedback, ...prev]);
-
-      // Reset form
+      await submitReview(selectedSession.id, rating, comment);
       setSelectedSession(null);
       setRating(0);
       setComment('');
-
-      alert('Feedback submitted successfully!');
+      await fetchData();
     } catch (error) {
-      alert('Failed to submit feedback. Please try again.');
+      alert(error.message || 'Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -226,7 +116,7 @@ const FeedbackPage = () => {
     >
       <div className="flex items-center gap-3 mb-3">
         <img
-          src={session.partner.profilePictureUrl}
+          src={session.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)}
           alt={session.partner.name}
           className="w-12 h-12 rounded-full object-cover"
         />
@@ -245,7 +135,6 @@ const FeedbackPage = () => {
 
       <div className="bg-gray-50 rounded-lg p-3 mb-3">
         <h4 className="font-medium text-gray-900 mb-1">{session.skill.name}</h4>
-        <p className="text-sm text-gray-600 mb-2">{session.skill.description}</p>
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -263,8 +152,6 @@ const FeedbackPage = () => {
       )}
     </div>
   );
-
-  const pendingSessions = completedSessions.filter(session => !session.feedbackGiven);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-4">
@@ -306,7 +193,7 @@ const FeedbackPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Average Rating Given</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {feedbackHistory.length > 0 
+                  {feedbackHistory.length > 0
                     ? (feedbackHistory.reduce((sum, f) => sum + f.rating, 0) / feedbackHistory.length).toFixed(1)
                     : '0.0'
                   }
@@ -323,7 +210,9 @@ const FeedbackPage = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-6">Give Feedback</h2>
 
-            {pendingSessions.length > 0 ? (
+            {loading ? (
+              <p className="text-gray-500">Loading...</p>
+            ) : pendingSessions.length > 0 ? (
               <>
                 {/* Session Selection */}
                 <div className="mb-6">
@@ -421,22 +310,22 @@ const FeedbackPage = () => {
                   <div key={feedback.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <img
-                        src={feedback.session.partner.profilePictureUrl}
-                        alt={feedback.session.partner.name}
+                        src={feedback.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(feedback.partner.name)}
+                        alt={feedback.partner.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">
-                          {feedback.session.partner.name}
+                          {feedback.partner.name}
                         </h4>
                         <p className="text-sm text-gray-600">
-                          {feedback.session.skill.name}
+                          {feedback.skill.name}
                         </p>
                       </div>
                       <div className="text-right">
                         <StarRating value={feedback.rating} readonly />
                         <p className="text-xs text-gray-500 mt-1">
-                          {formatDate(feedback.givenAt)}
+                          {formatDate(feedback.createdAt)}
                         </p>
                       </div>
                     </div>

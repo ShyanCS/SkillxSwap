@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 const SkillsContext = createContext(undefined);
 
@@ -16,7 +17,7 @@ export const SkillsProvider = ({ children }) => {
   const addSkill = async (skillData) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/skills/add`, {
+      const res = await fetch(`${API_BASE_URL}/api/skills/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +38,7 @@ export const SkillsProvider = ({ children }) => {
   const getSkill = async (type) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/skills/get?type=${type}`, {
+      const res = await fetch(`${API_BASE_URL}/api/skills/get?type=${type}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +59,7 @@ export const SkillsProvider = ({ children }) => {
   const listSkill = async (type) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/skills/`, {
+      const res = await fetch(`${API_BASE_URL}/api/skills/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +82,7 @@ export const SkillsProvider = ({ children }) => {
     try {
       console.log("Updating skill...", skillId, updatedData);
 
-      const res = await fetch(`http://127.0.0.1:5000/api/skills/${skillId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/skills/${skillId}`, {
         method: "PUT",
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +109,7 @@ export const SkillsProvider = ({ children }) => {
   const deleteSkill = async (skillId) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/skills/${skillId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/skills/${skillId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 import { Users, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const RegisterPage = () => {
@@ -52,7 +53,7 @@ const RegisterPage = () => {
 
     setIsRequestingOtp(true);
     try {
-      const response = await fetch('/api/auth/request-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/request-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +88,7 @@ const RegisterPage = () => {
 
     setIsVerifyingOtp(true);
     try {
-      const response = await fetch('/api/auth/verify-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

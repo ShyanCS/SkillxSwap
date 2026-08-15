@@ -1,213 +1,89 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Search, 
-  Send, 
-  Paperclip, 
-  Smile, 
-  MoreVertical,
-  Phone,
-  Video,
-  Calendar,
-  Star,
-  Clock
+import {
+  Search,
+  Send,
+  Calendar
 } from 'lucide-react';
+import { useMessaging } from '../contexts/MessagingContext';
 
 const MessagesPage = () => {
-  const { user: currentUser } = useAuth();
-  const [selectedChat, setSelectedChat] = useState(null);
+  const { getConversations, getMessages, sendMessage } = useMessaging();
+  const [selectedConversation, setSelectedConversation] = useState(null); // a conversation summary entry
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
-  // Mock chat data - replace with actual API calls
-  const [chats, setChats] = useState([
-    {
-      id: '1',
-      participant: {
-        id: 'user1',
-        name: 'Sarah Chen',
-        profilePictureUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-        status: 'online',
-        lastSeen: 'online'
-      },
-      lastMessage: {
-        text: 'Great! Looking forward to our React session tomorrow.',
-        timestamp: '2:30 PM',
-        senderId: 'user1'
-      },
-      unreadCount: 2,
-      messages: [
-        {
-          id: '1',
-          senderId: 'user1',
-          text: 'Hi! Thanks for accepting my match request. When would be a good time for our first React session?',
-          timestamp: '2024-01-15T14:00:00Z',
-          type: 'text'
-        },
-        {
-          id: '2',
-          senderId: 'current-user',
-          text: 'Hi Sarah! I\'m excited to get started. How about tomorrow at 3 PM?',
-          timestamp: '2024-01-15T14:15:00Z',
-          type: 'text'
-        },
-        {
-          id: '3',
-          senderId: 'user1',
-          text: 'Perfect! I\'ll send you the Zoom link.',
-          timestamp: '2024-01-15T14:20:00Z',
-          type: 'text'
-        },
-        {
-          id: '4',
-          senderId: 'user1',
-          text: 'Great! Looking forward to our React session tomorrow.',
-          timestamp: '2024-01-15T14:30:00Z',
-          type: 'text'
-        }
-      ]
-    },
-    {
-      id: '2',
-      participant: {
-        id: 'user2',
-        name: 'Miguel Rodriguez',
-        profilePictureUrl: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-        status: 'away',
-        lastSeen: '1 hour ago'
-      },
-      lastMessage: {
-        text: 'Thanks for the Python tips!',
-        timestamp: '11:45 AM',
-        senderId: 'user2'
-      },
-      unreadCount: 0,
-      messages: [
-        {
-          id: '1',
-          senderId: 'current-user',
-          text: 'Hey Miguel! Ready for our machine learning session?',
-          timestamp: '2024-01-15T10:00:00Z',
-          type: 'text'
-        },
-        {
-          id: '2',
-          senderId: 'user2',
-          text: 'Absolutely! I\'ve prepared some examples we can work through.',
-          timestamp: '2024-01-15T10:30:00Z',
-          type: 'text'
-        },
-        {
-          id: '3',
-          senderId: 'user2',
-          text: 'Thanks for the Python tips!',
-          timestamp: '2024-01-15T11:45:00Z',
-          type: 'text'
-        }
-      ]
-    },
-    {
-      id: '3',
-      participant: {
-        id: 'user3',
-        name: 'Emma Thompson',
-        profilePictureUrl: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-        status: 'offline',
-        lastSeen: '2 days ago'
-      },
-      lastMessage: {
-        text: 'Let\'s schedule our design session for next week.',
-        timestamp: 'Yesterday',
-        senderId: 'user3'
-      },
-      unreadCount: 1,
-      messages: [
-        {
-          id: '1',
-          senderId: 'user3',
-          text: 'Hi! I\'m excited to learn about your design process.',
-          timestamp: '2024-01-14T16:00:00Z',
-          type: 'text'
-        },
-        {
-          id: '2',
-          senderId: 'current-user',
-          text: 'Great! I have some case studies we can review together.',
-          timestamp: '2024-01-14T16:30:00Z',
-          type: 'text'
-        },
-        {
-          id: '3',
-          senderId: 'user3',
-          text: 'Let\'s schedule our design session for next week.',
-          timestamp: '2024-01-14T17:00:00Z',
-          type: 'text'
-        }
-      ]
+  const fetchConversations = async () => {
+    try {
+      const data = await getConversations();
+      setConversations(data);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  const openConversation = async (conv) => {
+    setSelectedConversation(conv);
+    if (!conv.conversationId) {
+      setMessages([]);
+      return;
+    }
+    try {
+      const data = await getMessages(conv.conversationId);
+      setMessages(data);
+      // Refresh the list in the background so unread counts/read receipts update.
+      fetchConversations();
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
-  }, [selectedChat]);
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedChat) return;
+    if (!newMessage.trim() || !selectedConversation) return;
 
-    const message = {
-      id: Date.now().toString(),
-      senderId: 'current-user',
-      text: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-      type: 'text'
-    };
-
-    setChats(prevChats =>
-      prevChats.map(chat =>
-        chat.id === selectedChat.id
-          ? {
-              ...chat,
-              messages: [...chat.messages, message],
-              lastMessage: {
-                text: message.text,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                senderId: 'current-user'
-              }
-            }
-          : chat
-      )
-    );
-
+    const body = newMessage.trim();
     setNewMessage('');
-    scrollToBottom();
-  };
-
-  const formatMessageTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'online':
-        return 'bg-green-500';
-      case 'away':
-        return 'bg-yellow-500';
-      default:
-        return 'bg-gray-400';
+    try {
+      const sent = await sendMessage(selectedConversation.partner.id, body);
+      setMessages(prev => [...prev, sent]);
+      fetchConversations();
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   };
 
-  const filteredChats = chats.filter(chat =>
-    chat.participant.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const formatMessageTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatListTime = (timestamp) => {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    conv.partner.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -215,7 +91,7 @@ const MessagesPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
           <div className="flex h-full">
-            {/* Sidebar - Chat List */}
+            {/* Sidebar - Conversation List */}
             <div className="w-80 border-r border-gray-200 flex flex-col">
               {/* Header */}
               <div className="p-4 border-b border-gray-200">
@@ -232,117 +108,108 @@ const MessagesPage = () => {
                 </div>
               </div>
 
-              {/* Chat List */}
+              {/* Conversation List */}
               <div className="flex-1 overflow-y-auto">
-                {filteredChats.map(chat => (
-                  <div
-                    key={chat.id}
-                    onClick={() => setSelectedChat(chat)}
-                    className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedChat?.id === chat.id ? 'bg-blue-50 border-blue-200' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
+                {loading ? (
+                  <p className="p-4 text-gray-500">Loading...</p>
+                ) : filteredConversations.length === 0 ? (
+                  <p className="p-4 text-gray-500 text-sm">
+                    No conversations yet. Accept a match request to start messaging.
+                  </p>
+                ) : (
+                  filteredConversations.map(conv => (
+                    <div
+                      key={conv.partner.id}
+                      onClick={() => openConversation(conv)}
+                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                        selectedConversation?.partner.id === conv.partner.id ? 'bg-blue-50 border-blue-200' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
                         <img
-                          src={chat.participant.profilePictureUrl}
-                          alt={chat.participant.name}
+                          src={conv.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(conv.partner.name)}
+                          alt={conv.partner.name}
                           className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(chat.participant.status)}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-medium text-gray-900 truncate">
-                            {chat.participant.name}
-                          </h3>
-                          <span className="text-xs text-gray-500">
-                            {chat.lastMessage.timestamp}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 truncate">
-                            {chat.lastMessage.text}
-                          </p>
-                          {chat.unreadCount > 0 && (
-                            <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                              {chat.unreadCount}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-medium text-gray-900 truncate">
+                              {conv.partner.name}
+                            </h3>
+                            <span className="text-xs text-gray-500">
+                              {formatListTime(conv.lastMessage?.sentAt)}
                             </span>
-                          )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-600 truncate">
+                              {conv.lastMessage ? conv.lastMessage.body : 'Say hello!'}
+                            </p>
+                            {conv.unreadCount > 0 && (
+                              <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                {conv.unreadCount}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
-              {selectedChat ? (
+              {selectedConversation ? (
                 <>
                   {/* Chat Header */}
                   <div className="p-4 border-b border-gray-200 bg-white">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <img
-                            src={selectedChat.participant.profilePictureUrl}
-                            alt={selectedChat.participant.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(selectedChat.participant.status)}`} />
-                        </div>
+                        <img
+                          src={selectedConversation.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedConversation.partner.name)}
+                          alt={selectedConversation.partner.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
                         <div>
                           <h2 className="font-semibold text-gray-900">
-                            {selectedChat.participant.name}
+                            {selectedConversation.partner.name}
                           </h2>
-                          <p className="text-sm text-gray-500">
-                            {selectedChat.participant.status === 'online' 
-                              ? 'Online' 
-                              : `Last seen ${selectedChat.participant.lastSeen}`
-                            }
-                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <Phone className="w-5 h-5" />
-                        </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <Video className="w-5 h-5" />
-                        </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                        <a
+                          href="/schedule"
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                          title="Schedule a session"
+                        >
                           <Calendar className="w-5 h-5" />
-                        </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
+                        </a>
                       </div>
                     </div>
                   </div>
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {selectedChat.messages.map(message => (
+                    {messages.map(message => (
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.senderId === 'current-user' ? 'justify-end' : 'justify-start'
+                          message.senderId === selectedConversation.partner.id ? 'justify-start' : 'justify-end'
                         }`}
                       >
                         <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.senderId === 'current-user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
+                          message.senderId === selectedConversation.partner.id
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'bg-blue-600 text-white'
                         }`}>
-                          <p className="text-sm">{message.text}</p>
+                          <p className="text-sm">{message.body}</p>
                           <p className={`text-xs mt-1 ${
-                            message.senderId === 'current-user'
-                              ? 'text-blue-100'
-                              : 'text-gray-500'
+                            message.senderId === selectedConversation.partner.id
+                              ? 'text-gray-500'
+                              : 'text-blue-100'
                           }`}>
-                            {formatMessageTime(message.timestamp)}
+                            {formatMessageTime(message.sentAt)}
                           </p>
                         </div>
                       </div>
@@ -353,26 +220,14 @@ const MessagesPage = () => {
                   {/* Message Input */}
                   <div className="p-4 border-t border-gray-200 bg-white">
                     <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                      >
-                        <Paperclip className="w-5 h-5" />
-                      </button>
                       <div className="flex-1 relative">
                         <input
                           type="text"
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           placeholder="Type a message..."
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-                        >
-                          <Smile className="w-5 h-5" />
-                        </button>
                       </div>
                       <button
                         type="submit"

@@ -1,0 +1,24 @@
+services:
+  skillswap-db:
+    image: postgres:16
+    container_name: skillswap-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: skillswap
+      POSTGRES_USER: skillswap
+      POSTGRES_PASSWORD: skillswap
+    ports:
+      - "5433:5432"
+    volumes:
+      - skillswap-db-data:/var/lib/postgresql/data
+
+  skillswap-mailpit:
+    image: axllent/mailpit
+    container_name: skillswap-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI to view caught emails (e.g. OTP codes) during dev
+
+volumes:
+  skillswap-db-data:

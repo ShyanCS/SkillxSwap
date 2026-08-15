@@ -1,0 +1,13 @@
+package com.skillswap.backend.review.repository;
+
+import com.skillswap.backend.review.entity.Review;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+    Optional<Review> findBySessionIdAndReviewerId(Long sessionId, Long reviewerId);
+    List<Review> findByReviewerIdOrderByIdDesc(Long reviewerId);
+    List<Review> findByReviewerIdAndSessionIdIn(Long reviewerId, List<Long> sessionIds);
+}

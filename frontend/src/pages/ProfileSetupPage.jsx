@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { API_BASE_URL } from "../config/api";
 import { Plus, X, User, MapPin, Clock, BookOpen, Target } from "lucide-react";
 
 const ProfileSetupPage = () => {
@@ -73,7 +74,7 @@ const ProfileSetupPage = () => {
 
     try {
       const apiRes = await fetch(
-        "http://127.0.0.1:5000/api/auth/cloudinary-sign",
+        `${API_BASE_URL}/api/profile/cloudinary-sign`,
         {
           method: "GET",
           credentials: "include",

@@ -3,6 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SkillsProvider } from './contexts/SkillsContext';
 import { MatchProvider } from './contexts/MatchContext';
+import { SessionProvider } from './contexts/SessionContext';
+import { WalletProvider } from './contexts/WalletContext';
+import { ReviewProvider } from './contexts/ReviewContext';
+import { MessagingProvider } from './contexts/MessagingContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { AdminProvider } from './contexts/AdminContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -19,8 +25,10 @@ import SessionsPage from './pages/SessionsPage';
 import FeedbackPage from './pages/FeedbackPage';
 import KarmaPage from './pages/KarmaPage';
 import AskAIPage from './pages/AskAIPage';
+import AdminPage from './pages/AdminPage';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
 
 function AppContent() {
   const { user } = useAuth();
@@ -45,6 +53,7 @@ function AppContent() {
         <Route path="/feedback" element={<ProtectedRoute><FeedbackPage /></ProtectedRoute>} />
         <Route path="/karma" element={<ProtectedRoute><KarmaPage /></ProtectedRoute>} />
         <Route path="/ask-ai" element={<ProtectedRoute><AskAIPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       </Routes>
     </div>
   );
@@ -55,9 +64,21 @@ function App() {
     <AuthProvider>
       <SkillsProvider>
         <MatchProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <SessionProvider>
+            <WalletProvider>
+              <ReviewProvider>
+                <MessagingProvider>
+                  <NotificationProvider>
+                    <AdminProvider>
+                      <Router>
+                        <AppContent />
+                      </Router>
+                    </AdminProvider>
+                  </NotificationProvider>
+                </MessagingProvider>
+              </ReviewProvider>
+            </WalletProvider>
+          </SessionProvider>
         </MatchProvider>
       </SkillsProvider>
     </AuthProvider>

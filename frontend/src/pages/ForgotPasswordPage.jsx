@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, Mail, ArrowLeft } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const ForgotPasswordPage = () => {
 
     setIsRequestingOtp(true);
     try {
-      const response = await fetch('/api/auth/request-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, purpose: 'reset' }),
@@ -56,7 +57,7 @@ const ForgotPasswordPage = () => {
 
     setIsVerifyingOtp(true);
     try {
-      const response = await fetch('/api/auth/verify-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
@@ -86,7 +87,7 @@ const ForgotPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/auth/reset`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: newPassword }),

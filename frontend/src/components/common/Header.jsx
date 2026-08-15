@@ -1,27 +1,81 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  Users, 
-  MessageCircle, 
-  Calendar, 
-  Star, 
-  Settings, 
-  LogOut, 
-  BookOpen, 
+import { useNotifications } from '../../contexts/NotificationContext';
+import {
+  Users,
+  MessageCircle,
+  Calendar,
+  Star,
+  Settings,
+  LogOut,
+  BookOpen,
   Home,
   Mail,
   Award,
   Bot,
-  Search
+  Search,
+  Bell,
+  Shield
 } from 'lucide-react';
 
 const Header = () => {
   const { user, logout } = useAuth();
+  const { getNotifications, getUnreadCount, markRead } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const profileMenuRef = useRef(null);
+  const notificationMenuRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        setUnreadCount(await getUnreadCount());
+      } catch (error) {
+        console.error('Failed to fetch unread notification count:', error);
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleNotifications = async () => {
+    const next = !showNotifications;
+    setShowNotifications(next);
+    if (next) {
+      try {
+        setNotifications(await getNotifications());
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    }
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      try {
+        await markRead(notification.id);
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }
+  };
+
+  const formatNotificationTime = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -32,6 +86,9 @@ const Header = () => {
     const handleClickOutside = (event) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+      }
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target)) {
+        setShowNotifications(false);
       }
     };
 
@@ -50,6 +107,7 @@ const Header = () => {
     { path: '/sessions', icon: Calendar, label: 'Sessions' },
     { path: '/karma', icon: Award, label: 'Karma' },
     { path: '/ask-ai', icon: Bot, label: 'Ask AI' },
+    ...(user?.role === 'ADMIN' ? [{ path: '/admin', icon: Shield, label: 'Admin' }] : []),
   ];
 
   return (
@@ -100,6 +158,56 @@ const Header = () => {
             <button className="md:hidden p-2 text-gray-600 hover:text-gray-900 flex-shrink-0">
               <Search className="w-5 h-5" />
             </button>
+
+            {/* Notification Bell */}
+            <div className="relative flex-shrink-0" ref={notificationMenuRef}>
+              <button
+                onClick={toggleNotifications}
+                className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-colors"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <>
+                  <div className="lg:hidden fixed inset-0 bg-black bg-opacity-25 z-40" />
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200 max-h-96 overflow-y-auto">
+                    <div className="px-4 py-2 border-b border-gray-100 font-medium text-sm text-gray-900">
+                      Notifications
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="px-4 py-6 text-sm text-gray-500 text-center">No notifications yet</p>
+                    ) : (
+                      notifications.map(notification => (
+                        <button
+                          key={notification.id}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                            !notification.read ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {!notification.read && (
+                              <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                              <p className="text-xs text-gray-600 line-clamp-2">{notification.body}</p>
+                              <p className="text-xs text-gray-400 mt-1">{formatNotificationTime(notification.createdAt)}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Profile Menu */}
             <div className="relative flex-shrink-0" ref={profileMenuRef}>
