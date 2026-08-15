@@ -1,82 +1,101 @@
-# 🧠 SkillSwap – Learn Together, Teach Together
+# SkillSwap
 
-Welcome to **SkillSwap**, a smart, collaborative platform that connects people who want to **learn** and those who love to **teach**. Whether you’re looking to pick up a new skill or share your expertise, SkillSwap helps you find the perfect match – powered by **AI matching**, **live sessions**, and a community that grows through mutual learning.
+A peer-to-peer skill exchange platform: members teach a skill they know and learn a skill they want, matched by a rule-based recommendation engine and coordinated through a non-monetary Skill Credit economy instead of payment.
 
----
+Built as an IGNOU MCA (MCSP-232) project. Full gap analysis and build history: [PROJECT_TRACKER.md](PROJECT_TRACKER.md).
 
-## 🌟 Our Mission
+## Tech Stack
 
-**SkillSwap** was born out of a simple idea:  
-> Everyone has something to learn. Everyone has something to teach.  
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite + Tailwind CSS |
+| Backend | Spring Boot 4.1 (Java 17), Spring Security (JWT), Spring Data JPA/Hibernate |
+| Database | PostgreSQL, schema versioned with Flyway |
+| Email | JavaMail over SMTP (Mailpit in dev, catches mail locally instead of sending) |
+| Photo storage | Cloudinary (signed uploads) |
 
-We’re building a peer-to-peer skill-sharing platform where **learning is collaborative, personalized, and powered by community spirit**.
+`backend/` (Node.js/Express/MongoDB) is the original prototype backend and is no longer used — every frontend request now goes to `backend-java/`. It's kept in the repo for reference only.
 
----
+## Features
 
-## 🚀 What You Can Do with SkillSwap
+- **Auth** — registration with email OTP verification, login, password reset, JWT (httpOnly cookie) sessions, role-based access (user/admin)
+- **Profiles** — bio, region, timezone, profile photo
+- **Skill Marketplace** — a categorized skill catalog; add/edit/remove skills you offer or want to learn
+- **Matching Engine** — reciprocal skill matching (mutual offer/want overlap) with a normalized 0–100% compatibility score; send/accept/reject match requests
+- **Sessions** — schedule, list, cancel, and complete teaching sessions with a matched partner
+- **Credit Wallet** — every user starts with a small credit balance; completing a session transfers credits from learner to teacher, tracked in an append-only ledger
+- **Ratings & Reviews** — leave a review after a completed session; feeds a real average rating per user
+- **Messaging** — one-to-one chat with matched users, unread counts, read receipts
+- **Notifications** — in-app + email alerts for match requests, sessions, reviews, and messages
+- **Admin Panel** — platform stats, suspend/activate users, manage the skill catalog, review and resolve user reports
 
-### 👤 Create Your Profile  
-Define who you are, your timezone, your interests, and the skills you’re passionate about learning or teaching.
+## Running Locally
 
-### 🔄 Offer & Learn Skills  
-Add skills you want to learn and the ones you can offer to teach. Each skill entry helps the platform tailor your matches intelligently.
+### Prerequisites
 
-### 🤝 Smart Matching  
-SkillSwap uses AI to match you with users who have **mutual learning-teaching interests**.  
-Only users with **at least one common skill to teach/learn** can connect.
+- Java 17, Maven
+- Node.js + npm
+- Docker (for PostgreSQL + Mailpit)
 
-### 📩 Connect & Collaborate  
-Send and receive match requests by selecting what you want to **learn** and what you can **offer** in return.
+### 1. Start PostgreSQL and Mailpit
 
-### 🗓️ Build a Learning Plan Together  
-Once connected, AI helps you generate a structured **lesson plan** for your chosen skill, including suggested sessions and progress tracking.
+```bash
+cd backend-java
+docker compose up -d
+```
 
-### 📅 Schedule Sessions Easily  
-Coordinate time slots with your learning partner using a shared calendar. Sessions can be conducted right on the platform.
+This starts Postgres on `localhost:5433` and [Mailpit](https://mailpit.axllent.org/) (a local SMTP catcher) on `localhost:1025`, with a web UI at [http://localhost:8025](http://localhost:8025) to view OTP and notification emails without needing a real mail provider.
 
-### 📹 In-Platform Video Sessions  
-Join live, face-to-face sessions directly through our built-in video calling feature (coming soon!). No third-party tools needed.
+### 2. Start the backend
 
-### 📬 Chat in Real-Time  
-Message your partners instantly. Collaborate, ask questions, and share resources with a real-time chat interface.
+```bash
+cd backend-java
+./mvnw spring-boot:run
+```
 
-### ⭐ Feedback & Karma  
-After each session, users can rate and give feedback. Your contributions earn you **karma points** and grow your **teaching reputation**.
+Runs on `http://localhost:8080`. Flyway applies all schema migrations automatically on startup. Health check: `GET /api/health`.
 
----
+Optional environment variables (all have sensible local-dev defaults — see `src/main/resources/application.yml`):
 
-## 💡 Future Features (Coming Soon)
+| Variable | Purpose |
+|---|---|
+| `JWT_SECRET` | Signing key for auth tokens |
+| `MAIL_HOST` / `MAIL_PORT` | SMTP server (defaults to Mailpit) |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Required only for profile photo uploads |
 
-- 🧠 **AI Doubt Assistant**  
-  Ask any questions post-session – our AI will use session transcripts to give contextual answers.
+### 3. Start the frontend
 
-- 🎓 **Skill Certification**  
-  Earn micro-certifications based on teaching and learning milestones.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-- 📜 **Session Transcripts & Notes**  
-  Automatically generated transcripts to help retain what you’ve learned and revisit key insights later.
+Runs on `http://localhost:5173`. It reads the backend URL from `frontend/.env` (`VITE_API_BASE_URL`, defaults to `http://127.0.0.1:8080`).
 
----
+## Project Structure
 
-## 🌍 Who Is This For?
+```
+frontend/       React SPA (Vite)
+backend-java/   Spring Boot API — the active backend
+  src/main/java/com/skillswap/backend/
+    auth/         registration, login, JWT, OTP
+    profile/      profile updates, photo upload
+    skill/        skill catalog, offered/wanted skills
+    matching/     matching engine, match requests
+    session/      session scheduling
+    wallet/       credit wallet & transaction ledger
+    review/       ratings & reviews
+    messaging/    conversations & messages
+    notification/ in-app + email notifications
+    admin/        admin panel
+    report/       user complaints/reports
+  src/main/resources/db/migration/   Flyway SQL migrations
+backend/        legacy Node.js prototype backend (unused, kept for reference)
+```
 
-- **Lifelong learners** eager to pick up new skills  
-- **Experts** who want to give back by teaching  
-- **Students**, **freelancers**, **hobbyists**, and anyone with a skill to trade  
-- Anyone tired of passive online courses and looking for **human connection in learning**
+## Notes
 
----
-
-## 💬 Why SkillSwap?
-
-> Because the best learning happens when people teach each other.  
-
-SkillSwap isn't just about learning a skill – it’s about **mutual growth**, **community**, and **making education more personal and social**.
-
----
-
-## 📣 Join Us!
-
-Whether you're here to teach, learn, or both – you're part of a global movement to make education more inclusive, interactive, and impactful.
-
-**Ready to SkillSwap? Let’s build the future of peer-to-peer learning.**
+- No test suite exists yet for either the backend or frontend.
+- Diagrams (ERD, DFD, UML, architecture) are tracked separately as project-report deliverables, not part of the codebase — see [PROJECT_TRACKER.md](PROJECT_TRACKER.md).
+- The first admin user must currently be promoted manually: `UPDATE users SET role = 'ADMIN' WHERE email = '...';`
