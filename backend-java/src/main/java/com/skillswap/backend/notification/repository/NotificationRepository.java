@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     List<Notification> findByUserIdOrderByIdDesc(Long userId);
+    List<Notification> findByUserIdOrderByIdDesc(Long userId, org.springframework.data.domain.Pageable pageable);
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
     long countByUserIdAndReadAtIsNull(Long userId);
 }

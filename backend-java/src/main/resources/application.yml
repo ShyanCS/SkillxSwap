@@ -4,54 +4,63 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5433/skillswap}
-    username: ${DB_USERNAME:skillswap}
-    password: ${DB_PASSWORD:skillswap}
-
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
 
   flyway:
     enabled: true
     locations: classpath:db/migration
 
-  mail:
-    # Defaults point at the Mailpit container in docker-compose.yml (no auth,
-    # no TLS) so OTP emails can be viewed at http://localhost:8025 during dev
-    # without needing real Gmail/SMTP credentials. Override via env vars for
-    # a real SMTP provider.
-    host: ${MAIL_HOST:localhost}
-    port: ${MAIL_PORT:1025}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: ${MAIL_SMTP_AUTH:false}
-          starttls:
-            enable: ${MAIL_SMTP_STARTTLS:false}
-
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  # Correct client IPs behind a reverse proxy / load balancer. Without this,
+  # rate limiting would bucket every request under the proxy's IP.
+  forward-headers-strategy: native
+  error:
+    include-message: never
+    include-stacktrace: never
+
+spring.lifecycle:
+  timeout-per-shutdown-phase: 20s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
 
 app:
   jwt:
-    secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret-change-me}
     expiration-ms: ${JWT_EXPIRATION_MS:604800000} # 7 days
-  cookie:
-    secure: ${COOKIE_SECURE:false}
-    same-site: ${COOKIE_SAME_SITE:Lax}
   otp:
-    ttl-minutes: 10
+    ttl-minutes: ${OTP_TTL_MINUTES:10}
+  ratelimit:
+    # Requests allowed per window, per client IP.
+    otp-per-hour: ${RATELIMIT_OTP_PER_HOUR:5}
+    login-per-15min: ${RATELIMIT_LOGIN_PER_15MIN:10}
+    ai-per-hour: ${RATELIMIT_AI_PER_HOUR:30}
+  ai:
+    enabled: ${AI_ENABLED:false}
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.0-flash}
+    endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
   cloudinary:
     cloud-name: ${CLOUDINARY_CLOUD_NAME:}
     api-key: ${CLOUDINARY_API_KEY:}
     api-secret: ${CLOUDINARY_API_SECRET:}
-  cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://127.0.0.1:5173,http://localhost:5173}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.skillswap.backend: ${LOG_LEVEL_APP:INFO}
+  pattern:
+    # requestId comes from RequestIdFilter (MDC) so logs for one request can be correlated.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{requestId:-}] %logger{36} - %msg%n"

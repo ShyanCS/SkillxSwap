@@ -11,4 +11,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @Query("select m from Match m where m.user1.id = :userId or m.user2.id = :userId order by m.id desc")
     List<Match> findAllForUser(@Param("userId") Long userId);
+
+    @Query("select count(m) from Match m where m.user1.id = :userId or m.user2.id = :userId")
+    long countForUser(@Param("userId") Long userId);
 }

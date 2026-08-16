@@ -14,12 +14,15 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Distinct from isLoading: true only until the initial session check
+  // resolves. Routes must not render before this flips, otherwise a refresh
+  // on a protected page redirects to /login (losing the deep link) before
+  // the cookie session has been confirmed.
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
-  // Fetch current user from backend on initial load (optional route: /me)
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        setIsLoading(true);
         const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
@@ -28,10 +31,11 @@ export const AuthProvider = ({ children }) => {
           const data = await res.json();
           setUser(data.user);
         }
+        // A 401 here is expected for signed-out visitors, not an error.
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to restore session:', error);
       } finally {
-        setIsLoading(false);
+        setIsBootstrapping(false);
       }
     };
     fetchUser();
@@ -147,6 +151,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         fetchUserDetails,
         isLoading,
+        isBootstrapping,
       }}
     >
       {children}

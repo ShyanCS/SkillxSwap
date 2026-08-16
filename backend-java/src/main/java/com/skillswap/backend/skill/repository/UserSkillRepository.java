@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     List<UserSkill> findByUserIdAndType(Long userId, String type);
+    long countByUserIdAndType(Long userId, String type);
     Optional<UserSkill> findByIdAndUserId(Long id, Long userId);
     List<UserSkill> findAllByIdIn(List<Long> ids);
 

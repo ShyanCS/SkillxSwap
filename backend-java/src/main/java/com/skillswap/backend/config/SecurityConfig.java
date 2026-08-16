@@ -69,6 +69,10 @@ public class SecurityConfig {
                         // gets denied and translated to 401, clobbering the real 403.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        // Liveness/readiness probes for the container runtime.
+                        // Only health is exposed (see management.endpoints in
+                        // application.yml) and it never renders details.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/auth/request-otp", "/api/auth/verify-otp",
                                 "/api/auth/register", "/api/auth/login", "/api/auth/reset").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

@@ -10,4 +10,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findBySessionIdAndReviewerId(Long sessionId, Long reviewerId);
     List<Review> findByReviewerIdOrderByIdDesc(Long reviewerId);
     List<Review> findByReviewerIdAndSessionIdIn(Long reviewerId, List<Long> sessionIds);
+    List<Review> findByRevieweeIdOrderByIdDesc(Long revieweeId, org.springframework.data.domain.Pageable pageable);
 }

@@ -1,0 +1,45 @@
+# Production profile. Values below have NO fallback defaults on purpose:
+# if a required secret is missing the application refuses to start rather than
+# silently booting with a guessable value. See .env.example for the full list.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: ${DB_POOL_MIN:2}
+      connection-timeout: 30000
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}          # required; validated for length at startup
+  cookie:
+    secure: true                   # hardcoded: auth cookies must never go over plaintext
+    # Lax is correct when the frontend and API share a registrable domain
+    # (e.g. app.example.com + api.example.com). Set to "None" only if the
+    # frontend is on a genuinely different domain -- None requires Secure,
+    # which is already enforced above.
+    same-site: ${COOKIE_SAME_SITE:Lax}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}   # required; no wildcard fallback

@@ -225,7 +225,7 @@ const Header = () => {
                     {user?.name}
                   </p>
                   <p className="text-xs text-gray-500 whitespace-nowrap">
-                    {user?.karmaPoints || 0} karma
+                    {user?.rating > 0 ? `★ ${user.rating.toFixed(1)}` : 'No ratings yet'}
                   </p>
                 </div>
               </button>
@@ -241,7 +241,7 @@ const Header = () => {
                         {user?.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.karmaPoints || 0} karma points
+                        {user?.rating > 0 ? `★ ${user.rating.toFixed(1)} rating` : 'No ratings yet'}
                       </p>
                     </div>
 

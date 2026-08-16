@@ -1,314 +1,198 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Send, 
-  Bot, 
-  User, 
-  Lightbulb, 
-  BookOpen, 
-  Code, 
-  Sparkles,
-  RefreshCw,
-  Copy,
-  ThumbsUp,
-  ThumbsDown
-} from 'lucide-react';
+import { Bot, Send, User, AlertCircle, Sparkles } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
+
+const SUGGESTIONS = [
+  'How should I structure my first teaching session?',
+  'Give me a 4-week plan to learn the basics of guitar.',
+  'What questions should I ask my teacher to get the most out of a session?',
+  'How do I explain a difficult concept to a complete beginner?',
+];
 
 const AskAIPage = () => {
-  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  // Sample conversation starters
-  const conversationStarters = [
-    {
-      icon: Code,
-      title: 'Debugging Help',
-      message: 'Can you help me debug this React useEffect hook?'
-    },
-    {
-      icon: BookOpen,
-      title: 'Learning Path',
-      message: 'What should I learn after mastering JavaScript basics?'
-    },
-    {
-      icon: Lightbulb,
-      title: 'Best Practices',
-      message: 'What are the best practices for responsive web design?'
-    },
-    {
-      icon: Sparkles,
-      title: 'Career Advice',
-      message: 'How can I transition from frontend to full-stack development?'
-    }
-  ];
-
-  // Initialize with welcome message
-  useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        type: 'ai',
-        content: `Hello ${user?.name || 'there'}! I'm your AI learning assistant. I can help you with programming concepts, learning paths, debugging, best practices, and career advice. What would you like to learn about today?`,
-        timestamp: new Date().toISOString()
-      }
-    ]);
-  }, [user]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [available, setAvailable] = useState(null); // null = still checking
+  const endRef = useRef(null);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const generateAIResponse = async (userMessage) => {
-    // Mock AI responses - replace with actual AI API integration
-    const responses = [
-      "Great question! Let me help you with that. Based on your learning history and current skill level, here's what I recommend...",
-      "I understand you're working on this concept. Let me break it down step by step for you...",
-      "That's a common challenge many developers face. Here's a practical approach you can take...",
-      "Excellent! I can see you're making progress. Let me suggest some advanced techniques...",
-      "I notice from your recent sessions that you've been working on React. This question relates perfectly to what you've been learning..."
-    ];
-
-    const contextualResponses = {
-      'react': "Since you've been learning React in your recent sessions with Sarah Chen, I can provide some specific guidance on this topic. React is a powerful library, and here's what you should focus on next...",
-      'javascript': "Based on your JavaScript learning path, I recommend diving deeper into these concepts. Your recent session covered ES6+ features, so let's build on that foundation...",
-      'python': "I see you've been working on Python with Miguel Rodriguez. This is a great follow-up question to your machine learning sessions. Here's how to approach this...",
-      'debug': "Debugging is a crucial skill! Let me walk you through a systematic approach that will help you identify and fix issues more efficiently...",
-      'career': "Career development is important! Based on your current skills and learning trajectory in SkillSwap, here are some strategic recommendations..."
-    };
-
-    // Simple keyword matching for contextual responses
-    const message = userMessage.toLowerCase();
-    for (const [keyword, response] of Object.entries(contextualResponses)) {
-      if (message.includes(keyword)) {
-        return response;
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/ai/status`, { credentials: 'include' });
+        const data = await res.json();
+        setAvailable(Boolean(data.available));
+      } catch {
+        setAvailable(false);
       }
-    }
-
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const handleSendMessage = async (messageText = inputMessage) => {
-    if (!messageText.trim()) return;
-
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: messageText.trim(),
-      timestamp: new Date().toISOString()
     };
+    checkStatus();
+  }, []);
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
+
+  const ask = async (question) => {
+    const trimmed = question.trim();
+    if (!trimmed || sending) return;
+
+    setMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
+    setInput('');
+    setSending(true);
 
     try {
-      // Simulate AI processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch(`${API_BASE_URL}/api/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ question: trimmed }),
+      });
+      const data = await res.json();
 
-      const aiResponse = await generateAIResponse(messageText);
-      
-      const aiMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: aiResponse,
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      console.error('Error generating AI response:', error);
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again in a moment.",
-        timestamp: new Date().toISOString(),
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStarterClick = (starter) => {
-    handleSendMessage(starter.message);
-  };
-
-  const handleCopyMessage = (content) => {
-    navigator.clipboard.writeText(content);
-    // You could add a toast notification here
-  };
-
-  const clearConversation = () => {
-    setMessages([
-      {
-        id: '1',
-        type: 'ai',
-        content: `Hello ${user?.name || 'there'}! I'm your AI learning assistant. I can help you with programming concepts, learning paths, debugging, best practices, and career advice. What would you like to learn about today?`,
-        timestamp: new Date().toISOString()
+      if (res.status === 429) {
+        setMessages((prev) => [...prev, { role: 'assistant', text: data.error, isError: true }]);
+        return;
       }
-    ]);
-  };
+      if (!res.ok) {
+        throw new Error(data.error || 'The assistant could not answer that.');
+      }
 
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        text: data.answer,
+        isError: data.available === false,
+      }]);
+    } catch (err) {
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        text: err.message || 'Something went wrong reaching the assistant.',
+        isError: true,
+      }]);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-4">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-xl">
-                <Bot className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">AI Learning Assistant</h1>
-                <p className="text-gray-600">Get instant help with your learning journey</p>
-              </div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <button
-              onClick={clearConversation}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              New Chat
-            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Study Assistant</h1>
           </div>
+          <p className="text-gray-600">
+            Ask for study plans, explanations, or help preparing for your exchange sessions.
+          </p>
         </div>
 
-        {/* Chat Container */}
-        <div className="bg-white rounded-xl shadow-sm" style={{ height: 'calc(100vh - 200px)' }}>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ height: 'calc(100% - 80px)' }}>
-            {messages.map(message => (
-              <div key={message.id} className={`flex gap-3 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}>
-                {message.type === 'ai' && (
-                  <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg flex-shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
-                  </div>
-                )}
-                
-                <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
-                  message.type === 'user' ? 'order-first' : ''
-                }`}>
-                  <div className={`p-4 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : message.isError
-                      ? 'bg-red-50 text-red-800 border border-red-200'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                  </div>
-                  
-                  <div className={`flex items-center gap-2 mt-2 text-xs text-gray-500 ${
-                    message.type === 'user' ? 'justify-end' : 'justify-start'
-                  }`}>
-                    <span>{formatTime(message.timestamp)}</span>
-                    {message.type === 'ai' && !message.isError && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleCopyMessage(message.content)}
-                          className="p-1 hover:bg-gray-200 rounded"
-                          title="Copy message"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                        <button className="p-1 hover:bg-gray-200 rounded" title="Helpful">
-                          <ThumbsUp className="w-3 h-3" />
-                        </button>
-                        <button className="p-1 hover:bg-gray-200 rounded" title="Not helpful">
-                          <ThumbsDown className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {message.type === 'user' && (
-                  <div className="bg-blue-600 p-2 rounded-lg flex-shrink-0">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+        {available === false && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 mb-6">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">The assistant isn't enabled on this deployment.</p>
+              <p className="text-sm">
+                An administrator needs to set <code className="bg-amber-100 px-1 rounded">AI_ENABLED</code> and{' '}
+                <code className="bg-amber-100 px-1 rounded">GEMINI_API_KEY</code> to turn it on.
+              </p>
+            </div>
           </div>
+        )}
 
-          {/* Input Area */}
-          <div className="border-t border-gray-200 p-4">
-            {/* Conversation Starters (show only when no messages except welcome) */}
-            {messages.length === 1 && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-3">Try asking about:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {conversationStarters.map((starter, index) => (
+        <div className="bg-white rounded-xl shadow-sm flex flex-col" style={{ height: 'calc(100vh - 300px)', minHeight: '420px' }}>
+          {/* Conversation */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <Bot className="w-12 h-12 text-gray-300 mb-4" />
+                <p className="text-gray-500 mb-6">Ask anything about learning or teaching a skill.</p>
+                <div className="grid sm:grid-cols-2 gap-2 w-full max-w-xl">
+                  {SUGGESTIONS.map((s) => (
                     <button
-                      key={index}
-                      onClick={() => handleStarterClick(starter)}
-                      className="flex items-center gap-2 p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                      key={s}
+                      onClick={() => ask(s)}
+                      disabled={available === false || sending}
+                      className="text-left text-sm px-3 py-2 border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <starter.icon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{starter.title}</div>
-                        <div className="text-xs text-gray-500 truncate">{starter.message}</div>
-                      </div>
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
+            ) : (
+              messages.map((message, i) => (
+                <div key={i} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {message.role === 'assistant' && (
+                    <div className={`p-2 rounded-full h-fit ${message.isError ? 'bg-amber-100' : 'bg-blue-100'}`}>
+                      <Bot className={`w-4 h-4 ${message.isError ? 'text-amber-600' : 'text-blue-600'}`} />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap ${
+                    message.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : message.isError
+                        ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                        : 'bg-gray-100 text-gray-900'
+                  }`}>
+                    <p className="text-sm">{message.text}</p>
+                  </div>
+                  {message.role === 'user' && (
+                    <div className="bg-gray-200 p-2 rounded-full h-fit">
+                      <User className="w-4 h-4 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+              ))
             )}
 
-            {/* Message Input */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex gap-2">
+            {sending && (
+              <div className="flex gap-3">
+                <div className="bg-blue-100 p-2 rounded-full h-fit">
+                  <Bot className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="bg-gray-100 px-4 py-3 rounded-lg flex gap-1">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Composer */}
+          <div className="border-t border-gray-200 p-4">
+            <form
+              onSubmit={(e) => { e.preventDefault(); ask(input); }}
+              className="flex items-center gap-2"
+            >
               <input
                 type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask me anything about programming, learning paths, or career advice..."
-                disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                maxLength={2000}
+                placeholder={available === false ? 'Assistant unavailable' : 'Ask a question…'}
+                disabled={available === false || sending}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
               <button
                 type="submit"
-                disabled={!inputMessage.trim() || isLoading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={!input.trim() || sending || available === false}
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Send className="w-5 h-5" />
               </button>
             </form>
+            <p className="text-xs text-gray-400 mt-2">
+              The assistant can't see your messages, credits, or account, and can't act on your behalf.
+            </p>
           </div>
         </div>
       </div>
