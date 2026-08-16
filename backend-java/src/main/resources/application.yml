@@ -64,6 +64,12 @@ app:
   admin:
     # Existing account to grant ADMIN on startup. Blank disables the check.
     bootstrap-email: ${ADMIN_BOOTSTRAP_EMAIL:}
+  mail:
+    # The visible sender. With an SMTP relay this must be an address the
+    # provider has verified -- it is NOT the same as MAIL_USERNAME, which is a
+    # credential rather than a mailbox.
+    from: ${MAIL_FROM:noreply@skillswap.local}
+    from-name: ${MAIL_FROM_NAME:SkillSwap}
   redis:
     # Share rate-limit buckets and WebSocket fan-out across API instances.
     # Required before scaling past one replica; pointless below that.
@@ -72,11 +78,26 @@ app:
     # Requests allowed per window, per client IP.
     otp-per-hour: ${RATELIMIT_OTP_PER_HOUR:5}
     login-per-15min: ${RATELIMIT_LOGIN_PER_15MIN:10}
-    ai-per-hour: ${RATELIMIT_AI_PER_HOUR:30}
+    # Low on purpose. Gemini's free tier allows only ~20 generate requests per
+    # day per model for the whole project, so a generous per-user limit lets one
+    # person drain the entire day's allowance in minutes and leaves the feature
+    # dead for everyone else. Raise this once on a paid plan.
+    ai-per-hour: ${RATELIMIT_AI_PER_HOUR:5}
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-2.0-flash}
+    # Pinned, and chosen by measurement rather than by picking the newest.
+    #
+    # Two failure modes were observed against a real free-tier key: retired ids
+    # return 404 permanently (this is how gemini-2.0-flash broke), and the
+    # newest ids are heavily rate-limited (gemini-3.7-flash returned 429 on 4 of
+    # 5 calls, the `-latest` alias 503 on 2 of 5). gemini-3.5-flash answered 5
+    # of 5. Newest is not most available.
+    #
+    # This id will eventually be retired too; the symptom is a 404 naming the
+    # model in the logs, and the fix is to bump this after re-checking
+    # availability against your own key.
+    model: ${GEMINI_MODEL:gemini-3.5-flash}
     endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
   cloudinary:
     cloud-name: ${CLOUDINARY_CLOUD_NAME:}

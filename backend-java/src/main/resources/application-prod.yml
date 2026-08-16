@@ -16,6 +16,9 @@ spring:
       hibernate:
         format_sql: false
 
+  # No fallback for MAIL_FROM in production: defaulting it would send from a
+  # placeholder address the provider has not verified, so mail would fail at
+  # runtime rather than at startup.
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT:587}
@@ -32,6 +35,8 @@ spring:
           writetimeout: 5000
 
 app:
+  mail:
+    from: ${MAIL_FROM}
   jwt:
     secret: ${JWT_SECRET}          # required; validated for length at startup
   cookie:
