@@ -1,0 +1,80 @@
+# Production stack: Postgres + Spring Boot API + nginx-served frontend.
+#
+#   cp .env.example .env      # then fill in real values
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Postgres is intentionally NOT published to the host -- it is reachable only
+# on the internal compose network. Put a TLS-terminating reverse proxy
+# (Caddy, Traefik, nginx, or your platform's load balancer) in front of the
+# published ports; the app sets Secure cookies in prod and will not work over
+# plaintext HTTP.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  api:
+    build:
+      context: ./backend-java
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy   # Flyway needs a live database at startup
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-604800000}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      AI_ENABLED: ${AI_ENABLED:-false}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      RATELIMIT_OTP_PER_HOUR: ${RATELIMIT_OTP_PER_HOUR:-5}
+      RATELIMIT_LOGIN_PER_15MIN: ${RATELIMIT_LOGIN_PER_15MIN:-10}
+      RATELIMIT_AI_PER_HOUR: ${RATELIMIT_AI_PER_HOUR:-30}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-INFO}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks: [internal]
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the bundle at build time; changing it requires a rebuild.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "${WEB_PORT:-80}:80"
+    networks: [internal]
+
+volumes:
+  db-data:
+
+networks:
+  internal:

@@ -34,7 +34,10 @@ public class OtpService {
                 .expiresAt(OffsetDateTime.now().plusMinutes(ttlMinutes))
                 .build();
         otpVerificationRepository.save(verification);
-        mailService.send(email, "Your SkillSwap verification code",
+        // Synchronous on purpose: the UI tells the member to go check their
+        // inbox, so a delivery failure has to surface as an error here rather
+        // than leave them waiting for a code that never sends.
+        mailService.sendSync(email, "Your SkillSwap verification code",
                 "Your OTP is " + otp + ". It expires in " + ttlMinutes + " minutes.");
     }
 

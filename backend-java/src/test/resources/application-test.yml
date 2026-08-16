@@ -1,0 +1,31 @@
+# Datasource is supplied by Testcontainers via @ServiceConnection.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate     # same as production: proves migrations match entities
+  mail:
+    host: localhost
+    port: 3025               # nothing listening; mail sends are expected to fail
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+app:
+  jwt:
+    secret: test-only-signing-key-for-integration-tests-0123456789abcdef
+  cookie:
+    secure: false
+    same-site: Lax
+  cors:
+    allowed-origins: http://localhost:5173
+  ai:
+    enabled: false
+    api-key: ""
+
+logging:
+  level:
+    root: WARN
+    com.skillswap.backend: INFO

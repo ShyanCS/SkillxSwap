@@ -28,7 +28,25 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<!--
+		  Pinned explicitly: Spring Boot 4's BOM does not manage Testcontainers,
+		  and the 2.x line dropped the standalone `postgresql` module that this
+		  suite uses, so staying on 1.x is deliberate rather than stale.
+		-->
+		<testcontainers.version>1.21.4</testcontainers.version>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>${testcontainers.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -131,6 +149,27 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!--
+		  Tests run against a real PostgreSQL container rather than an in-memory
+		  substitute: the schema uses Postgres-specific features (text[] columns,
+		  CHECK constraints, Flyway migrations) that H2 does not reproduce, so an
+		  in-memory database would pass while production broke.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -138,6 +177,21 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!--
+					  Tests never run main(), which is where the runtime sets the
+					  default timezone. Without this the JVM hands PostgreSQL the
+					  host's zone id, and legacy aliases (e.g. "Asia/Calcutta" on
+					  some Windows locales) are rejected by the server's tzdata,
+					  so every test fails at connection time. UTC also matches the
+					  TIMESTAMPTZ-based schema.
+					-->
+					<argLine>-Duser.timezone=UTC</argLine>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -1,5 +1,6 @@
 package com.skillswap.backend.config;
 
+import com.skillswap.backend.common.logging.RequestIdFilter;
 import com.skillswap.backend.common.ratelimit.RateLimitFilter;
 import com.skillswap.backend.common.ratelimit.RateLimiterService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -8,7 +9,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 @Configuration
-public class RateLimitConfig {
+public class WebFilterConfig {
+
+    /**
+     * Outermost filter so even rate-limit rejections carry a request id and can
+     * be correlated in the logs.
+     */
+    @Bean
+    public FilterRegistrationBean<RequestIdFilter> requestIdFilterRegistration() {
+        FilterRegistrationBean<RequestIdFilter> registration =
+                new FilterRegistrationBean<>(new RequestIdFilter());
+        registration.addUrlPatterns("/*");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
 
     /**
      * Registered ahead of the Spring Security filter chain so abusive requests
