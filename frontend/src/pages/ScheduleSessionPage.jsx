@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
+import { useAvailability } from '../contexts/AvailabilityContext';
 import {
   Calendar as CalendarIcon,
   Video,
@@ -11,10 +12,21 @@ import {
   Check
 } from 'lucide-react';
 
+// Index 0 is unused: the API uses ISO day numbering (1 = Monday).
+const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const formatMinutes = (minutes) => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours % 24).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+};
+
 const ScheduleSessionPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getSchedulableMatches, createSession } = useSession();
+  const { getUserAvailability } = useAvailability();
+  const [partnerAvailability, setPartnerAvailability] = useState(null);
 
   const [step, setStep] = useState(1);
   const [matches, setMatches] = useState([]);
@@ -36,7 +48,7 @@ const ScheduleSessionPage = () => {
       try {
         const data = await getSchedulableMatches();
         setMatches(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load your matches.');
       } finally {
         setLoadingMatches(false);
@@ -44,6 +56,18 @@ const ScheduleSessionPage = () => {
     };
     fetchMatches();
   }, []);
+
+  // Show the partner's windows before a time is proposed, rather than letting
+  // the user discover the clash only when the server rejects the submission.
+  useEffect(() => {
+    if (!selectedMatch) {
+      setPartnerAvailability(null);
+      return;
+    }
+    getUserAvailability(selectedMatch.partner.id)
+      .then(setPartnerAvailability)
+      .catch(() => setPartnerAvailability(null));
+  }, [selectedMatch]);
 
   const handleScheduleSession = async () => {
     setSubmitting(true);
@@ -228,6 +252,36 @@ const ScheduleSessionPage = () => {
           {step === 2 && (
             <div>
               <h2 className="text-xl font-semibold mb-6">Choose Date & Time</h2>
+
+              {partnerAvailability && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">
+                    {selectedMatch?.partner.name}&apos;s usual availability
+                  </h3>
+                  {partnerAvailability.slots.length === 0 ? (
+                    <p className="text-sm text-blue-800">
+                      They haven&apos;t set availability, so any time is worth proposing.
+                    </p>
+                  ) : (
+                    <>
+                      <ul className="text-sm text-blue-800 space-y-1">
+                        {partnerAvailability.slots.map((slot, i) => (
+                          <li key={i}>
+                            {DAY_NAMES[slot.dayOfWeek]} {formatMinutes(slot.startMinute)} &ndash;{' '}
+                            {formatMinutes(slot.endMinute)}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-blue-700 mt-2">
+                        Shown in their timezone ({partnerAvailability.timezone}). Pick the
+                        time in yours below &mdash; the two are matched on the actual
+                        moment, not the clock reading.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Session Date & Time

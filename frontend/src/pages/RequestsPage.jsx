@@ -112,7 +112,7 @@ const RequestsPage = () => {
                 <Star className="w-3 h-3 text-yellow-500 fill-current" />
                 <span>{user.rating}</span>
                 <span>•</span>
-                <span>{user.karmaPoints} karma</span>
+                <span>{user.sessionsCompleted === 1 ? '1 session' : `${user.sessionsCompleted} sessions`}</span>
               </div>
             </div>
           </div>

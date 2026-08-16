@@ -2,6 +2,8 @@ package com.skillswap.backend.messaging.service;
 
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
+import com.skillswap.backend.common.dto.PageRequests;
+import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.matching.dto.UserSummary;
 import com.skillswap.backend.matching.repository.MatchRepository;
@@ -12,7 +14,10 @@ import com.skillswap.backend.messaging.entity.Message;
 import com.skillswap.backend.messaging.repository.ConversationRepository;
 import com.skillswap.backend.messaging.repository.MessageRepository;
 import com.skillswap.backend.notification.service.NotificationService;
+import com.skillswap.backend.realtime.RealtimeEvent;
+import com.skillswap.backend.realtime.RealtimeGateway;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,11 @@ public class MessagingService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final RealtimeGateway realtimeGateway;
+
+    /** Envelope for a pushed chat message: the client needs to know which conversation it belongs to. */
+    public record IncomingMessage(Long conversationId, Long senderId, MessageResponse message) {
+    }
 
     @Transactional(readOnly = true)
     public List<ConversationSummaryResponse> getConversations(Long userId) {
@@ -67,21 +77,27 @@ public class MessagingService {
         return result;
     }
 
+    /**
+     * Returns a page of messages newest-first; the caller reverses for display
+     * and requests higher page numbers to scroll back through history.
+     *
+     * Opening a conversation marks the whole thing read, not just the page that
+     * was fetched -- scoping the read receipt to one page would leave older
+     * unread messages counted forever, since the user never scrolls back to
+     * them once the conversation is open.
+     */
     @Transactional
-    public List<MessageResponse> getMessages(Long conversationId, Long userId) {
+    public PageResponse<MessageResponse> getMessages(Long conversationId, Long userId, Integer page, Integer size) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("Conversation not found"));
         requireParticipant(conversation, userId);
 
-        List<Message> messages = messageRepository.findByConversationIdOrderBySentAtAsc(conversationId);
-        OffsetDateTime now = OffsetDateTime.now();
-        for (Message m : messages) {
-            if (!m.getSender().getId().equals(userId) && m.getReadAt() == null) {
-                m.setReadAt(now);
-                messageRepository.save(m);
-            }
-        }
-        return messages.stream().map(MessageResponse::from).toList();
+        messageRepository.markConversationRead(conversationId, userId, OffsetDateTime.now());
+
+        Pageable pageable = PageRequests.of(page, size);
+        return PageResponse.of(
+                messageRepository.findByConversationIdOrderByIdDesc(conversationId, pageable),
+                MessageResponse::from);
     }
 
     @Transactional
@@ -108,7 +124,14 @@ public class MessagingService {
                 "New message from " + sender.getName(),
                 body.length() > 140 ? body.substring(0, 140) + "..." : body);
 
-        return MessageResponse.from(saved);
+        MessageResponse response = MessageResponse.from(saved);
+        // Push the message itself so an open chat renders it without waiting for
+        // a poll. Delivery is best-effort by design -- the message is already
+        // committed, so a dropped frame costs latency, not data.
+        realtimeGateway.publish(partnerId, RealtimeEvent.message(
+                new IncomingMessage(conversation.getId(), senderId, response)));
+
+        return response;
     }
 
     private Conversation getOrCreateConversation(Long userAId, Long userBId) {

@@ -26,25 +26,21 @@ final class TokenBucket {
         this.lastRefillNanos = System.nanoTime();
     }
 
-    /** @return true if a token was consumed; false if the caller is over the limit. */
-    synchronized boolean tryConsume() {
+    /**
+     * Consumes a token if one is available, reporting the wait when it is not.
+     * Both answers come from one synchronized section so the Retry-After can't
+     * be computed against a bucket another thread has since refilled or drained.
+     */
+    synchronized RateLimitDecision tryConsume() {
         refill();
         if (tokens >= 1.0d) {
             tokens -= 1.0d;
-            return true;
-        }
-        return false;
-    }
-
-    /** Seconds until at least one token is available. Always >= 1 so clients don't hot-loop. */
-    synchronized long retryAfterSeconds() {
-        refill();
-        if (tokens >= 1.0d) {
-            return 0L;
+            return RateLimitDecision.allow();
         }
         double tokensNeeded = 1.0d - tokens;
         double nanosPerToken = refillPeriodNanos / capacity;
-        return Math.max(1L, (long) Math.ceil(tokensNeeded * nanosPerToken / 1_000_000_000d));
+        long retryAfter = (long) Math.ceil(tokensNeeded * nanosPerToken / 1_000_000_000d);
+        return RateLimitDecision.deny(retryAfter);
     }
 
     private void refill() {

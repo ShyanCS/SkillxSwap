@@ -46,9 +46,10 @@ public class User extends BaseEntity {
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
-    @Column(name = "karma_points", nullable = false)
+    /** Maintained by SessionService when a session transitions to Completed. */
+    @Column(name = "sessions_completed", nullable = false)
     @Builder.Default
-    private Integer karmaPoints = 0;
+    private Integer sessionsCompleted = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

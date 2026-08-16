@@ -48,14 +48,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         String clientKey = clientKey(request);
-        if (rateLimiter.tryConsume(limit, clientKey)) {
+        RateLimitDecision decision = rateLimiter.check(limit, clientKey);
+        if (decision.allowed()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        long retryAfter = rateLimiter.retryAfterSeconds(limit, clientKey);
         log.warn("Rate limit {} exceeded for {} on {}", limit, clientKey, request.getRequestURI());
-        writeTooManyRequests(response, retryAfter);
+        writeTooManyRequests(response, decision.retryAfterSeconds());
     }
 
     private RateLimiterService.Limit limitFor(HttpServletRequest request) {

@@ -4,6 +4,8 @@ import com.skillswap.backend.admin.dto.AdminStatsResponse;
 import com.skillswap.backend.admin.dto.AdminUserResponse;
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
+import com.skillswap.backend.common.dto.PageRequests;
+import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.report.repository.ReportRepository;
 import com.skillswap.backend.session.repository.SessionRepository;
@@ -11,6 +13,9 @@ import com.skillswap.backend.skill.dto.SkillCatalogResponse;
 import com.skillswap.backend.skill.repository.SkillRepository;
 import com.skillswap.backend.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,10 +44,13 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminUserResponse> getUsers() {
-        return userRepository.findAll().stream()
-                .map(AdminUserResponse::from)
-                .toList();
+    public PageResponse<AdminUserResponse> getUsers(String query, Integer page, Integer size) {
+        Pageable pageable = PageRequests.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<User> users = (query == null || query.isBlank())
+                ? userRepository.findAll(pageable)
+                : userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        query.trim(), query.trim(), pageable);
+        return PageResponse.of(users, AdminUserResponse::from);
     }
 
     @Transactional

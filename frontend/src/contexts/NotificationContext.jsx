@@ -24,10 +24,11 @@ export const NotificationProvider = ({ children }) => {
     return data;
   };
 
-  const getNotifications = async () => {
+  // Returns a page envelope: { items, page, hasNext, ... }.
+  const getNotifications = async (page = 0, size = 20) => {
     setIsLoading(true);
     try {
-      return await apiGet('/api/notifications');
+      return await apiGet(`/api/notifications?page=${page}&size=${size}`);
     } finally {
       setIsLoading(false);
     }

@@ -9,6 +9,8 @@ A peer-to-peer skill exchange platform: members teach a skill they know and lear
 | Frontend | React 18 + Vite + Tailwind CSS, served by nginx in production |
 | Backend | Spring Boot 4.1 (Java 17), Spring Security (JWT), Spring Data JPA/Hibernate |
 | Database | PostgreSQL, schema versioned with Flyway |
+| Realtime | WebSocket push (`/ws`), authenticated by the same JWT cookie as the REST API |
+| Redis | Optional — only needed to run multiple API replicas (shared rate limits + WebSocket fan-out) |
 | Email | JavaMail over SMTP (Mailpit locally, any provider in production) |
 | AI assistant | Google Gemini (optional — the feature degrades gracefully when unconfigured) |
 | Photo storage | Cloudinary (optional, signed uploads) |
@@ -19,12 +21,13 @@ A peer-to-peer skill exchange platform: members teach a skill they know and lear
 - **Auth** — registration with email OTP verification, login, password reset, JWT httpOnly-cookie sessions, role-based access (user/admin), account suspension
 - **Profiles** — bio, region, timezone, photo, public profile pages with ratings and reviews
 - **Skill Marketplace** — categorized skill catalog; add/edit/remove skills you offer or want
-- **Matching Engine** — reciprocal skill matching with a normalized 0–100% compatibility score; send/accept/reject match requests
-- **Sessions** — schedule, list, cancel, and complete teaching sessions with a matched partner
+- **Matching Engine** — reciprocal skill matching with a normalized 0–100% compatibility score weighted by shared free time; send/accept/reject match requests
+- **Availability** — weekly recurring windows per user, stored in their own timezone and compared as real instants, so partners in different zones see genuinely overlapping hours
+- **Sessions** — schedule, list, cancel, and complete teaching sessions, validated against both participants' availability and existing bookings
 - **Credit Wallet** — starter balance, automatic credit transfer from learner to teacher on session completion, append-only transaction ledger
 - **Ratings & Reviews** — post-session reviews gated on completion, feeding a real average rating
-- **Messaging** — one-to-one chat between matched users, unread counts, read receipts
-- **Notifications** — in-app and email alerts for match requests, sessions, reviews, and messages
+- **Messaging** — one-to-one chat between matched users with live WebSocket delivery, unread counts, read receipts, and paged history
+- **Notifications** — in-app and email alerts for match requests, sessions, reviews, and messages, pushed to open tabs in real time
 - **Study Assistant** — Gemini-backed help with study plans and session prep, scoped to your own skills
 - **Admin Panel** — platform stats, user suspend/activate, skill catalog management, user reports
 
@@ -57,7 +60,11 @@ AI_ENABLED=true GEMINI_API_KEY=your-key ./mvnw spring-boot:run
 cd backend-java && ./mvnw verify
 ```
 
-Tests run against a real PostgreSQL container via Testcontainers (Docker must be running), with the actual Flyway migrations applied and `ddl-auto: validate` on — so a JPA entity drifting from a migration fails the build. Coverage focuses on the invariants that matter most: credit-ledger correctness (transfers happen exactly once and stay balanced) and access-control boundaries.
+Tests run against a real PostgreSQL container via Testcontainers (Docker must be running), with the actual Flyway migrations applied and `ddl-auto: validate` on — so a JPA entity drifting from a migration fails the build. Coverage focuses on the invariants that matter most:
+
+- **Credit ledger** — transfers happen exactly once and stay balanced.
+- **Access control** — role boundaries, suspension, and cookie flags.
+- **Scheduling** — availability and double-booking, including the cross-timezone cases that look correct when everyone is tested in UTC and break in production.
 
 ## Production Deployment
 
@@ -76,8 +83,23 @@ A few things worth knowing:
 
 - `VITE_API_BASE_URL` is baked into the frontend bundle at **build** time, so changing it requires a rebuild, not just a restart.
 - `COOKIE_SAME_SITE` defaults to `Lax`, which is correct when the frontend and API share a registrable domain (`app.example.com` + `api.example.com`). Set it to `None` only if they're on genuinely different domains.
-- Rate limits are in-memory and therefore per-instance; running multiple API replicas multiplies the effective limit. Move the buckets to Redis before scaling horizontally.
-- The first admin must be promoted manually: `UPDATE users SET role = 'ADMIN' WHERE email = '...';`
+- **Your reverse proxy must forward WebSocket upgrades** to `/ws` (`Upgrade` and `Connection` headers). Without that, chat silently falls back to polling — it keeps working, just not instantly.
+- Set `ADMIN_BOOTSTRAP_EMAIL` to an account that has already registered; it is granted ADMIN on the next start. Leaving it set is harmless once applied.
+
+### Running more than one API replica
+
+Set `REDIS_ENABLED=true` and start the stack with the `scale` profile:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile scale up -d --build
+```
+
+Redis is genuinely optional below that point, and enabling it on a single instance buys nothing. Above it, it is required for two reasons:
+
+- **Rate limits** are otherwise per-process, so the effective limit multiplies by the replica count — five replicas turn a 5/hour OTP limit into 25/hour.
+- **WebSocket delivery** is otherwise per-process. A load balancer will rarely put the sender's HTTP request and the recipient's socket on the same replica, so pushes would be silently dropped for most users while appearing to work in single-instance testing.
+
+If Redis becomes unreachable at runtime the app degrades to per-instance behaviour and logs it, rather than failing requests outright — a cache outage should not become an authentication outage.
 
 Container health is exposed at `/actuator/health` (with `/readiness` and `/liveness` probes) for orchestrators.
 
@@ -91,7 +113,9 @@ backend-java/               Spring Boot API + Dockerfile
     profile/                  profile updates, public profiles, photo upload
     skill/                    skill catalog, offered/wanted skills
     matching/                 matching engine, match requests
+    availability/             weekly availability + timezone-aware overlap
     session/                  session scheduling
+    realtime/                 WebSocket push (local and Redis-backed)
     wallet/                   credit wallet & transaction ledger
     review/                   ratings & reviews
     messaging/                conversations & messages
@@ -108,7 +132,7 @@ docker-compose.prod.yml     production stack
 
 ## Known Limitations
 
-- List endpoints (messages, notifications, admin users) are not paginated yet and return full result sets.
-- Messaging is REST + polling; there is no WebSocket push.
-- There is no per-user availability model, so session scheduling uses a plain date/time picker rather than matching on free slots.
-- Rate limiting and notification delivery are in-process, so both assume a single API instance.
+- Session reminders are not sent; notifications fire on events (match, booking, message, review), not ahead of a scheduled session.
+- Availability is a weekly recurring pattern only. There is no way to block out a one-off date, so a user going on holiday has to clear the affected windows.
+- Skill search is a plain `LIKE` over name and email in the admin panel; there is no full-text or fuzzy search over the skill catalogue.
+- Deleting an account is not exposed in the UI.

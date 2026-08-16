@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { API_BASE_URL } from "../config/api";
 import { Plus, X, User, MapPin, Clock, BookOpen, Target } from "lucide-react";
+import AvailabilityEditor from "../components/profile/AvailabilityEditor";
 
 const ProfileSetupPage = () => {
   const navigate = useNavigate();
@@ -252,6 +253,15 @@ const ProfileSetupPage = () => {
         {/* Form Content */}
         <div className="bg-white rounded-xl shadow-sm p-8">
           {renderStep1()}
+
+          {/*
+            Availability saves independently of the profile form: it has its own
+            endpoint, and pairing them would mean an unsaved profile silently
+            discarding availability edits (or the reverse).
+          */}
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <AvailabilityEditor />
+          </div>
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">

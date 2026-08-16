@@ -3,17 +3,22 @@ package com.skillswap.backend.notification.service;
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
 import com.skillswap.backend.common.exception.ApiException;
+import com.skillswap.backend.common.dto.PageRequests;
+import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.common.mail.MailService;
 import com.skillswap.backend.notification.dto.NotificationResponse;
 import com.skillswap.backend.notification.entity.Notification;
 import com.skillswap.backend.notification.repository.NotificationRepository;
+import com.skillswap.backend.realtime.RealtimeEvent;
+import com.skillswap.backend.realtime.RealtimeGateway;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -25,6 +30,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final MailService mailService;
+    private final RealtimeGateway realtimeGateway;
 
     /**
      * Records an in-app notification and best-effort emails it. Called by
@@ -39,12 +45,16 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.badRequest("User not found"));
 
-        notificationRepository.save(Notification.builder()
+        Notification saved = notificationRepository.save(Notification.builder()
                 .user(user)
                 .type(type)
                 .title(title)
                 .body(body)
                 .build());
+
+        // Lights up the notification bell immediately instead of on the next
+        // 30-second poll.
+        realtimeGateway.publish(userId, RealtimeEvent.notification(NotificationResponse.from(saved)));
 
         try {
             mailService.send(user.getEmail(), title, body);
@@ -54,10 +64,9 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(Long userId) {
-        return notificationRepository.findByUserIdOrderByIdDesc(userId).stream()
-                .map(NotificationResponse::from)
-                .toList();
+    public PageResponse<NotificationResponse> getNotifications(Long userId, Integer page, Integer size) {
+        Pageable pageable = PageRequests.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return PageResponse.of(notificationRepository.findByUserId(userId, pageable), NotificationResponse::from);
     }
 
     @Transactional(readOnly = true)

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useRealtime } from '../../contexts/RealtimeContext';
 import {
   Users,
   MessageCircle,
@@ -22,6 +23,7 @@ import {
 const Header = () => {
   const { user, logout } = useAuth();
   const { getNotifications, getUnreadCount, markRead } = useNotifications();
+  const { subscribe } = useRealtime();
   const location = useLocation();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -40,16 +42,33 @@ const Header = () => {
       }
     };
     fetchUnread();
+    // Polling is kept as a backstop even with the socket connected: it repairs
+    // the count after a missed push, a sleeping laptop, or a blocked upgrade.
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Instant badge update when a notification is pushed.
+  useEffect(() => {
+    return subscribe('NOTIFICATION', (notification) => {
+      setUnreadCount(count => count + 1);
+      // Only prepend if the panel is open; otherwise it reloads on next open.
+      setNotifications(current => (
+        current.length === 0 || current.some(n => n.id === notification.id)
+          ? current
+          : [notification, ...current]
+      ));
+    });
+  }, [subscribe]);
 
   const toggleNotifications = async () => {
     const next = !showNotifications;
     setShowNotifications(next);
     if (next) {
       try {
-        setNotifications(await getNotifications());
+        // The bell shows a recent slice only; the endpoint is paginated.
+        const page = await getNotifications(0, 15);
+        setNotifications(page.items);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       }

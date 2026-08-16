@@ -1,7 +1,5 @@
 package com.skillswap.backend.common.ratelimit;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -10,52 +8,49 @@ import java.time.Duration;
 /**
  * Per-client rate limiting for abuse-prone endpoints.
  *
- * Buckets live in a bounded, self-expiring cache so a flood of unique source
- * IPs can't grow memory without limit -- an idle bucket is evicted, and a
- * caller who returns after eviction simply starts with a full bucket, which is
- * the same state they would have refilled to anyway.
- *
- * NOTE: this is per-instance. Running multiple backend replicas multiplies the
- * effective limit by the replica count. Move the buckets to Redis before
- * scaling horizontally.
+ * Owns the policy -- which limits exist and how big they are -- and delegates
+ * where the counters live to a {@link RateLimitStore}, so single-instance and
+ * multi-replica deployments differ only by configuration.
  */
 @Service
 public class RateLimiterService {
 
-    public enum Limit { OTP, LOGIN, AI }
+    public enum Limit {
+        OTP(Duration.ofHours(1)),
+        LOGIN(Duration.ofMinutes(15)),
+        AI(Duration.ofHours(1));
 
-    private static final int MAX_TRACKED_CLIENTS = 100_000;
+        private final Duration window;
 
-    private final Cache<String, TokenBucket> buckets = Caffeine.newBuilder()
-            .maximumSize(MAX_TRACKED_CLIENTS)
-            .expireAfterAccess(Duration.ofHours(2))
-            .build();
+        Limit(Duration window) {
+            this.window = window;
+        }
+    }
 
+    private final RateLimitStore store;
     private final int otpPerHour;
     private final int loginPer15Min;
     private final int aiPerHour;
 
-    public RateLimiterService(@Value("${app.ratelimit.otp-per-hour}") int otpPerHour,
+    public RateLimiterService(RateLimitStore store,
+                               @Value("${app.ratelimit.otp-per-hour}") int otpPerHour,
                                @Value("${app.ratelimit.login-per-15min}") int loginPer15Min,
                                @Value("${app.ratelimit.ai-per-hour}") int aiPerHour) {
+        this.store = store;
         this.otpPerHour = otpPerHour;
         this.loginPer15Min = loginPer15Min;
         this.aiPerHour = aiPerHour;
     }
 
-    public boolean tryConsume(Limit limit, String clientKey) {
-        return bucketFor(limit, clientKey).tryConsume();
+    public RateLimitDecision check(Limit limit, String clientKey) {
+        return store.tryConsume(limit.name() + ':' + clientKey, capacityFor(limit), limit.window);
     }
 
-    public long retryAfterSeconds(Limit limit, String clientKey) {
-        return bucketFor(limit, clientKey).retryAfterSeconds();
-    }
-
-    private TokenBucket bucketFor(Limit limit, String clientKey) {
-        return buckets.get(limit.name() + ':' + clientKey, key -> switch (limit) {
-            case OTP -> new TokenBucket(otpPerHour, Duration.ofHours(1));
-            case LOGIN -> new TokenBucket(loginPer15Min, Duration.ofMinutes(15));
-            case AI -> new TokenBucket(aiPerHour, Duration.ofHours(1));
-        });
+    private int capacityFor(Limit limit) {
+        return switch (limit) {
+            case OTP -> otpPerHour;
+            case LOGIN -> loginPer15Min;
+            case AI -> aiPerHour;
+        };
     }
 }

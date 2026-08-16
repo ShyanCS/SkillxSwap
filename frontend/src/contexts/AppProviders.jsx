@@ -9,6 +9,8 @@ import { MessagingProvider } from './MessagingContext';
 import { NotificationProvider } from './NotificationContext';
 import { DashboardProvider } from './DashboardContext';
 import { AdminProvider } from './AdminContext';
+import { RealtimeProvider } from './RealtimeContext';
+import { AvailabilityProvider } from './AvailabilityContext';
 
 /**
  * Composes every context provider so App.jsx doesn't accumulate a deeply
@@ -17,6 +19,9 @@ import { AdminProvider } from './AdminContext';
  */
 const PROVIDERS = [
   AuthProvider,
+  // Directly inside AuthProvider: it opens the socket on login and closes it on
+  // logout, and everything below may subscribe to its events.
+  RealtimeProvider,
   SkillsProvider,
   MatchProvider,
   SessionProvider,
@@ -25,6 +30,7 @@ const PROVIDERS = [
   MessagingProvider,
   NotificationProvider,
   DashboardProvider,
+  AvailabilityProvider,
   AdminProvider,
 ];
 

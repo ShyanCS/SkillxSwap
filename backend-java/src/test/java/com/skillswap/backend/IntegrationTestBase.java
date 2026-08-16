@@ -60,7 +60,7 @@ public abstract class IntegrationTestBase {
                 TRUNCATE TABLE
                     reviews, wallet_transactions, wallets, sessions, matches,
                     match_requests, messages, conversations, notifications,
-                    reports, user_skills, otp_verifications, users
+                    reports, user_skills, user_availability, otp_verifications, users
                 RESTART IDENTITY CASCADE
                 """);
     }

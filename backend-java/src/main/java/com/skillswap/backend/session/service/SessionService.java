@@ -2,6 +2,7 @@ package com.skillswap.backend.session.service;
 
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
+import com.skillswap.backend.availability.service.AvailabilityService;
 import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.matching.dto.UserSummary;
 import com.skillswap.backend.matching.entity.Match;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -35,6 +37,7 @@ public class SessionService {
     private final UserRepository userRepository;
     private final WalletService walletService;
     private final NotificationService notificationService;
+    private final AvailabilityService availabilityService;
 
     @Transactional(readOnly = true)
     public List<SchedulableMatchResponse> getSchedulableMatches(Long userId) {
@@ -92,6 +95,15 @@ public class SessionService {
         userSkillRepository.findFirstByUserIdAndTypeAndSkillId(request.teacherId(), "offer", request.skillId())
                 .orElseThrow(() -> ApiException.badRequest("Teacher does not offer this skill"));
 
+        User teacher = userRepository.findById(request.teacherId())
+                .orElseThrow(() -> ApiException.badRequest("Teacher not found"));
+        User learner = userRepository.findById(learnerId)
+                .orElseThrow(() -> ApiException.badRequest("Learner not found"));
+
+        requireInFuture(request.scheduledAt());
+        requireBothAvailable(teacher, learner, request.scheduledAt(), request.durationMinutes());
+        requireNoClash(teacher, learner, request.scheduledAt(), request.durationMinutes());
+
         Session session = Session.builder()
                 .match(match)
                 .skill(skillRepository.getReferenceById(request.skillId()))
@@ -114,6 +126,51 @@ public class SessionService {
                 "A " + session.getSkill().getName() + " session is scheduled for " + session.getScheduledAt() + ".");
 
         return SessionResponse.from(saved, viewerId);
+    }
+
+    private void requireInFuture(OffsetDateTime scheduledAt) {
+        // A small grace window absorbs clock skew between the client's picker
+        // and the server rather than rejecting a legitimate "starting now".
+        if (scheduledAt.isBefore(OffsetDateTime.now().minusMinutes(5))) {
+            throw ApiException.badRequest("Sessions cannot be scheduled in the past.");
+        }
+    }
+
+    private void requireBothAvailable(User teacher, User learner, OffsetDateTime startsAt, int durationMinutes) {
+        if (!availabilityService.isAvailableFor(teacher, startsAt, durationMinutes)) {
+            throw ApiException.badRequest(teacher.getName() + " is not available at that time.");
+        }
+        if (!availabilityService.isAvailableFor(learner, startsAt, durationMinutes)) {
+            throw ApiException.badRequest(learner.getName() + " is not available at that time.");
+        }
+    }
+
+    /**
+     * Rejects a session that would overlap one either participant already has.
+     *
+     * Declared availability says when someone is willing to teach; it says
+     * nothing about what they have already committed to, so both checks are
+     * needed to stop the same hour being sold twice.
+     */
+    private void requireNoClash(User teacher, User learner, OffsetDateTime startsAt, int durationMinutes) {
+        OffsetDateTime endsAt = startsAt.plusMinutes(durationMinutes);
+        // Widened on the low side so an earlier, longer session that runs into
+        // this slot is still considered.
+        List<Session> nearby = sessionRepository.findScheduledForUsersBetween(
+                List.of(teacher.getId(), learner.getId()),
+                startsAt.minusDays(1),
+                endsAt);
+
+        for (Session existing : nearby) {
+            OffsetDateTime existingEnd = existing.getScheduledAt().plusMinutes(existing.getDurationMinutes());
+            boolean overlaps = existing.getScheduledAt().isBefore(endsAt) && startsAt.isBefore(existingEnd);
+            if (overlaps) {
+                boolean teacherIsBusy = existing.getTeacher().getId().equals(teacher.getId())
+                        || existing.getLearner().getId().equals(teacher.getId());
+                String who = teacherIsBusy ? teacher.getName() : learner.getName();
+                throw ApiException.badRequest(who + " already has a session booked at that time.");
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -141,6 +198,8 @@ public class SessionService {
         // ever credited once, even if "complete" is called again.
         if (transitioningToCompleted) {
             walletService.transferForSession(saved);
+            userRepository.incrementSessionsCompleted(
+                    List.of(saved.getTeacher().getId(), saved.getLearner().getId()));
         }
 
         return SessionResponse.from(saved, userId);

@@ -43,6 +43,9 @@ public class ProductionConfigValidator implements BeanFactoryPostProcessor {
         validateAi(
                 Boolean.parseBoolean(env.getProperty("app.ai.enabled", "false")),
                 env.getProperty("app.ai.api-key", ""));
+        validateRedis(
+                Boolean.parseBoolean(env.getProperty("app.redis.enabled", "false")),
+                env.getProperty("spring.data.redis.password", ""));
 
         log.info("Production configuration validated");
     }
@@ -84,6 +87,14 @@ public class ProductionConfigValidator implements BeanFactoryPostProcessor {
         // An operator who set AI_ENABLED=true almost certainly forgot the key.
         if (aiEnabled && (apiKey == null || apiKey.isBlank())) {
             throw new IllegalStateException("AI_ENABLED=true but GEMINI_API_KEY is not set.");
+        }
+    }
+
+    private void validateRedis(boolean redisEnabled, String password) {
+        // An unauthenticated Redis holding rate-limit state lets anyone who can
+        // reach it reset the buckets protecting login and OTP.
+        if (redisEnabled && (password == null || password.isBlank())) {
+            throw new IllegalStateException("REDIS_ENABLED=true but REDIS_PASSWORD is not set.");
         }
     }
 }

@@ -13,6 +13,17 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      # Short on purpose: a rate-limit check sits on the login hot path, so a
+      # hung Redis must fail fast to the in-memory fallback rather than stall
+      # every request behind it.
+      timeout: 1s
+      connect-timeout: 1s
+
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
@@ -36,12 +47,27 @@ management:
       probes:
         enabled: true
       show-details: never
+  health:
+    redis:
+      # Tied to whether Redis is actually in use. The starter is always on the
+      # classpath, and its health indicator would otherwise report the whole
+      # application DOWN for failing to reach a Redis that this deployment
+      # deliberately does not run -- taking healthy instances out of a load
+      # balancer over an optional dependency.
+      enabled: ${REDIS_ENABLED:false}
 
 app:
   jwt:
     expiration-ms: ${JWT_EXPIRATION_MS:604800000} # 7 days
   otp:
     ttl-minutes: ${OTP_TTL_MINUTES:10}
+  admin:
+    # Existing account to grant ADMIN on startup. Blank disables the check.
+    bootstrap-email: ${ADMIN_BOOTSTRAP_EMAIL:}
+  redis:
+    # Share rate-limit buckets and WebSocket fan-out across API instances.
+    # Required before scaling past one replica; pointless below that.
+    enabled: ${REDIS_ENABLED:false}
   ratelimit:
     # Requests allowed per window, per client IP.
     otp-per-hour: ${RATELIMIT_OTP_PER_HOUR:5}

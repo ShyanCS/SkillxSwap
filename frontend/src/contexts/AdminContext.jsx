@@ -43,7 +43,12 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  const getUsers = async () => await apiGet('/api/admin/users');
+  // Returns a page envelope: { items, page, totalElements, hasNext, ... }.
+  const getUsers = async ({ q = '', page = 0, size = 20 } = {}) => {
+    const params = new URLSearchParams({ page, size });
+    if (q) params.set('q', q);
+    return await apiGet(`/api/admin/users?${params}`);
+  };
   const suspendUser = async (id) => await apiMutate(`/api/admin/users/${id}/suspend`, 'PUT');
   const activateUser = async (id) => await apiMutate(`/api/admin/users/${id}/activate`, 'PUT');
 

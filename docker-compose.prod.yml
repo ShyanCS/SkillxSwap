@@ -26,6 +26,24 @@ services:
       retries: 5
     networks: [internal]
 
+  # Only needed to run more than one `api` replica: it shares rate-limit buckets
+  # and WebSocket fan-out between them. Started only with the `scale` profile:
+  #
+  #   docker compose -f docker-compose.prod.yml --profile scale up -d
+  #
+  # A single-replica deployment can ignore this service entirely.
+  redis:
+    image: redis:7-alpine
+    profiles: [scale]
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
   api:
     build:
       context: ./backend-java
@@ -46,12 +64,17 @@ services:
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
       AI_ENABLED: ${AI_ENABLED:-false}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      REDIS_ENABLED: ${REDIS_ENABLED:-false}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       RATELIMIT_OTP_PER_HOUR: ${RATELIMIT_OTP_PER_HOUR:-5}
       RATELIMIT_LOGIN_PER_15MIN: ${RATELIMIT_LOGIN_PER_15MIN:-10}
       RATELIMIT_AI_PER_HOUR: ${RATELIMIT_AI_PER_HOUR:-30}

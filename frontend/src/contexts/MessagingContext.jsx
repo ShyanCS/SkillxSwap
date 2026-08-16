@@ -33,8 +33,10 @@ export const MessagingProvider = ({ children }) => {
     }
   };
 
-  const getMessages = async (conversationId) => {
-    return await apiGet(`/api/messages/conversations/${conversationId}`);
+  // Returns a page envelope: { items, page, hasNext, ... }. Items are
+  // newest-first -- the caller reverses them for display.
+  const getMessages = async (conversationId, page = 0, size = 30) => {
+    return await apiGet(`/api/messages/conversations/${conversationId}?page=${page}&size=${size}`);
   };
 
   const sendMessage = async (partnerId, body) => {

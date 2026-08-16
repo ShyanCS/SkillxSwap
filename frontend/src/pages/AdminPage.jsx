@@ -8,9 +8,12 @@ import {
   CheckCircle,
   Ban,
   UserCheck,
-  Trash2
+  Trash2,
+  Search
 } from 'lucide-react';
 import { useAdmin } from '../contexts/AdminContext';
+
+const USERS_PER_PAGE = 20;
 
 const AdminPage = () => {
   const { getStats, getUsers, suspendUser, activateUser, getSkills, deleteSkill, getReports, resolveReport } = useAdmin();
@@ -21,16 +24,26 @@ const AdminPage = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userQuery, setUserQuery] = useState('');
+  const [userPage, setUserPage] = useState(0);
+  const [userPageInfo, setUserPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0 });
+
+  const loadUsers = async (page = userPage, q = userQuery) => {
+    const data = await getUsers({ q, page, size: USERS_PER_PAGE });
+    setUsers(data.items);
+    setUserPageInfo({ page: data.page, totalPages: data.totalPages, totalElements: data.totalElements });
+    setUserPage(data.page);
+  };
 
   const loadAll = async () => {
     try {
-      const [statsData, usersData, skillsData, reportsData] = await Promise.all([
-        getStats(), getUsers(), getSkills(), getReports(),
+      const [statsData, skillsData, reportsData] = await Promise.all([
+        getStats(), getSkills(), getReports(),
       ]);
       setStats(statsData);
-      setUsers(usersData);
       setSkills(skillsData);
       setReports(reportsData);
+      await loadUsers(0, '');
     } catch (err) {
       setError(err.message || 'Failed to load admin data');
     } finally {
@@ -42,6 +55,14 @@ const AdminPage = () => {
     loadAll();
   }, []);
 
+  // Debounced so typing a search doesn't fire a request per keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadUsers(0, userQuery).catch(err => setError(err.message || 'Search failed'));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [userQuery]);
+
   const handleToggleUser = async (user) => {
     try {
       if (user.enabled) {
@@ -49,7 +70,8 @@ const AdminPage = () => {
       } else {
         await activateUser(user.id);
       }
-      setUsers(await getUsers());
+      // Stay on the current page rather than resetting to the first.
+      await loadUsers(userPage, userQuery);
     } catch (err) {
       alert(err.message || 'Action failed');
     }
@@ -163,7 +185,18 @@ const AdminPage = () => {
 
           <div className="p-6">
             {activeTab === 'users' && (
-              <div className="overflow-x-auto">
+              <div>
+                <div className="relative mb-4 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-500 border-b border-gray-200">
@@ -207,8 +240,40 @@ const AdminPage = () => {
                         </td>
                       </tr>
                     ))}
+                    {users.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="py-6 text-center text-gray-500">
+                          {userQuery ? `No users matching "${userQuery}"` : 'No users yet'}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
+                </div>
+
+                {userPageInfo.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 text-sm">
+                    <span className="text-gray-500">
+                      Page {userPageInfo.page + 1} of {userPageInfo.totalPages} &middot; {userPageInfo.totalElements} users
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => loadUsers(userPage - 1, userQuery)}
+                        disabled={userPage <= 0}
+                        className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => loadUsers(userPage + 1, userQuery)}
+                        disabled={userPage >= userPageInfo.totalPages - 1}
+                        className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

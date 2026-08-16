@@ -4,6 +4,7 @@ import com.skillswap.backend.admin.dto.AdminStatsResponse;
 import com.skillswap.backend.admin.dto.AdminUserResponse;
 import com.skillswap.backend.admin.service.AdminService;
 import com.skillswap.backend.auth.security.CustomUserDetails;
+import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.report.dto.ReportResponse;
 import com.skillswap.backend.report.service.ReportService;
 import com.skillswap.backend.skill.dto.SkillCatalogResponse;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,8 +36,10 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public List<AdminUserResponse> users() {
-        return adminService.getUsers();
+    public PageResponse<AdminUserResponse> users(@RequestParam(required = false) String q,
+                                                  @RequestParam(required = false) Integer page,
+                                                  @RequestParam(required = false) Integer size) {
+        return adminService.getUsers(q, page, size);
     }
 
     @PutMapping("/users/{id}/suspend")

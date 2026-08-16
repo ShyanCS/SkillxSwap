@@ -11,7 +11,7 @@ public record UserResponse(
         String region,
         String timezone,
         String profilePictureUrl,
-        Integer karmaPoints,
+        Integer sessionsCompleted,
         Role role,
         Double rating
 ) {
@@ -24,7 +24,7 @@ public record UserResponse(
                 user.getRegion(),
                 user.getTimezone(),
                 user.getProfilePictureUrl(),
-                user.getKarmaPoints(),
+                user.getSessionsCompleted(),
                 user.getRole(),
                 user.getAverageRating().doubleValue()
         );

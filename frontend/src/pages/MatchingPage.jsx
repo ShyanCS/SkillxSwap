@@ -129,7 +129,7 @@ const MatchingPage = () => {
               </div>
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
-                <span>{match.user.karmaPoints} karma</span>
+                <span>{match.user.sessionsCompleted === 1 ? '1 session' : `${match.user.sessionsCompleted} sessions`}</span>
               </div>
             </div>
           </div>

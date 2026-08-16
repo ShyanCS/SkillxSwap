@@ -5,16 +5,25 @@ import {
   Calendar
 } from 'lucide-react';
 import { useMessaging } from '../contexts/MessagingContext';
+import { useRealtime } from '../contexts/RealtimeContext';
 
 const MessagesPage = () => {
   const { getConversations, getMessages, sendMessage } = useMessaging();
+  const { subscribe } = useRealtime();
   const [selectedConversation, setSelectedConversation] = useState(null); // a conversation summary entry
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pageInfo, setPageInfo] = useState({ page: 0, hasNext: false });
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  // Autoscrolling to the newest message is right when opening a chat or
+  // sending, but wrong when prepending history -- that would yank the reader
+  // away from the older messages they just asked for.
+  const stickToBottomRef = useRef(true);
 
   const fetchConversations = async () => {
     try {
@@ -33,13 +42,18 @@ const MessagesPage = () => {
 
   const openConversation = async (conv) => {
     setSelectedConversation(conv);
+    setMessages([]);
+    setPageInfo({ page: 0, hasNext: false });
     if (!conv.conversationId) {
-      setMessages([]);
       return;
     }
     try {
-      const data = await getMessages(conv.conversationId);
-      setMessages(data);
+      const data = await getMessages(conv.conversationId, 0);
+      stickToBottomRef.current = true;
+      // The API returns newest-first so page 0 is the bottom of the chat;
+      // reverse it back into reading order.
+      setMessages([...data.items].reverse());
+      setPageInfo({ page: data.page, hasNext: data.hasNext });
       // Refresh the list in the background so unread counts/read receipts update.
       fetchConversations();
     } catch (error) {
@@ -47,9 +61,51 @@ const MessagesPage = () => {
     }
   };
 
+  const loadOlderMessages = async () => {
+    if (!selectedConversation?.conversationId || loadingOlder || !pageInfo.hasNext) return;
+    setLoadingOlder(true);
+    const container = messagesContainerRef.current;
+    const heightBefore = container?.scrollHeight ?? 0;
+    try {
+      const data = await getMessages(selectedConversation.conversationId, pageInfo.page + 1);
+      stickToBottomRef.current = false;
+      setMessages(prev => [...[...data.items].reverse(), ...prev]);
+      setPageInfo({ page: data.page, hasNext: data.hasNext });
+      // Prepending grows the scroll area upward, which would otherwise shove
+      // the current view down by exactly the height of the new content.
+      requestAnimationFrame(() => {
+        if (container) container.scrollTop = container.scrollHeight - heightBefore;
+      });
+    } catch (error) {
+      console.error('Failed to load older messages:', error);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
   useEffect(() => {
-    scrollToBottom();
+    if (stickToBottomRef.current) scrollToBottom();
   }, [messages]);
+
+  // Live delivery of messages sent to us while this page is open.
+  useEffect(() => {
+    return subscribe('MESSAGE_RECEIVED', ({ senderId, message }) => {
+      // Always refresh the sidebar so a message from a chat we don't currently
+      // have open still bumps its unread badge and preview.
+      fetchConversations();
+
+      setSelectedConversation(current => {
+        if (current?.partner.id !== senderId) return current;
+        stickToBottomRef.current = true;
+        setMessages(prev => (
+          // The sender's own echo and a reconnect replay can both re-deliver a
+          // message we already have.
+          prev.some(m => m.id === message.id) ? prev : [...prev, message]
+        ));
+        return current;
+      });
+    });
+  }, [subscribe]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,6 +119,7 @@ const MessagesPage = () => {
     setNewMessage('');
     try {
       const sent = await sendMessage(selectedConversation.partner.id, body);
+      stickToBottomRef.current = true;
       setMessages(prev => [...prev, sent]);
       fetchConversations();
     } catch (error) {
@@ -190,7 +247,18 @@ const MessagesPage = () => {
                   </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {pageInfo.hasNext && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={loadOlderMessages}
+                          disabled={loadingOlder}
+                          className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 px-3 py-1 rounded-lg hover:bg-blue-50"
+                        >
+                          {loadingOlder ? 'Loading...' : 'Load earlier messages'}
+                        </button>
+                      </div>
+                    )}
                     {messages.map(message => (
                       <div
                         key={message.id}

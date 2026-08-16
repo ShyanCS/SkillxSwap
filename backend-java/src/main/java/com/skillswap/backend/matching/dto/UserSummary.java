@@ -9,7 +9,7 @@ public record UserSummary(
         String region,
         String timezone,
         String profilePictureUrl,
-        Integer karmaPoints,
+        Integer sessionsCompleted,
         Double rating
 ) {
     public static UserSummary from(User user) {
@@ -20,7 +20,7 @@ public record UserSummary(
                 user.getRegion(),
                 user.getTimezone(),
                 user.getProfilePictureUrl(),
-                user.getKarmaPoints(),
+                user.getSessionsCompleted(),
                 user.getAverageRating().doubleValue()
         );
     }

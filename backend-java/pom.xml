@@ -76,10 +76,24 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<!-- Server-to-client push for messages and notifications. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
 		<!-- Bounded, self-expiring storage for per-client rate limit buckets. -->
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
+		</dependency>
+		<!--
+		  Backs rate-limit buckets and WebSocket fan-out when running more than
+		  one API replica. Optional at runtime (app.redis.enabled): connections
+		  are lazy, so a single-instance deployment never contacts Redis.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>

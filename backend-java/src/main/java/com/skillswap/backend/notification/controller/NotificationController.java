@@ -1,6 +1,7 @@
 package com.skillswap.backend.notification.controller;
 
 import com.skillswap.backend.auth.security.CustomUserDetails;
+import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.notification.dto.NotificationResponse;
 import com.skillswap.backend.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,8 +23,10 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public List<NotificationResponse> list(@AuthenticationPrincipal CustomUserDetails principal) {
-        return notificationService.getNotifications(principal.getId());
+    public PageResponse<NotificationResponse> list(@AuthenticationPrincipal CustomUserDetails principal,
+                                                    @RequestParam(required = false) Integer page,
+                                                    @RequestParam(required = false) Integer size) {
+        return notificationService.getNotifications(principal.getId(), page, size);
     }
 
     @GetMapping("/unread-count")
