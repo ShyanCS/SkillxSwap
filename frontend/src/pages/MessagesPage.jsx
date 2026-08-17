@@ -175,10 +175,11 @@ const MessagesPage = () => {
                   </p>
                 ) : (
                   filteredConversations.map(conv => (
-                    <div
+                    <button
                       key={conv.partner.id}
+                      type="button"
                       onClick={() => openConversation(conv)}
-                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      className={`block w-full text-left p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
                         selectedConversation?.partner.id === conv.partner.id ? 'bg-blue-50 border-blue-200' : ''
                       }`}
                     >
@@ -209,7 +210,7 @@ const MessagesPage = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

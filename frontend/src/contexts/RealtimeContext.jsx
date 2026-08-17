@@ -20,6 +20,9 @@ const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
 const KEEPALIVE_MS = 25000;
 
+/** A float in [0, 1), same range as Math.random(), sourced from the Web Crypto API. */
+const randomUnitInterval = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+
 const toWebSocketUrl = (base) => {
   // API_BASE_URL may be relative (same-origin deploys), so resolve against the
   // page before swapping the scheme.
@@ -122,8 +125,13 @@ export const RealtimeProvider = ({ children }) => {
       // Exponential backoff with jitter: without the spread, every client
       // dropped by a restart would reconnect in lockstep and stampede the
       // instance that just came back.
+      //
+      // crypto.getRandomValues rather than Math.random -- not because jitter
+      // timing is security-sensitive, but because it removes any ambiguity for
+      // a reader (or a scanner) about whether this value ever influences
+      // something that matters. Same cost, no downside.
       const backoff = Math.min(RECONNECT_BASE_MS * 2 ** attemptRef.current, RECONNECT_MAX_MS);
-      const jittered = backoff * (0.5 + Math.random() * 0.5);
+      const jittered = backoff * (0.5 + randomUnitInterval() * 0.5);
       attemptRef.current += 1;
       reconnectTimerRef.current = setTimeout(connect, jittered);
     };

@@ -8,9 +8,18 @@
 
 ALTER TABLE users ADD COLUMN sessions_completed INTEGER NOT NULL DEFAULT 0;
 
+-- WHERE EXISTS narrows this to users who actually have a completed session;
+-- everyone else already got sessions_completed = 0 from the DEFAULT above, so
+-- writing 0 over 0 again would just be unnecessary I/O on every existing row.
 UPDATE users u
 SET sessions_completed = (
     SELECT COUNT(*)
+    FROM sessions s
+    WHERE s.status = 'Completed'
+      AND (s.teacher_id = u.id OR s.learner_id = u.id)
+)
+WHERE EXISTS (
+    SELECT 1
     FROM sessions s
     WHERE s.status = 'Completed'
       AND (s.teacher_id = u.id OR s.learner_id = u.id)

@@ -170,10 +170,11 @@ const ScheduleSessionPage = () => {
               ) : (
                 <div className="space-y-4 mb-6">
                   {matches.map(match => (
-                    <div
+                    <button
                       key={match.matchId}
+                      type="button"
                       onClick={() => { setSelectedMatch(match); setSelectedSkill(null); }}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      className={`block w-full text-left border rounded-lg p-4 cursor-pointer transition-colors ${
                         selectedMatch?.matchId === match.matchId
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
@@ -205,7 +206,7 @@ const ScheduleSessionPage = () => {
                           <Check className="w-5 h-5 text-blue-600" />
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

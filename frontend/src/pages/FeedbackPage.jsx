@@ -106,9 +106,10 @@ const FeedbackPage = () => {
   };
 
   const SessionCard = ({ session, onSelect, isSelected }) => (
-    <div
+    <button
+      type="button"
       onClick={() => onSelect(session)}
-      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+      className={`block w-full text-left border rounded-lg p-4 cursor-pointer transition-all ${
         isSelected
           ? 'border-blue-500 bg-blue-50'
           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -150,7 +151,7 @@ const FeedbackPage = () => {
       {session.notes && (
         <p className="text-sm text-gray-600 italic">"{session.notes}"</p>
       )}
-    </div>
+    </button>
   );
 
   return (

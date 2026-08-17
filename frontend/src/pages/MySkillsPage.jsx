@@ -492,9 +492,10 @@ const MySkillsPage = () => {
                             s.name.toLowerCase().includes(skillSearch.toLowerCase())
                           )
                           .map((s) => (
-                            <div
+                            <button
                               key={s.id}
-                              className="px-3 py-2 cursor-pointer hover:bg-blue-100"
+                              type="button"
+                              className="block w-full text-left px-3 py-2 cursor-pointer hover:bg-blue-100"
                               onClick={() => {
                                 setFormData((prev) => ({
                                   ...prev,
@@ -505,7 +506,7 @@ const MySkillsPage = () => {
                               }}
                             >
                               {s.name}
-                            </div>
+                            </button>
                           ))}
                         {allSkills.filter((s) =>
                           s.name.toLowerCase().includes(skillSearch.toLowerCase())
