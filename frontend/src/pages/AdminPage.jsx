@@ -12,6 +12,7 @@ import {
   Search
 } from 'lucide-react';
 import { useAdmin } from '../contexts/AdminContext';
+import ErrorBanner from '../components/common/ErrorBanner';
 
 const USERS_PER_PAGE = 20;
 
@@ -27,6 +28,9 @@ const AdminPage = () => {
   const [userQuery, setUserQuery] = useState('');
   const [userPage, setUserPage] = useState(0);
   const [userPageInfo, setUserPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0 });
+  // Failures of individual admin actions (suspend/delete/resolve) as opposed
+  // to `error`, which is a whole-page load failure.
+  const [actionError, setActionError] = useState('');
 
   const loadUsers = async (page = userPage, q = userQuery) => {
     const data = await getUsers({ q, page, size: USERS_PER_PAGE });
@@ -70,19 +74,21 @@ const AdminPage = () => {
       } else {
         await activateUser(user.id);
       }
+      setActionError('');
       // Stay on the current page rather than resetting to the first.
       await loadUsers(userPage, userQuery);
     } catch (err) {
-      alert(err.message || 'Action failed');
+      setActionError(err.message || 'Action failed');
     }
   };
 
   const handleDeleteSkill = async (skillId) => {
     try {
       await deleteSkill(skillId);
+      setActionError('');
       setSkills(await getSkills());
     } catch (err) {
-      alert(err.message || 'Failed to delete skill');
+      setActionError(err.message || 'Failed to delete skill');
     }
   };
 
@@ -92,8 +98,9 @@ const AdminPage = () => {
       const [reportsData, statsData] = await Promise.all([getReports(), getStats()]);
       setReports(reportsData);
       setStats(statsData);
+      setActionError('');
     } catch (err) {
-      alert(err.message || 'Failed to resolve report');
+      setActionError(err.message || 'Failed to resolve report');
     }
   };
 
@@ -116,6 +123,12 @@ const AdminPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
           <p className="text-gray-600">Platform governance, users, skills, and complaint management</p>
         </div>
+
+        <ErrorBanner
+          message={actionError}
+          onDismiss={() => setActionError('')}
+          className="mb-6"
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">

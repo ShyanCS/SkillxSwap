@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Zap
 } from 'lucide-react';
+import ErrorBanner from '../components/common/ErrorBanner';
 import logger from '../lib/logger';
 
 const MatchingPage = () => {
@@ -26,6 +27,7 @@ const MatchingPage = () => {
   });
   const [matches, setMatches] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [notice, setNotice] = useState(null); // { tone, text }
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -76,10 +78,11 @@ const MatchingPage = () => {
           match.skillsOffered.map(skill => skill.id || skill.userSkillId),
           match.skillsRequested.map(skill => skill.id || skill.userSkillId)
         );
-        alert("Match request sent!");
+        setNotice({ tone: 'success', text: `Match request sent to ${match.user.name}!` });
         setAlreadyRequested(true);
       } catch (err) {
-        alert(err.message || "Failed to send request");
+        logger.error('Failed to send match request:', err);
+        setNotice({ tone: 'error', text: err.message || 'Failed to send request' });
       } finally {
         setSending(false);
       }
@@ -220,6 +223,12 @@ const MatchingPage = () => {
         </div>
 
         {/* Stats */}
+        <ErrorBanner
+          message={notice?.text}
+          tone={notice?.tone}
+          onDismiss={() => setNotice(null)}
+          className="mb-6"
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">

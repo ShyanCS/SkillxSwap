@@ -8,6 +8,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useReview } from '../contexts/ReviewContext';
+import ErrorBanner from '../components/common/ErrorBanner';
 import logger from '../lib/logger';
 
 const FeedbackPage = () => {
@@ -22,6 +23,7 @@ const FeedbackPage = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const fetchData = async () => {
     try {
@@ -62,7 +64,7 @@ const FeedbackPage = () => {
 
   const handleSubmitFeedback = async () => {
     if (!selectedSession || rating === 0) {
-      alert('Please select a session and provide a rating');
+      setFormError('Please select a session and provide a rating');
       return;
     }
 
@@ -72,9 +74,11 @@ const FeedbackPage = () => {
       setSelectedSession(null);
       setRating(0);
       setComment('');
+      setFormError('');
       await fetchData();
     } catch (error) {
-      alert(error.message || 'Failed to submit feedback. Please try again.');
+      logger.error('Failed to submit feedback:', error);
+      setFormError(error.message || 'Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -211,6 +215,12 @@ const FeedbackPage = () => {
           {/* Give Feedback Section */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-6">Give Feedback</h2>
+
+            <ErrorBanner
+              message={formError}
+              onDismiss={() => setFormError('')}
+              className="mb-4"
+            />
 
             {loading ? (
               <p className="text-gray-500">Loading...</p>

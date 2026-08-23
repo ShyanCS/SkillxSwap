@@ -12,6 +12,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import ErrorBanner from "../components/common/ErrorBanner";
 import logger from "../lib/logger";
 
 const MySkillsPage = () => {
@@ -30,6 +31,9 @@ const MySkillsPage = () => {
 
   const [editSkillId, setEditSkillId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  // Validation / save failures for the add-edit modal, shown inline instead
+  // of a blocking window.alert().
+  const [skillFormError, setSkillFormError] = useState("");
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -113,9 +117,10 @@ const MySkillsPage = () => {
     e.preventDefault();
     const selectedSkill = allSkills.find((s) => s.name === formData.name);
     if (!selectedSkill) {
-      alert("Please select a skill from the suggestions.");
+      setSkillFormError("Please select a skill from the suggestions.");
       return;
     }
+    setSkillFormError("");
 
     const newSkill = {
       ...formData, // includes name and skillId
@@ -123,15 +128,24 @@ const MySkillsPage = () => {
       status: "Active",
       matchCount: 0,
       sessionCount: modalType === "offer" ? 0 : undefined,
-      newSkillId: formData.skillId, // <-- send new skillId in body
+      newSkillId: formData.skillId, // <-- send newSkillId in body
     };
 
-    if (isEditMode) {
-      // Pass previous UserSkill _id as param, send newSkillId in body
-      await updateSkill(editSkillId, newSkill);
-    } else {
-      await addSkill(newSkill);
+    try {
+      if (isEditMode) {
+        // Pass previous UserSkill _id as param, send newSkillId in body
+        await updateSkill(editSkillId, newSkill);
+      } else {
+        await addSkill(newSkill);
+      }
+    } catch (error) {
+      // Previously this path had no handling at all: a rejected save left an
+      // unhandled promise rejection and a modal that silently stayed open.
+      logger.error('Failed to save skill:', error);
+      setSkillFormError(error.message || "Failed to save the skill. Please try again.");
+      return;
     }
+
     // Refresh user data to get updated skill arrays
     await fetchUserDetails();
     setReloadFlag((prev) => !prev);
@@ -472,6 +486,11 @@ const MySkillsPage = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <ErrorBanner
+                  message={skillFormError}
+                  tone="warning"
+                  onDismiss={() => setSkillFormError("")}
+                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Skill Name
