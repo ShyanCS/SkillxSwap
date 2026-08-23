@@ -99,6 +99,16 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
+		<!--
+		  JSON log encoding for production (see logback-spring.xml): one
+		  parseable object per line so log shippers can index fields like
+		  level, logger, requestId (MDC), and stack traces directly.
+		-->
+		<dependency>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>8.1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

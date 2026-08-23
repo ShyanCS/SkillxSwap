@@ -105,9 +105,8 @@ app:
     api-secret: ${CLOUDINARY_API_SECRET:}
 
 logging:
+  # Levels only; the output FORMAT lives in logback-spring.xml (readable
+  # console lines in dev, JSON per line in prod).
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
     com.skillswap.backend: ${LOG_LEVEL_APP:INFO}
-  pattern:
-    # requestId comes from RequestIdFilter (MDC) so logs for one request can be correlated.
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{requestId:-}] %logger{36} - %msg%n"

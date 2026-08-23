@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logging configuration.
+
+  Log levels themselves stay in application.yml (logging.level.root and
+  logging.level.com.skillswap.backend) so LOG_LEVEL_ROOT / LOG_LEVEL_APP
+  environment variables keep working; this file only decides the FORMAT.
+
+  - Default (dev): human-readable console lines, same shape as before.
+  - prod: one JSON object per line via LogstashEncoder, for log shippers.
+    MDC is included automatically, so requestId from RequestIdFilter tags
+    every line and lets a whole request be correlated in a log aggregator.
+-->
+<configuration>
+	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+	<springProfile name="!prod">
+		<include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+		<root level="INFO">
+			<appender-ref ref="CONSOLE"/>
+		</root>
+	</springProfile>
+
+	<springProfile name="prod">
+		<appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+			<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+				<timeZone>UTC</timeZone>
+				<customFields>{"service":"skillswap-backend"}</customFields>
+			</encoder>
+		</appender>
+		<root level="INFO">
+			<appender-ref ref="JSON_CONSOLE"/>
+		</root>
+	</springProfile>
+</configuration>
