@@ -1,28 +1,12 @@
-import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
 import { useAvailability } from '../contexts/AvailabilityContext';
-import {
-  Calendar as CalendarIcon,
-  Video,
-  MapPin,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-} from 'lucide-react';
+import { Calendar as CalendarIcon, Video, MapPin, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import useScheduleWizard from '../hooks/useScheduleWizard';
 
 // Index 0 is unused: the API uses ISO day numbering (1 = Monday).
-const DAY_NAMES = [
-  '',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
+const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const formatMinutes = (minutes) => {
   const hours = Math.floor(minutes / 60);
@@ -35,84 +19,40 @@ const ScheduleSessionPage = () => {
   const { user } = useAuth();
   const { getSchedulableMatches, createSession } = useSession();
   const { getUserAvailability } = useAvailability();
-  const [partnerAvailability, setPartnerAvailability] = useState(null);
 
-  const [step, setStep] = useState(1);
-  const [matches, setMatches] = useState([]);
-  const [loadingMatches, setLoadingMatches] = useState(true);
-  const [error, setError] = useState('');
-
-  const [selectedMatch, setSelectedMatch] = useState(null);
-  const [selectedSkill, setSelectedSkill] = useState(null); // { skillId, name, description, teacherRole: 'me' | 'partner' }
-
-  const [scheduledAt, setScheduledAt] = useState('');
-  const [duration, setDuration] = useState(60);
-  const [sessionType, setSessionType] = useState('online');
-  const [location, setLocation] = useState('');
-  const [notes, setNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const data = await getSchedulableMatches();
-        setMatches(data);
-      } catch {
-        setError('Failed to load your matches.');
-      } finally {
-        setLoadingMatches(false);
-      }
-    };
-    fetchMatches();
-  }, []);
-
-  // Show the partner's windows before a time is proposed, rather than letting
-  // the user discover the clash only when the server rejects the submission.
-  useEffect(() => {
-    if (!selectedMatch) {
-      setPartnerAvailability(null);
-      return;
-    }
-    getUserAvailability(selectedMatch.partner.id)
-      .then(setPartnerAvailability)
-      .catch(() => setPartnerAvailability(null));
-  }, [selectedMatch]);
-
-  const handleScheduleSession = async () => {
-    setSubmitting(true);
-    setError('');
-    try {
-      const teacherId = selectedSkill.teacherRole === 'me' ? user.id : selectedMatch.partner.id;
-      await createSession({
-        matchId: selectedMatch.matchId,
-        skillId: selectedSkill.skillId,
-        teacherId,
-        scheduledAt: new Date(scheduledAt).toISOString(),
-        durationMinutes: duration,
-        sessionType,
-        location: sessionType === 'in-person' ? location : location || 'Online',
-        notes,
-      });
-      navigate('/sessions');
-    } catch (err) {
-      setError(err.message || 'Failed to schedule session');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const canProceed = (currentStep) => {
-    switch (currentStep) {
-      case 1:
-        return selectedMatch && selectedSkill;
-      case 2:
-        return !!scheduledAt;
-      case 3:
-        return sessionType === 'online' || (sessionType === 'in-person' && location);
-      default:
-        return false;
-    }
-  };
+  const wizard = useScheduleWizard({
+    getSchedulableMatches,
+    getUserAvailability,
+    createSession,
+    userId: user?.id,
+    onSuccess: () => navigate('/sessions'),
+  });
+  const {
+    step,
+    matches,
+    loadingMatches,
+    error,
+    selectedMatch,
+    selectedSkill,
+    partnerAvailability,
+    scheduledAt,
+    duration,
+    sessionType,
+    location,
+    notes,
+    submitting,
+    selectMatch,
+    selectSkill,
+    setScheduledAt,
+    setDuration,
+    setSessionType,
+    setLocation,
+    setNotes,
+    canProceed,
+    goNext,
+    goBack,
+    submit,
+  } = wizard;
 
   // Minimum selectable datetime = now, formatted for datetime-local input
   const minDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -125,9 +65,7 @@ const ScheduleSessionPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Schedule a Session</h1>
-          <p className="text-gray-600">
-            Book a learning session with one of your connected partners
-          </p>
+          <p className="text-gray-600">Book a learning session with one of your connected partners</p>
         </div>
 
         {/* Progress Steps */}
@@ -173,7 +111,7 @@ const ScheduleSessionPage = () => {
                 <p className="text-gray-500">Loading your matches...</p>
               ) : matches.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 mb-2">You don't have any accepted matches yet.</p>
+                  <p className="text-gray-500 mb-2">You don&apos;t have any accepted matches yet.</p>
                   <p className="text-sm text-gray-400">
                     Accept a match request first, then come back here to schedule a session.
                   </p>
@@ -184,10 +122,7 @@ const ScheduleSessionPage = () => {
                     <button
                       key={match.matchId}
                       type="button"
-                      onClick={() => {
-                        setSelectedMatch(match);
-                        setSelectedSkill(null);
-                      }}
+                      onClick={() => selectMatch(match)}
                       className={`block w-full text-left border rounded-lg p-4 cursor-pointer transition-colors ${
                         selectedMatch?.matchId === match.matchId
                           ? 'border-blue-500 bg-blue-50'
@@ -206,9 +141,7 @@ const ScheduleSessionPage = () => {
                         />
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{match.partner.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            Timezone: {match.partner.timezone}
-                          </p>
+                          <p className="text-sm text-gray-500">Timezone: {match.partner.timezone}</p>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {match.teachableByPartner.map((skill) => (
                               <span
@@ -244,7 +177,7 @@ const ScheduleSessionPage = () => {
                     {selectedMatch.teachableByPartner.map((skill) => (
                       <button
                         key={`p-${skill.skillId}`}
-                        onClick={() => setSelectedSkill({ ...skill, teacherRole: 'partner' })}
+                        onClick={() => selectSkill({ ...skill, teacherRole: 'partner' })}
                         className={`p-3 text-left border rounded-lg transition-colors ${
                           selectedSkill?.skillId === skill.skillId &&
                           selectedSkill?.teacherRole === 'partner'
@@ -259,7 +192,7 @@ const ScheduleSessionPage = () => {
                     {selectedMatch.teachableByMe.map((skill) => (
                       <button
                         key={`m-${skill.skillId}`}
-                        onClick={() => setSelectedSkill({ ...skill, teacherRole: 'me' })}
+                        onClick={() => selectSkill({ ...skill, teacherRole: 'me' })}
                         className={`p-3 text-left border rounded-lg transition-colors ${
                           selectedSkill?.skillId === skill.skillId &&
                           selectedSkill?.teacherRole === 'me'
@@ -312,10 +245,11 @@ const ScheduleSessionPage = () => {
               )}
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="session-datetime" className="block text-sm font-medium text-gray-700 mb-2">
                   Session Date & Time
                 </label>
                 <input
+                  id="session-datetime"
                   type="datetime-local"
                   value={scheduledAt}
                   min={minDateTime}
@@ -324,8 +258,11 @@ const ScheduleSessionPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                <label htmlFor="session-duration" className="block text-sm font-medium text-gray-700 mb-2">
+                  Duration
+                </label>
                 <select
+                  id="session-duration"
                   value={duration}
                   onChange={(e) => setDuration(parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -378,27 +315,27 @@ const ScheduleSessionPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="session-location" className="block text-sm font-medium text-gray-700 mb-2">
                     {sessionType === 'in-person' ? 'Meeting Location' : 'Meeting Link (optional)'}
                   </label>
                   <input
+                    id="session-location"
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder={
-                      sessionType === 'in-person'
-                        ? 'Enter meeting location...'
-                        : 'e.g. Zoom/Meet link'
+                      sessionType === 'in-person' ? 'Enter meeting location...' : 'e.g. Zoom/Meet link'
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="session-notes" className="block text-sm font-medium text-gray-700 mb-2">
                     Session Notes (Optional)
                   </label>
                   <textarea
+                    id="session-notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
@@ -452,7 +389,7 @@ const ScheduleSessionPage = () => {
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
             <button
-              onClick={() => setStep(Math.max(1, step - 1))}
+              onClick={goBack}
               disabled={step === 1}
               className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -462,7 +399,7 @@ const ScheduleSessionPage = () => {
 
             {step < 3 ? (
               <button
-                onClick={() => setStep(step + 1)}
+                onClick={goNext}
                 disabled={!canProceed(step)}
                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -471,7 +408,7 @@ const ScheduleSessionPage = () => {
               </button>
             ) : (
               <button
-                onClick={handleScheduleSession}
+                onClick={submit}
                 disabled={!canProceed(step) || submitting}
                 className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
