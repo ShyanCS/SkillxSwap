@@ -1,48 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSkills } from '../contexts/SkillsContext';
-import {
-  Plus,
-  Edit3,
-  Trash2,
-  BookOpen,
-  Target,
-  Clock,
-  TrendingUp,
-  Star,
-  Users,
-} from 'lucide-react';
-import ErrorBanner from '../components/common/ErrorBanner';
+import { Plus, Edit3, Trash2, BookOpen, Target, Clock, Star, Users } from 'lucide-react';
+import SkillFormModal from '../components/skills/SkillFormModal';
 import logger from '../lib/logger';
 
 const MySkillsPage = () => {
   const { user, fetchUserDetails } = useAuth();
-  const { addSkill, getSkill, deleteSkill, updateSkill, listSkill } = useSkills();
+  const { addSkill, getSkill, deleteSkill, updateSkill } = useSkills();
   const [activeTab, setActiveTab] = useState('offered');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [modalType, setModalType] = useState('offer');
+  // null means the modal is closed; an object holds the skill being edited.
+  const [modalState, setModalState] = useState(null); // { type, skill }
   const [reloadFlag, setReloadFlag] = useState(false);
 
-  // Mock data - replace with actual data from API
   const [offeredSkills, setOfferedSkills] = useState([]);
   const [requestedSkills, setRequestedSkills] = useState([]);
-  const [allSkills, setAllSkills] = useState([]);
-  const [skillSearch, setSkillSearch] = useState('');
-
-  const [editSkillId, setEditSkillId] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  // Validation / save failures for the add-edit modal, shown inline instead
-  // of a blocking window.alert().
-  const [skillFormError, setSkillFormError] = useState('');
 
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const [offeredData, requestedData] = await Promise.all([
-          getSkill('offer'),
-          getSkill('request'),
-        ]);
-
+        const [offeredData, requestedData] = await Promise.all([getSkill('offer'), getSkill('request')]);
         setOfferedSkills(offeredData);
         setRequestedSkills(requestedData);
       } catch (error) {
@@ -53,152 +30,24 @@ const MySkillsPage = () => {
     if (user) fetchSkills();
   }, [user, reloadFlag]);
 
-  useEffect(() => {
-    const fetchAllSkills = async () => {
-      if (showAddModal) {
-        try {
-          const data = await listSkill(); // This calls the imported function
-          setAllSkills(Array.isArray(data) ? data : []);
-        } catch (err) {
-          setAllSkills([]);
-          logger.error('Failed to fetch skill catalog:', err);
-        }
-      }
-    };
-    fetchAllSkills();
-  }, [showAddModal]);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    skillId: '', // <-- Add this line
-    description: '',
-    proficiencyLevel: 'Intermediate',
-    desiredProficiency: 'Intermediate',
-    urgency: 'Medium',
-    availability: [],
-  });
-
-  const proficiencyLevels = ['Beginner', 'Intermediate', 'Advanced'];
-  const urgencyLevels = ['Low', 'Medium', 'High'];
-  const availabilityOptions = [
-    'Monday AM',
-    'Monday PM',
-    'Tuesday AM',
-    'Tuesday PM',
-    'Wednesday AM',
-    'Wednesday PM',
-    'Thursday AM',
-    'Thursday PM',
-    'Friday AM',
-    'Friday PM',
-    'Saturday AM',
-    'Saturday PM',
-    'Sunday AM',
-    'Sunday PM',
-  ];
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const toggleAvailability = (slot) => {
-    const current = formData.availability;
-    const updated = current.includes(slot) ? current.filter((s) => s !== slot) : [...current, slot];
-
-    handleInputChange('availability', updated);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const selectedSkill = allSkills.find((s) => s.name === formData.name);
-    if (!selectedSkill) {
-      setSkillFormError('Please select a skill from the suggestions.');
-      return;
-    }
-    setSkillFormError('');
-
-    const newSkill = {
-      ...formData, // includes name and skillId
-      type: modalType,
-      status: 'Active',
-      matchCount: 0,
-      sessionCount: modalType === 'offer' ? 0 : undefined,
-      newSkillId: formData.skillId, // <-- send newSkillId in body
-    };
-
-    try {
-      if (isEditMode) {
-        // Pass previous UserSkill _id as param, send newSkillId in body
-        await updateSkill(editSkillId, newSkill);
-      } else {
-        await addSkill(newSkill);
-      }
-    } catch (error) {
-      // Previously this path had no handling at all: a rejected save left an
-      // unhandled promise rejection and a modal that silently stayed open.
-      logger.error('Failed to save skill:', error);
-      setSkillFormError(error.message || 'Failed to save the skill. Please try again.');
-      return;
-    }
-
+  const refreshAfterChange = async () => {
     // Refresh user data to get updated skill arrays
     await fetchUserDetails();
     setReloadFlag((prev) => !prev);
-    // Reset form
-    setFormData({
-      name: '',
-      skillId: '', // <-- Reset this field
-      description: '',
-      proficiencyLevel: 'Intermediate',
-      desiredProficiency: 'Intermediate',
-      urgency: 'Medium',
-      availability: [],
-    });
-    setShowAddModal(false);
   };
 
-  const openAddModal = (type) => {
-    setModalType(type);
-    setShowAddModal(true);
-    setSkillSearch(''); // Reset skill search input
-    setFormData({
-      name: '',
-      skillId: '', // <-- Reset this field
-      description: '',
-      proficiencyLevel: 'Intermediate',
-      desiredProficiency: 'Intermediate',
-      urgency: 'Medium',
-      availability: [],
-    });
-    setIsEditMode(false);
-    setEditSkillId(null);
+  const handleSaveSkill = async (editId, payload) => {
+    if (editId) {
+      await updateSkill(editId, payload);
+    } else {
+      await addSkill(payload);
+    }
+    await refreshAfterChange();
   };
 
-  const openEditModal = (skill) => {
-    setModalType(skill.type);
-    setFormData({
-      name: skill.name,
-      skillId: skill.skillId || '', // <-- Set skillId from skill object
-      description: skill.description,
-      proficiencyLevel: skill.proficiencyLevel || 'Intermediate',
-      desiredProficiency: skill.desiredProficiency || 'Intermediate',
-      urgency: skill.urgency || 'Medium',
-      availability: skill.availability || [],
-    });
-    setSkillSearch(skill.name); // <-- Set skillSearch so input is filled
-    setEditSkillId(skill.id);
-    setIsEditMode(true);
-    setShowAddModal(true);
-  };
-
-  const handleDeleteSkill = async (skillId, type) => {
+  const handleDeleteSkill = async (skillId) => {
     await deleteSkill(skillId);
-    // Refresh user data to get updated skill arrays
-    await fetchUserDetails();
-    setReloadFlag((prev) => !prev);
+    await refreshAfterChange();
   };
 
   const SkillCard = ({ skill, type, onDelete }) => (
@@ -209,9 +58,7 @@ const MySkillsPage = () => {
             <h3 className="text-lg font-semibold text-gray-900">{skill.name}</h3>
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                skill.status === 'Active'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-600'
+                skill.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
               }`}
             >
               {skill.status}
@@ -267,7 +114,7 @@ const MySkillsPage = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={() => openEditModal(skill)}
+            onClick={() => setModalState({ type: skill.type, skill })}
             className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
           >
             <Edit3 className="w-4 h-4" />
@@ -375,7 +222,7 @@ const MySkillsPage = () => {
                 {activeTab === 'offered' ? 'Skills You Offer' : 'Skills You Want to Learn'}
               </h2>
               <button
-                onClick={() => openAddModal(activeTab === 'offered' ? 'offer' : 'request')}
+                onClick={() => setModalState({ type: activeTab === 'offered' ? 'offer' : 'request', skill: null })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === 'offered'
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -396,25 +243,21 @@ const MySkillsPage = () => {
                       key={skill.id}
                       skill={skill}
                       type="offer"
-                      onDelete={(id) => handleDeleteSkill(id, 'offer')}
+                      onDelete={(id) => handleDeleteSkill(id)}
                     />
                   ))
                 ) : (
-                  <div className="text-center py-12">
-                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No skills offered yet
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Start by adding a skill you can teach to others
-                    </p>
-                    <button
-                      onClick={() => openAddModal('offer')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                    >
-                      Add Your First Skill
-                    </button>
-                  </div>
+                <div className="text-center py-12">
+                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No skills offered yet</h3>
+                  <p className="text-gray-500 mb-4">Start by adding a skill you can teach to others</p>
+                  <button
+                    onClick={() => setModalState({ type: 'offer', skill: null })}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                  >
+                    Add Your First Skill
+                  </button>
+                </div>
                 )
               ) : requestedSkills.length > 0 ? (
                 requestedSkills.map((skill) => (
@@ -422,18 +265,16 @@ const MySkillsPage = () => {
                     key={skill.id}
                     skill={skill}
                     type="request"
-                    onDelete={(id) => handleDeleteSkill(id, 'request')}
+                    onDelete={(id) => handleDeleteSkill(id)}
                   />
                 ))
               ) : (
                 <div className="text-center py-12">
                   <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No learning goals yet</h3>
-                  <p className="text-gray-500 mb-4">
-                    Add skills you want to learn from the community
-                  </p>
+                  <p className="text-gray-500 mb-4">Add skills you want to learn from the community</p>
                   <button
-                    onClick={() => openAddModal('request')}
+                    onClick={() => setModalState({ type: 'request', skill: null })}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium"
                   >
                     Add Learning Goal
@@ -444,196 +285,14 @@ const MySkillsPage = () => {
           </div>
         </div>
 
-        {/* Add Skill Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {modalType === 'offer' ? 'Add Skill to Teach' : 'Add Skill to Learn'}
-                </h2>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                <ErrorBanner
-                  message={skillFormError}
-                  tone="warning"
-                  onDismiss={() => setSkillFormError('')}
-                />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Skill Name</label>
-                  <input
-                    type="text"
-                    value={skillSearch}
-                    onChange={(e) => setSkillSearch(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Type to search skills..."
-                    autoComplete="off"
-                  />
-                  {skillSearch &&
-                    !allSkills.some((s) => s.name.toLowerCase() === skillSearch.toLowerCase()) && (
-                      <div className="border rounded-lg bg-white mt-1 max-h-40 overflow-y-auto shadow-lg z-10">
-                        {allSkills
-                          .filter((s) => s.name.toLowerCase().includes(skillSearch.toLowerCase()))
-                          .map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              className="block w-full text-left px-3 py-2 cursor-pointer hover:bg-blue-100"
-                              onClick={() => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  name: s.name,
-                                  skillId: s.id,
-                                }));
-                                setSkillSearch(s.name);
-                              }}
-                            >
-                              {s.name}
-                            </button>
-                          ))}
-                        {allSkills.filter((s) =>
-                          s.name.toLowerCase().includes(skillSearch.toLowerCase()),
-                        ).length === 0 && (
-                          <div className="px-3 py-2 text-gray-400">No matches found</div>
-                        )}
-                      </div>
-                    )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    required
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={
-                      modalType === 'offer'
-                        ? 'Describe your expertise and what you can teach...'
-                        : 'Describe what you want to learn and your goals...'
-                    }
-                  />
-                </div>
-
-                {modalType === 'offer' ? (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Your Proficiency Level
-                      </label>
-                      <select
-                        value={formData.proficiencyLevel}
-                        onChange={(e) => handleInputChange('proficiencyLevel', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        {proficiencyLevels.map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Availability
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {availabilityOptions.map((slot) => (
-                          <button
-                            key={slot}
-                            type="button"
-                            onClick={() => toggleAvailability(slot)}
-                            className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                              formData.availability.includes(slot)
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Desired Proficiency Level
-                      </label>
-                      <select
-                        value={formData.desiredProficiency}
-                        onChange={(e) => handleInputChange('desiredProficiency', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        {proficiencyLevels.map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Urgency
-                      </label>
-                      <select
-                        value={formData.urgency}
-                        onChange={(e) => handleInputChange('urgency', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        {urgencyLevels.map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddModal(false);
-                      setSkillSearch(''); // Reset skill search input
-                      setFormData({
-                        name: '',
-                        skillId: '', // <-- Reset this field
-                        description: '',
-                        proficiencyLevel: 'Intermediate',
-                        desiredProficiency: 'Intermediate',
-                        urgency: 'Medium',
-                        availability: [],
-                      });
-                      setIsEditMode(false);
-                      setEditSkillId(null);
-                    }}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${
-                      modalType === 'offer'
-                        ? 'bg-blue-600 hover:bg-blue-700'
-                        : 'bg-purple-600 hover:bg-purple-700'
-                    }`}
-                  >
-                    Add Skill
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+        {/* Add/Edit Skill Modal */}
+        {modalState && (
+          <SkillFormModal
+            type={modalState.type}
+            initial={modalState.skill}
+            onClose={() => setModalState(null)}
+            onSave={handleSaveSkill}
+          />
         )}
       </div>
     </div>
