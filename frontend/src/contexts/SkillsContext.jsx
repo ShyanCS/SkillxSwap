@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { API_BASE_URL } from '../config/api';
+import logger from '../lib/logger';
 
 const SkillsContext = createContext(undefined);
 
@@ -47,7 +48,6 @@ export const SkillsProvider = ({ children }) => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Cannot get data');
-      console.log(data);
       return data;
     } catch (error) {
       throw new Error(error.message);
@@ -67,7 +67,6 @@ export const SkillsProvider = ({ children }) => {
         credentials: 'include',
       });
       const data = await res.json();
-      console.log(data);
       if (!res.ok) throw new Error(data.error || 'Cannot get data');
       return data;
     } catch (error) {
@@ -80,8 +79,6 @@ export const SkillsProvider = ({ children }) => {
   const updateSkill = async (skillId, updatedData) => {
     setIsLoading(true);
     try {
-      console.log("Updating skill...", skillId, updatedData);
-
       const res = await fetch(`${API_BASE_URL}/api/skills/${skillId}`, {
         method: "PUT",
         headers: {
@@ -99,7 +96,7 @@ export const SkillsProvider = ({ children }) => {
       return data;
 
     } catch (error) {
-      console.error("Error updating skill:", error);
+      logger.error('Error updating skill:', error);
       throw error;
     } finally {
       setIsLoading(false);

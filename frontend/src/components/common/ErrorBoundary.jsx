@@ -1,4 +1,5 @@
 import React from 'react';
+import logger from '../../lib/logger';
 
 /**
  * Catches render-time exceptions anywhere below it. Without this, a single
@@ -16,8 +17,9 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Replace with a real error-reporting service (Sentry et al.) when one exists.
-    console.error('Unhandled UI error:', error, errorInfo);
+    // Swap this for a real error-reporting service (Sentry et al.) when one
+    // exists; logger.error is the single seam to change.
+    logger.error('Unhandled UI error:', error, errorInfo);
   }
 
   render() {

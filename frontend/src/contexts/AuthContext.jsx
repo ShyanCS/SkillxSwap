@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
+import logger from '../lib/logger';
 
 const AuthContext = createContext(undefined);
 
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         }
         // A 401 here is expected for signed-out visitors, not an error.
       } catch (error) {
-        console.error('Failed to restore session:', error);
+        logger.error('Failed to restore session:', error);
       } finally {
         setIsBootstrapping(false);
       }
@@ -80,7 +81,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
       }
     } catch (error) {
-      console.error('Failed to fetch user details:', error);
+      logger.error('Failed to fetch user details:', error);
     }
   };
 
@@ -93,7 +94,9 @@ export const AuthProvider = ({ children }) => {
         credentials: 'include',
       });
     } catch (e) {
-      console.warn('Logout API failed silently');
+      // The cookie is cleared client-side below regardless; a failed logout
+      // call only means the server may not have invalidated its record.
+      logger.warn('Logout API failed silently', e);
     }
     setUser(null);
   };

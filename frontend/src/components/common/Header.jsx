@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useRealtime } from '../../contexts/RealtimeContext';
+import logger from '../../lib/logger';
 import {
   Users,
   MessageCircle,
@@ -38,7 +39,7 @@ const Header = () => {
       try {
         setUnreadCount(await getUnreadCount());
       } catch (error) {
-        console.error('Failed to fetch unread notification count:', error);
+        logger.error('Failed to fetch unread notification count:', error);
       }
     };
     fetchUnread();
@@ -70,7 +71,7 @@ const Header = () => {
         const page = await getNotifications(0, 15);
         setNotifications(page.items);
       } catch (error) {
-        console.error('Failed to fetch notifications:', error);
+        logger.error('Failed to fetch notifications:', error);
       }
     }
   };
@@ -82,7 +83,7 @@ const Header = () => {
         setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
       } catch (error) {
-        console.error('Failed to mark notification as read:', error);
+        logger.error('Failed to mark notification as read:', error);
       }
     }
   };

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { API_BASE_URL } from '../config/api';
 import { useAuth } from './AuthContext';
+import logger from '../lib/logger';
 
 const RealtimeContext = createContext(undefined);
 
@@ -104,7 +105,7 @@ export const RealtimeProvider = ({ children }) => {
             handler(payload.payload);
           } catch (error) {
             // One bad subscriber must not stop the others from being notified.
-            console.error('Realtime handler failed:', error);
+            logger.error('Realtime handler failed:', error);
           }
         });
       };
