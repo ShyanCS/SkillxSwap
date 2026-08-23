@@ -18,7 +18,7 @@ import {
   Bot,
   Search,
   Bell,
-  Shield
+  Shield,
 } from 'lucide-react';
 
 const Header = () => {
@@ -52,13 +52,13 @@ const Header = () => {
   // Instant badge update when a notification is pushed.
   useEffect(() => {
     return subscribe('NOTIFICATION', (notification) => {
-      setUnreadCount(count => count + 1);
+      setUnreadCount((count) => count + 1);
       // Only prepend if the panel is open; otherwise it reloads on next open.
-      setNotifications(current => (
-        current.length === 0 || current.some(n => n.id === notification.id)
+      setNotifications((current) =>
+        current.length === 0 || current.some((n) => n.id === notification.id)
           ? current
-          : [notification, ...current]
-      ));
+          : [notification, ...current],
+      );
     });
   }, [subscribe]);
 
@@ -80,8 +80,10 @@ const Header = () => {
     if (!notification.read) {
       try {
         await markRead(notification.id);
-        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)),
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
         logger.error('Failed to mark notification as read:', error);
       }
@@ -93,7 +95,7 @@ const Header = () => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -201,9 +203,11 @@ const Header = () => {
                       Notifications
                     </div>
                     {notifications.length === 0 ? (
-                      <p className="px-4 py-6 text-sm text-gray-500 text-center">No notifications yet</p>
+                      <p className="px-4 py-6 text-sm text-gray-500 text-center">
+                        No notifications yet
+                      </p>
                     ) : (
-                      notifications.map(notification => (
+                      notifications.map((notification) => (
                         <button
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
@@ -216,9 +220,15 @@ const Header = () => {
                               <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
-                              <p className="text-xs text-gray-600 line-clamp-2">{notification.body}</p>
-                              <p className="text-xs text-gray-400 mt-1">{formatNotificationTime(notification.createdAt)}</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {notification.title}
+                              </p>
+                              <p className="text-xs text-gray-600 line-clamp-2">
+                                {notification.body}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {formatNotificationTime(notification.createdAt)}
+                              </p>
                             </div>
                           </div>
                         </button>
@@ -236,14 +246,15 @@ const Header = () => {
                 className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-50 transition-colors"
               >
                 <img
-                  src={user?.profilePictureUrl || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                  src={
+                    user?.profilePictureUrl ||
+                    'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=400'
+                  }
                   alt={user?.name}
                   className="w-8 h-8 rounded-full object-cover border border-gray-200 flex-shrink-0"
                 />
                 <div className="hidden xl:block text-left min-w-0 max-w-32">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-500 whitespace-nowrap">
                     {user?.rating > 0 ? `★ ${user.rating.toFixed(1)}` : 'No ratings yet'}
                   </p>
@@ -254,12 +265,10 @@ const Header = () => {
               {showProfileMenu && (
                 <>
                   <div className="lg:hidden fixed inset-0 bg-black bg-opacity-25 z-40" />
-                  
+
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200">
                     <div className="xl:hidden px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user?.name}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
                       <p className="text-xs text-gray-500">
                         {user?.rating > 0 ? `★ ${user.rating.toFixed(1)} rating` : 'No ratings yet'}
                       </p>
@@ -273,7 +282,7 @@ const Header = () => {
                       <Users className="w-4 h-4 mr-3" />
                       View Profile
                     </Link>
-                    
+
                     <Link
                       to="/profile-setup"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -282,7 +291,7 @@ const Header = () => {
                       <Settings className="w-4 h-4 mr-3" />
                       Settings
                     </Link>
-                    
+
                     <div className="border-t border-gray-100 mt-2 pt-2">
                       <button
                         onClick={handleLogout}

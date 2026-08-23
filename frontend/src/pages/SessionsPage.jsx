@@ -11,7 +11,7 @@ import {
   PlayCircle,
   MessageCircle,
   Plus,
-  Star
+  Star,
 } from 'lucide-react';
 import { useSession } from '../contexts/SessionContext';
 import logger from '../lib/logger';
@@ -43,7 +43,7 @@ const SessionsPage = () => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -51,7 +51,7 @@ const SessionsPage = () => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -82,7 +82,7 @@ const SessionsPage = () => {
   };
 
   const filterSessions = () => {
-    return sessions.filter(session => {
+    return sessions.filter((session) => {
       if (activeTab === 'upcoming') return session.status === 'scheduled';
       if (activeTab === 'completed') return session.status === 'completed';
       if (activeTab === 'cancelled') return session.status === 'cancelled';
@@ -116,8 +116,9 @@ const SessionsPage = () => {
 
   const SessionCard = ({ session }) => {
     const isUpcoming = new Date(session.startTime) > new Date();
-    const canJoin = session.status === 'scheduled' &&
-                   Math.abs(new Date(session.startTime) - new Date()) <= 15 * 60 * 1000; // 15 minutes
+    const canJoin =
+      session.status === 'scheduled' &&
+      Math.abs(new Date(session.startTime) - new Date()) <= 15 * 60 * 1000; // 15 minutes
 
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-shadow">
@@ -125,7 +126,10 @@ const SessionsPage = () => {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
-              src={session.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)}
+              src={
+                session.partner.profilePictureUrl ||
+                'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)
+              }
               alt={session.partner.name}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -135,15 +139,17 @@ const SessionsPage = () => {
                 <Star className="w-3 h-3 text-yellow-500 fill-current" />
                 <span>{session.partner.rating}</span>
                 <span>•</span>
-                <span className={`${
-                  session.role === 'teacher' ? 'text-green-600' : 'text-blue-600'
-                }`}>
+                <span
+                  className={`${session.role === 'teacher' ? 'text-green-600' : 'text-blue-600'}`}
+                >
                   You're the {session.role}
                 </span>
               </div>
             </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(session.status)}`}>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(session.status)}`}
+          >
             {getStatusIcon(session.status)}
             {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
           </span>
@@ -170,7 +176,9 @@ const SessionsPage = () => {
               ) : (
                 <MapPin className="w-4 h-4 text-gray-400" />
               )}
-              <span className="text-gray-600">{session.location || (session.type === 'online' ? 'Online' : '')}</span>
+              <span className="text-gray-600">
+                {session.location || (session.type === 'online' ? 'Online' : '')}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-gray-400" />
@@ -260,9 +268,7 @@ const SessionsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Sessions</h1>
-            <p className="text-gray-600">
-              Manage your scheduled and completed learning sessions
-            </p>
+            <p className="text-gray-600">Manage your scheduled and completed learning sessions</p>
           </div>
           <Link
             to="/schedule"
@@ -280,7 +286,7 @@ const SessionsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Upcoming Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {sessions.filter(s => s.status === 'scheduled').length}
+                  {sessions.filter((s) => s.status === 'scheduled').length}
                 </p>
               </div>
               <Clock className="w-8 h-8 text-blue-600" />
@@ -292,7 +298,7 @@ const SessionsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Completed Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {sessions.filter(s => s.status === 'completed').length}
+                  {sessions.filter((s) => s.status === 'completed').length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600" />
@@ -304,7 +310,7 @@ const SessionsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Teaching Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {sessions.filter(s => s.role === 'teacher').length}
+                  {sessions.filter((s) => s.role === 'teacher').length}
                 </p>
               </div>
               <User className="w-8 h-8 text-purple-600" />
@@ -316,7 +322,7 @@ const SessionsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Learning Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {sessions.filter(s => s.role === 'learner').length}
+                  {sessions.filter((s) => s.role === 'learner').length}
                 </p>
               </div>
               <Star className="w-8 h-8 text-yellow-600" />
@@ -337,7 +343,7 @@ const SessionsPage = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Upcoming ({sessions.filter(s => s.status === 'scheduled').length})
+                  Upcoming ({sessions.filter((s) => s.status === 'scheduled').length})
                 </button>
                 <button
                   onClick={() => setActiveTab('completed')}
@@ -347,7 +353,7 @@ const SessionsPage = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Completed ({sessions.filter(s => s.status === 'completed').length})
+                  Completed ({sessions.filter((s) => s.status === 'completed').length})
                 </button>
                 <button
                   onClick={() => setActiveTab('cancelled')}
@@ -357,7 +363,7 @@ const SessionsPage = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Cancelled ({sessions.filter(s => s.status === 'cancelled').length})
+                  Cancelled ({sessions.filter((s) => s.status === 'cancelled').length})
                 </button>
               </nav>
             </div>
@@ -368,21 +374,18 @@ const SessionsPage = () => {
               <p className="text-gray-500 text-center py-12">Loading sessions...</p>
             ) : filteredSessions.length > 0 ? (
               <div className="space-y-6">
-                {filteredSessions.map(session => (
+                {filteredSessions.map((session) => (
                   <SessionCard key={session.id} session={session} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No {activeTab} sessions
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No {activeTab} sessions</h3>
                 <p className="text-gray-500 mb-4">
                   {activeTab === 'upcoming'
                     ? "You don't have any upcoming sessions scheduled."
-                    : `You don't have any ${activeTab} sessions.`
-                  }
+                    : `You don't have any ${activeTab} sessions.`}
                 </p>
                 {activeTab === 'upcoming' && (
                   <Link

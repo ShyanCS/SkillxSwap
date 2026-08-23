@@ -18,14 +18,12 @@ export function createLogger({ minLevel, sink } = {}) {
   const threshold = parseLevel(minLevel ?? import.meta.env.VITE_LOG_LEVEL) ?? fallback;
   const out = sink || console;
 
-  const emit = (level) => (...args) => {
-    if (LEVELS[level] < threshold) return;
-    (out[level] || console.error.bind(console))(
-      new Date().toISOString(),
-      `[${level}]`,
-      ...args,
-    );
-  };
+  const emit =
+    (level) =>
+    (...args) => {
+      if (LEVELS[level] < threshold) return;
+      (out[level] || console.error.bind(console))(new Date().toISOString(), `[${level}]`, ...args);
+    };
 
   return { debug: emit('debug'), info: emit('info'), warn: emit('warn'), error: emit('error') };
 }

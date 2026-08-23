@@ -58,7 +58,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: formData.email, purpose:'register'}),
+        body: JSON.stringify({ email: formData.email, purpose: 'register' }),
       });
 
       const data = await response.json();
@@ -93,9 +93,9 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email: formData.email, 
-          otp: otp 
+        body: JSON.stringify({
+          email: formData.email,
+          otp: otp,
         }),
       });
 
@@ -192,13 +192,13 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <div className='flex justify-between items-center'>
+              <div className="flex justify-between items-center">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
                 </label>
-                <button 
+                <button
                   type="button"
-                  className='text-xs font-bold text-blue-600 hover:text-blue-700'
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700"
                   onClick={handleRequestOtp}
                   disabled={isRequestingOtp || isOtpVerified}
                 >
@@ -279,7 +279,10 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -299,7 +302,11 @@ const RegisterPage = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>

@@ -50,21 +50,21 @@ const AvailabilityEditor = () => {
 
   const updateSlot = (index, changes) => {
     setSaved(false);
-    setSlots(current => current.map((slot, i) => (i === index ? { ...slot, ...changes } : slot)));
+    setSlots((current) => current.map((slot, i) => (i === index ? { ...slot, ...changes } : slot)));
   };
 
   const addSlot = () => {
     setSaved(false);
-    setSlots(current => [...current, { dayOfWeek: 1, startMinute: 9 * 60, endMinute: 17 * 60 }]);
+    setSlots((current) => [...current, { dayOfWeek: 1, startMinute: 9 * 60, endMinute: 17 * 60 }]);
   };
 
   const removeSlot = (index) => {
     setSaved(false);
-    setSlots(current => current.filter((_, i) => i !== index));
+    setSlots((current) => current.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
-    const invalid = slots.find(slot => slot.endMinute <= slot.startMinute);
+    const invalid = slots.find((slot) => slot.endMinute <= slot.startMinute);
     if (invalid) {
       setError('Each window must end after it starts.');
       return;
@@ -96,8 +96,8 @@ const AvailabilityEditor = () => {
           </h3>
           <p className="text-sm text-gray-500 mt-1">
             When you&apos;re open to sessions. Times are in your timezone
-            {timezone ? ` (${timezone})` : ''}, and partners in other timezones see
-            the equivalent hours in theirs.
+            {timezone ? ` (${timezone})` : ''}, and partners in other timezones see the equivalent
+            hours in theirs.
           </p>
         </div>
       </div>
@@ -117,14 +117,19 @@ const AvailabilityEditor = () => {
       ) : (
         <div className="space-y-3 mb-4">
           {slots.map((slot, index) => (
-            <div key={index} className="flex flex-wrap items-center gap-3 border border-gray-200 rounded-lg p-3">
+            <div
+              key={index}
+              className="flex flex-wrap items-center gap-3 border border-gray-200 rounded-lg p-3"
+            >
               <select
                 value={slot.dayOfWeek}
                 onChange={(e) => updateSlot(index, { dayOfWeek: Number(e.target.value) })}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               >
-                {DAYS.map(day => (
-                  <option key={day.value} value={day.value}>{day.label}</option>
+                {DAYS.map((day) => (
+                  <option key={day.value} value={day.value}>
+                    {day.label}
+                  </option>
                 ))}
               </select>
 

@@ -80,12 +80,12 @@ export const SkillsProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/skills/${skillId}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(updatedData)
+        body: JSON.stringify(updatedData),
       });
 
       if (!res.ok) {
@@ -94,7 +94,6 @@ export const SkillsProvider = ({ children }) => {
 
       const data = await res.json();
       return data;
-
     } catch (error) {
       logger.error('Error updating skill:', error);
       throw error;
@@ -137,4 +136,4 @@ export const SkillsProvider = ({ children }) => {
       {children}
     </SkillsContext.Provider>
   );
-}; 
+};

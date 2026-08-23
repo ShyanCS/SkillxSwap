@@ -9,7 +9,7 @@ import {
   Ban,
   UserCheck,
   Trash2,
-  Search
+  Search,
 } from 'lucide-react';
 import { useAdmin } from '../contexts/AdminContext';
 import ErrorBanner from '../components/common/ErrorBanner';
@@ -17,7 +17,16 @@ import ErrorBanner from '../components/common/ErrorBanner';
 const USERS_PER_PAGE = 20;
 
 const AdminPage = () => {
-  const { getStats, getUsers, suspendUser, activateUser, getSkills, deleteSkill, getReports, resolveReport } = useAdmin();
+  const {
+    getStats,
+    getUsers,
+    suspendUser,
+    activateUser,
+    getSkills,
+    deleteSkill,
+    getReports,
+    resolveReport,
+  } = useAdmin();
   const [activeTab, setActiveTab] = useState('users');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -35,14 +44,20 @@ const AdminPage = () => {
   const loadUsers = async (page = userPage, q = userQuery) => {
     const data = await getUsers({ q, page, size: USERS_PER_PAGE });
     setUsers(data.items);
-    setUserPageInfo({ page: data.page, totalPages: data.totalPages, totalElements: data.totalElements });
+    setUserPageInfo({
+      page: data.page,
+      totalPages: data.totalPages,
+      totalElements: data.totalElements,
+    });
     setUserPage(data.page);
   };
 
   const loadAll = async () => {
     try {
       const [statsData, skillsData, reportsData] = await Promise.all([
-        getStats(), getSkills(), getReports(),
+        getStats(),
+        getSkills(),
+        getReports(),
       ]);
       setStats(statsData);
       setSkills(skillsData);
@@ -62,7 +77,7 @@ const AdminPage = () => {
   // Debounced so typing a search doesn't fire a request per keystroke.
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadUsers(0, userQuery).catch(err => setError(err.message || 'Search failed'));
+      loadUsers(0, userQuery).catch((err) => setError(err.message || 'Search failed'));
     }, 300);
     return () => clearTimeout(timer);
   }, [userQuery]);
@@ -104,12 +119,19 @@ const AdminPage = () => {
     }
   };
 
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 pt-8 text-center text-gray-500">Loading admin panel...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 pt-8 text-center text-gray-500">
+        Loading admin panel...
+      </div>
+    );
   }
 
   if (error) {
@@ -121,14 +143,12 @@ const AdminPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-          <p className="text-gray-600">Platform governance, users, skills, and complaint management</p>
+          <p className="text-gray-600">
+            Platform governance, users, skills, and complaint management
+          </p>
         </div>
 
-        <ErrorBanner
-          message={actionError}
-          onDismiss={() => setActionError('')}
-          className="mb-6"
-        />
+        <ErrorBanner message={actionError} onDismiss={() => setActionError('')} className="mb-6" />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -180,7 +200,7 @@ const AdminPage = () => {
         <div className="bg-white rounded-xl shadow-sm mb-8">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              {['users', 'skills', 'reports'].map(tab => (
+              {['users', 'skills', 'reports'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -210,64 +230,77 @@ const AdminPage = () => {
                   />
                 </div>
                 <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-500 border-b border-gray-200">
-                      <th className="pb-3 pr-4">Name</th>
-                      <th className="pb-3 pr-4">Email</th>
-                      <th className="pb-3 pr-4">Role</th>
-                      <th className="pb-3 pr-4">Rating</th>
-                      <th className="pb-3 pr-4">Joined</th>
-                      <th className="pb-3 pr-4">Status</th>
-                      <th className="pb-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(u => (
-                      <tr key={u.id} className="border-b border-gray-100">
-                        <td className="py-3 pr-4 font-medium text-gray-900">{u.name}</td>
-                        <td className="py-3 pr-4 text-gray-600">{u.email}</td>
-                        <td className="py-3 pr-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'}`}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4 text-gray-600">{u.rating.toFixed(1)}</td>
-                        <td className="py-3 pr-4 text-gray-600">{formatDate(u.createdAt)}</td>
-                        <td className="py-3 pr-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${u.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {u.enabled ? 'Active' : 'Suspended'}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <button
-                            onClick={() => handleToggleUser(u)}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                              u.enabled
-                                ? 'border border-red-300 text-red-700 hover:bg-red-50'
-                                : 'bg-green-600 hover:bg-green-700 text-white'
-                            }`}
-                          >
-                            {u.enabled ? <><Ban className="w-3 h-3" /> Suspend</> : <><UserCheck className="w-3 h-3" /> Activate</>}
-                          </button>
-                        </td>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b border-gray-200">
+                        <th className="pb-3 pr-4">Name</th>
+                        <th className="pb-3 pr-4">Email</th>
+                        <th className="pb-3 pr-4">Role</th>
+                        <th className="pb-3 pr-4">Rating</th>
+                        <th className="pb-3 pr-4">Joined</th>
+                        <th className="pb-3 pr-4">Status</th>
+                        <th className="pb-3"></th>
                       </tr>
-                    ))}
-                    {users.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="py-6 text-center text-gray-500">
-                          {userQuery ? `No users matching "${userQuery}"` : 'No users yet'}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {users.map((u) => (
+                        <tr key={u.id} className="border-b border-gray-100">
+                          <td className="py-3 pr-4 font-medium text-gray-900">{u.name}</td>
+                          <td className="py-3 pr-4 text-gray-600">{u.email}</td>
+                          <td className="py-3 pr-4">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'}`}
+                            >
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4 text-gray-600">{u.rating.toFixed(1)}</td>
+                          <td className="py-3 pr-4 text-gray-600">{formatDate(u.createdAt)}</td>
+                          <td className="py-3 pr-4">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${u.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                            >
+                              {u.enabled ? 'Active' : 'Suspended'}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <button
+                              onClick={() => handleToggleUser(u)}
+                              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                                u.enabled
+                                  ? 'border border-red-300 text-red-700 hover:bg-red-50'
+                                  : 'bg-green-600 hover:bg-green-700 text-white'
+                              }`}
+                            >
+                              {u.enabled ? (
+                                <>
+                                  <Ban className="w-3 h-3" /> Suspend
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="w-3 h-3" /> Activate
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {users.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-gray-500">
+                            {userQuery ? `No users matching "${userQuery}"` : 'No users yet'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
 
                 {userPageInfo.totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4 text-sm">
                     <span className="text-gray-500">
-                      Page {userPageInfo.page + 1} of {userPageInfo.totalPages} &middot; {userPageInfo.totalElements} users
+                      Page {userPageInfo.page + 1} of {userPageInfo.totalPages} &middot;{' '}
+                      {userPageInfo.totalElements} users
                     </span>
                     <div className="flex gap-2">
                       <button
@@ -292,8 +325,11 @@ const AdminPage = () => {
 
             {activeTab === 'skills' && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {skills.map(skill => (
-                  <div key={skill.id} className="border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                {skills.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className="border border-gray-200 rounded-lg p-3 flex items-center justify-between"
+                  >
                     <span className="text-sm font-medium text-gray-900">{skill.name}</span>
                     <button
                       onClick={() => handleDeleteSkill(skill.id)}
@@ -312,7 +348,7 @@ const AdminPage = () => {
                 {reports.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No reports have been filed.</p>
                 ) : (
-                  reports.map(report => (
+                  reports.map((report) => (
                     <div key={report.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>
@@ -322,13 +358,19 @@ const AdminPage = () => {
                           </p>
                           <p className="text-xs text-gray-500">{formatDate(report.createdAt)}</p>
                         </div>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          report.status === 'Open' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            report.status === 'Open'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}
+                        >
                           {report.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg mb-3">{report.reason}</p>
+                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg mb-3">
+                        {report.reason}
+                      </p>
                       {report.status === 'Open' && (
                         <button
                           onClick={() => handleResolveReport(report.id)}

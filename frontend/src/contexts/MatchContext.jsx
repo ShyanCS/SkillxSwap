@@ -52,7 +52,7 @@ export const MatchProvider = ({ children }) => {
     }
   };
 
-    const getSentRequest = async () => {
+  const getSentRequest = async () => {
     setIsLoading(true);
     try {
       return await apiGet('/match-requests/sent');
@@ -61,7 +61,7 @@ export const MatchProvider = ({ children }) => {
     }
   };
 
-    const getRecievedRequest = async () => {
+  const getRecievedRequest = async () => {
     setIsLoading(true);
     try {
       return await apiGet('/match-requests/incoming');

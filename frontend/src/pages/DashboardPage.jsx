@@ -11,14 +11,38 @@ import {
   Coins,
   Plus,
   Bell,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 const QUICK_ACTIONS = [
-  { title: 'Find Matches', description: 'Discover new learning partners', icon: Users, color: 'bg-blue-500', link: '/matching' },
-  { title: 'Add Skill', description: 'Offer a new skill to teach', icon: Plus, color: 'bg-green-500', link: '/skills' },
-  { title: 'Schedule Session', description: 'Book a learning session', icon: Calendar, color: 'bg-purple-500', link: '/schedule' },
-  { title: 'View Messages', description: 'Check your conversations', icon: MessageCircle, color: 'bg-orange-500', link: '/messages' },
+  {
+    title: 'Find Matches',
+    description: 'Discover new learning partners',
+    icon: Users,
+    color: 'bg-blue-500',
+    link: '/matching',
+  },
+  {
+    title: 'Add Skill',
+    description: 'Offer a new skill to teach',
+    icon: Plus,
+    color: 'bg-green-500',
+    link: '/skills',
+  },
+  {
+    title: 'Schedule Session',
+    description: 'Book a learning session',
+    icon: Calendar,
+    color: 'bg-purple-500',
+    link: '/schedule',
+  },
+  {
+    title: 'View Messages',
+    description: 'Check your conversations',
+    icon: MessageCircle,
+    color: 'bg-orange-500',
+    link: '/messages',
+  },
 ];
 
 const activityIcon = (type) => {
@@ -79,13 +103,37 @@ const DashboardPage = () => {
   const recentActivity = data?.recentActivity ?? [];
 
   const statCards = [
-    { label: 'Skill Credits', value: stats?.creditBalance, icon: Coins, tint: 'bg-yellow-100', fg: 'text-yellow-600', hint: 'Earned by teaching' },
-    { label: 'Matches', value: stats?.activeMatches, icon: Users, tint: 'bg-blue-100', fg: 'text-blue-600', hint: 'Accepted connections' },
-    { label: 'Completed Sessions', value: stats?.completedSessions, icon: CheckCircle, tint: 'bg-green-100', fg: 'text-green-600', hint: 'Taught or learned' },
+    {
+      label: 'Skill Credits',
+      value: stats?.creditBalance,
+      icon: Coins,
+      tint: 'bg-yellow-100',
+      fg: 'text-yellow-600',
+      hint: 'Earned by teaching',
+    },
+    {
+      label: 'Matches',
+      value: stats?.activeMatches,
+      icon: Users,
+      tint: 'bg-blue-100',
+      fg: 'text-blue-600',
+      hint: 'Accepted connections',
+    },
+    {
+      label: 'Completed Sessions',
+      value: stats?.completedSessions,
+      icon: CheckCircle,
+      tint: 'bg-green-100',
+      fg: 'text-green-600',
+      hint: 'Taught or learned',
+    },
     {
       label: 'Skills Exchange',
       value: stats ? `${stats.skillsOffered}/${stats.skillsRequested}` : undefined,
-      icon: BookOpen, tint: 'bg-purple-100', fg: 'text-purple-600', hint: 'Offering/Learning',
+      icon: BookOpen,
+      tint: 'bg-purple-100',
+      fg: 'text-purple-600',
+      hint: 'Offering/Learning',
     },
   ];
 
@@ -110,7 +158,10 @@ const DashboardPage = () => {
               </div>
               <div className="hidden md:block">
                 <img
-                  src={user?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}`}
+                  src={
+                    user?.profilePictureUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}`
+                  }
                   alt={user?.name}
                   className="w-20 h-20 rounded-full border-4 border-white/20 object-cover"
                 />
@@ -132,9 +183,7 @@ const DashboardPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">{label}</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {loading ? '—' : value ?? 0}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{loading ? '—' : (value ?? 0)}</p>
                 </div>
                 <div className={`${tint} p-3 rounded-full`}>
                   <Icon className={`w-6 h-6 ${fg}`} />
@@ -171,7 +220,10 @@ const DashboardPage = () => {
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Upcoming Sessions</h2>
-                <Link to="/sessions" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                <Link
+                  to="/sessions"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
                   View all
                 </Link>
               </div>
@@ -181,9 +233,15 @@ const DashboardPage = () => {
               ) : upcomingSessions.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingSessions.map((session) => (
-                    <div key={session.id} className="flex items-center gap-4 p-4 rounded-lg border border-gray-100">
+                    <div
+                      key={session.id}
+                      className="flex items-center gap-4 p-4 rounded-lg border border-gray-100"
+                    >
                       <img
-                        src={session.partner.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.partner.name)}`}
+                        src={
+                          session.partner.profilePictureUrl ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(session.partner.name)}`
+                        }
                         alt={session.partner.name}
                         className="w-12 h-12 rounded-full object-cover"
                       />
@@ -192,10 +250,16 @@ const DashboardPage = () => {
                         <p className="text-sm text-gray-500">with {session.partner.name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{sessionTime(session.startTime)}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          session.role === 'teacher' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <p className="text-sm font-medium text-gray-900">
+                          {sessionTime(session.startTime)}
+                        </p>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            session.role === 'teacher'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
                           {session.role === 'teacher' ? 'Teaching' : 'Learning'}
                         </span>
                       </div>
@@ -206,7 +270,10 @@ const DashboardPage = () => {
                 <div className="text-center py-8">
                   <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 mb-3">No upcoming sessions scheduled.</p>
-                  <Link to="/schedule" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <Link
+                    to="/schedule"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
                     Schedule one →
                   </Link>
                 </div>

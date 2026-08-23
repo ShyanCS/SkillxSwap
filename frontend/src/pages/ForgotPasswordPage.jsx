@@ -107,7 +107,8 @@ const ForgotPasswordPage = () => {
     }
   };
 
-  const getSubmitHandler = () => isOtpVerified ? handleResetPassword : showOtpInput ? handleVerifyOtp : handleRequestOtp;
+  const getSubmitHandler = () =>
+    isOtpVerified ? handleResetPassword : showOtpInput ? handleVerifyOtp : handleRequestOtp;
 
   const getSubmitButtonText = () => {
     if (isLoading) return 'Resetting Password...';
@@ -141,11 +142,21 @@ const ForgotPasswordPage = () => {
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <form onSubmit={getSubmitHandler()} className="space-y-6">
-            {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">{error}</div>}
-            {success && <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">{success}</div>}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+                {success}
+              </div>
+            )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -164,7 +175,9 @@ const ForgotPasswordPage = () => {
 
             {showOtpInput && !isOtpVerified && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter OTP
+                </label>
                 <input
                   id="otp"
                   name="otp"
@@ -175,14 +188,21 @@ const ForgotPasswordPage = () => {
                   placeholder="Enter 6-digit OTP"
                   maxLength="6"
                 />
-                <p className="text-xs text-gray-500 mt-2">Check your email for the 6-digit OTP code</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Check your email for the 6-digit OTP code
+                </p>
               </div>
             )}
 
             {isOtpVerified && (
               <>
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                  <label
+                    htmlFor="newPassword"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    New Password
+                  </label>
                   <input
                     id="newPassword"
                     name="newPassword"
@@ -196,7 +216,12 @@ const ForgotPasswordPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Confirm New Password
+                  </label>
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -221,7 +246,10 @@ const ForgotPasswordPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <Link to="/login" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+            <Link
+              to="/login"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Sign In
             </Link>

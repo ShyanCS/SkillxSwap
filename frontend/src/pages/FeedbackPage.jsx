@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Star,
-  Clock,
-  Calendar,
-  Send,
-  CheckCircle,
-  MessageSquare
-} from 'lucide-react';
+import { Star, Clock, Calendar, Send, CheckCircle, MessageSquare } from 'lucide-react';
 import { useReview } from '../contexts/ReviewContext';
 import ErrorBanner from '../components/common/ErrorBanner';
 import logger from '../lib/logger';
@@ -27,10 +20,7 @@ const FeedbackPage = () => {
 
   const fetchData = async () => {
     try {
-      const [sessions, history] = await Promise.all([
-        getReviewableSessions(),
-        getGivenReviews(),
-      ]);
+      const [sessions, history] = await Promise.all([getReviewableSessions(), getGivenReviews()]);
       setPendingSessions(sessions);
       setFeedbackHistory(history);
     } catch (error) {
@@ -50,7 +40,7 @@ const FeedbackPage = () => {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -58,7 +48,7 @@ const FeedbackPage = () => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -96,14 +86,16 @@ const FeedbackPage = () => {
             onMouseEnter={() => !readonly && setHoverRating(star)}
             onMouseLeave={() => !readonly && setHoverRating(0)}
             className={`text-2xl transition-colors ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} ${
-              star <= (readonly ? value : (hoverRating || rating))
+              star <= (readonly ? value : hoverRating || rating)
                 ? 'text-yellow-500'
                 : 'text-gray-300'
             }`}
           >
-            <Star className={`w-8 h-8 ${
-              star <= (readonly ? value : (hoverRating || rating)) ? 'fill-current' : ''
-            }`} />
+            <Star
+              className={`w-8 h-8 ${
+                star <= (readonly ? value : hoverRating || rating) ? 'fill-current' : ''
+              }`}
+            />
           </button>
         ))}
       </div>
@@ -122,16 +114,17 @@ const FeedbackPage = () => {
     >
       <div className="flex items-center gap-3 mb-3">
         <img
-          src={session.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)}
+          src={
+            session.partner.profilePictureUrl ||
+            'https://ui-avatars.com/api/?name=' + encodeURIComponent(session.partner.name)
+          }
           alt={session.partner.name}
           className="w-12 h-12 rounded-full object-cover"
         />
         <div className="flex-1">
           <h3 className="font-medium text-gray-900">{session.partner.name}</h3>
           <div className="text-sm text-gray-500">
-            <span className={`${
-              session.role === 'teacher' ? 'text-green-600' : 'text-blue-600'
-            }`}>
+            <span className={`${session.role === 'teacher' ? 'text-green-600' : 'text-blue-600'}`}>
               You were the {session.role}
             </span>
           </div>
@@ -148,14 +141,14 @@ const FeedbackPage = () => {
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            <span>{formatTime(session.startTime)} - {formatTime(session.endTime)}</span>
+            <span>
+              {formatTime(session.startTime)} - {formatTime(session.endTime)}
+            </span>
           </div>
         </div>
       </div>
 
-      {session.notes && (
-        <p className="text-sm text-gray-600 italic">"{session.notes}"</p>
-      )}
+      {session.notes && <p className="text-sm text-gray-600 italic">"{session.notes}"</p>}
     </button>
   );
 
@@ -200,9 +193,11 @@ const FeedbackPage = () => {
                 <p className="text-sm text-gray-600">Average Rating Given</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {feedbackHistory.length > 0
-                    ? (feedbackHistory.reduce((sum, f) => sum + f.rating, 0) / feedbackHistory.length).toFixed(1)
-                    : '0.0'
-                  }
+                    ? (
+                        feedbackHistory.reduce((sum, f) => sum + f.rating, 0) /
+                        feedbackHistory.length
+                      ).toFixed(1)
+                    : '0.0'}
                 </p>
               </div>
               <Star className="w-8 h-8 text-yellow-600" />
@@ -216,11 +211,7 @@ const FeedbackPage = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-6">Give Feedback</h2>
 
-            <ErrorBanner
-              message={formError}
-              onDismiss={() => setFormError('')}
-              className="mb-4"
-            />
+            <ErrorBanner message={formError} onDismiss={() => setFormError('')} className="mb-4" />
 
             {loading ? (
               <p className="text-gray-500">Loading...</p>
@@ -230,7 +221,7 @@ const FeedbackPage = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-4">Select a Session</h3>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {pendingSessions.map(session => (
+                    {pendingSessions.map((session) => (
                       <SessionCard
                         key={session.id}
                         session={session}
@@ -302,9 +293,7 @@ const FeedbackPage = () => {
             ) : (
               <div className="text-center py-12">
                 <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  All caught up!
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
                 <p className="text-gray-500">
                   You've provided feedback for all your completed sessions.
                 </p>
@@ -318,21 +307,21 @@ const FeedbackPage = () => {
 
             {feedbackHistory.length > 0 ? (
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {feedbackHistory.map(feedback => (
+                {feedbackHistory.map((feedback) => (
                   <div key={feedback.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <img
-                        src={feedback.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(feedback.partner.name)}
+                        src={
+                          feedback.partner.profilePictureUrl ||
+                          'https://ui-avatars.com/api/?name=' +
+                            encodeURIComponent(feedback.partner.name)
+                        }
                         alt={feedback.partner.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {feedback.partner.name}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {feedback.skill.name}
-                        </p>
+                        <h4 className="font-medium text-gray-900">{feedback.partner.name}</h4>
+                        <p className="text-sm text-gray-600">{feedback.skill.name}</p>
                       </div>
                       <div className="text-right">
                         <StarRating value={feedback.rating} readonly />
@@ -353,9 +342,7 @@ const FeedbackPage = () => {
             ) : (
               <div className="text-center py-12">
                 <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No feedback given yet
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No feedback given yet</h3>
                 <p className="text-gray-500">
                   Your feedback history will appear here after you complete sessions.
                 </p>

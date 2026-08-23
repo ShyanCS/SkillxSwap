@@ -1,19 +1,19 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { API_BASE_URL } from "../config/api";
-import { Plus, X, User, MapPin, Clock, BookOpen, Target } from "lucide-react";
-import AvailabilityEditor from "../components/profile/AvailabilityEditor";
-import logger from "../lib/logger";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
+import { Plus, X, User, MapPin, Clock, BookOpen, Target } from 'lucide-react';
+import AvailabilityEditor from '../components/profile/AvailabilityEditor';
+import logger from '../lib/logger';
 
 const ProfileSetupPage = () => {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState({
-    profilePictureUrl: user?.profilePictureUrl || "",
-    bio: user?.bio || "",
-    region: user?.region || "",
-    timezone: user?.timezone || "",
+    profilePictureUrl: user?.profilePictureUrl || '',
+    bio: user?.bio || '',
+    region: user?.region || '',
+    timezone: user?.timezone || '',
   });
 
   // Helper functions
@@ -38,28 +38,11 @@ const ProfileSetupPage = () => {
   const isLastStep = () => currentStepIndex === totalSteps - 1;
 
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
+  const [uploadError, setUploadError] = useState('');
 
-  const regions = [
-    "North America",
-    "South America",
-    "Europe",
-    "Asia",
-    "Africa",
-    "Oceania",
-  ];
+  const regions = ['North America', 'South America', 'Europe', 'Asia', 'Africa', 'Oceania'];
 
-  const timezones = [
-    "EST",
-    "CST",
-    "MST",
-    "PST",
-    "GMT",
-    "CET",
-    "JST",
-    "AEST",
-    "IST",
-  ];
+  const timezones = ['EST', 'CST', 'MST', 'PST', 'GMT', 'CET', 'JST', 'AEST', 'IST'];
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -72,16 +55,13 @@ const ProfileSetupPage = () => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    setUploadError("");
+    setUploadError('');
 
     try {
-      const apiRes = await fetch(
-        `${API_BASE_URL}/api/profile/cloudinary-sign`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const apiRes = await fetch(`${API_BASE_URL}/api/profile/cloudinary-sign`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
       if (!apiRes.ok) {
         throw new Error(`Failed to get upload signature: ${apiRes.status}`);
@@ -90,29 +70,29 @@ const ProfileSetupPage = () => {
       const signData = await apiRes.json();
 
       const form = new FormData();
-      form.append("file", file);
-      form.append("api_key", signData.apiKey);
-      form.append("timestamp", signData.timestamp);
-      form.append("signature", signData.signature);
-      form.append("folder", signData.folder);
+      form.append('file', file);
+      form.append('api_key', signData.apiKey);
+      form.append('timestamp', signData.timestamp);
+      form.append('signature', signData.signature);
+      form.append('folder', signData.folder);
 
       const cloudinaryRes = await fetch(
         `https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`,
         {
-          method: "POST",
+          method: 'POST',
           body: form,
-        }
+        },
       );
 
       const data = await cloudinaryRes.json();
-      if (!data.secure_url) throw new Error("Upload failed");
+      if (!data.secure_url) throw new Error('Upload failed');
 
       setFormData((prev) => ({
         ...prev,
         profilePictureUrl: data.secure_url,
       }));
     } catch (err) {
-      setUploadError("Could not upload image. Try again.");
+      setUploadError('Could not upload image. Try again.');
       logger.error('Profile photo upload failed:', err);
     } finally {
       setUploading(false);
@@ -122,7 +102,7 @@ const ProfileSetupPage = () => {
   const handleSubmit = async () => {
     try {
       await updateProfile(formData);
-      navigate("/dashboard");
+      navigate('/dashboard');
     } catch (error) {
       logger.error('Profile setup error:', error);
     }
@@ -132,15 +112,10 @@ const ProfileSetupPage = () => {
     <div className="space-y-6">
       {/* Profile Picture */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Profile Picture
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
         <div className="flex items-center space-x-4">
           <img
-            src={
-              formData.profilePictureUrl ||
-              "https://ui-avatars.com/api/?name=User"
-            }
+            src={formData.profilePictureUrl || 'https://ui-avatars.com/api/?name=User'}
             alt="Profile"
             className="w-20 h-20 rounded-full object-cover border"
           />
@@ -150,22 +125,16 @@ const ProfileSetupPage = () => {
             onChange={handleProfileImageChange}
             className="block text-sm text-gray-600"
           />
-          {uploading && (
-            <span className="text-xs text-blue-600">Uploading...</span>
-          )}
+          {uploading && <span className="text-xs text-blue-600">Uploading...</span>}
         </div>
-        {uploadError && (
-          <p className="text-xs text-red-500 mt-1">{uploadError}</p>
-        )}
+        {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Bio
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
         <textarea
           value={formData.bio}
-          onChange={(e) => handleInputChange("bio", e.target.value)}
+          onChange={(e) => handleInputChange('bio', e.target.value)}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Tell us about yourself, your interests, and what you're passionate about..."
@@ -174,12 +143,10 @@ const ProfileSetupPage = () => {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Region
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
           <select
             value={formData.region}
-            onChange={(e) => handleInputChange("region", e.target.value)}
+            onChange={(e) => handleInputChange('region', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Select a region</option>
@@ -192,12 +159,10 @@ const ProfileSetupPage = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Timezone
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
           <select
             value={formData.timezone}
-            onChange={(e) => handleInputChange("timezone", e.target.value)}
+            onChange={(e) => handleInputChange('timezone', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Select a timezone</option>
@@ -218,9 +183,7 @@ const ProfileSetupPage = () => {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Complete Your Profile
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Complete Your Profile</h1>
             <span className="text-sm text-gray-500">
               Step {currentStepIndex + 1} of {totalSteps}
             </span>
@@ -238,9 +201,7 @@ const ProfileSetupPage = () => {
         {/* Step Icons */}
         <div className="flex justify-center mb-8">
           <div className="flex space-x-8">
-            <div
-              className={`flex flex-col items-center text-blue-600`}
-            >
+            <div className={`flex flex-col items-center text-blue-600`}>
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 text-white`}
               >

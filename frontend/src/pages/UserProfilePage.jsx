@@ -12,7 +12,7 @@ import {
   Calendar,
   MessageCircle,
   ArrowLeft,
-  ShieldAlert
+  ShieldAlert,
 } from 'lucide-react';
 
 const UserProfilePage = () => {
@@ -65,7 +65,9 @@ const UserProfilePage = () => {
       // Offer every skill of mine this person wants, and ask for every skill
       // of theirs I want -- the same reciprocal basis the matching page uses.
       const theirOfferedIds = profile.skillsOffered.map((s) => s.id);
-      const mySkillsRes = await fetch(`${API_BASE_URL}/api/skills/get?type=offer`, { credentials: 'include' });
+      const mySkillsRes = await fetch(`${API_BASE_URL}/api/skills/get?type=offer`, {
+        credentials: 'include',
+      });
       const myOffered = await mySkillsRes.json();
 
       if (!theirOfferedIds.length || !myOffered.length) {
@@ -73,7 +75,11 @@ const UserProfilePage = () => {
         return;
       }
 
-      await sendMatchRequest(Number(userId), theirOfferedIds, myOffered.map((s) => s.id));
+      await sendMatchRequest(
+        Number(userId),
+        theirOfferedIds,
+        myOffered.map((s) => s.id),
+      );
       setAlreadyRequested(true);
       setActionMessage('Match request sent.');
     } catch (err) {
@@ -106,14 +112,20 @@ const UserProfilePage = () => {
     iso ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 pt-16 text-center text-gray-500">Loading profile…</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16 text-center text-gray-500">
+        Loading profile…
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16 text-center">
         <p className="text-red-600 mb-4">{error}</p>
-        <Link to="/matching" className="text-blue-600 hover:text-blue-700 font-medium">← Back to matching</Link>
+        <Link to="/matching" className="text-blue-600 hover:text-blue-700 font-medium">
+          ← Back to matching
+        </Link>
       </div>
     );
   }
@@ -121,7 +133,10 @@ const UserProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-4">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link to="/matching" className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm mb-4">
+        <Link
+          to="/matching"
+          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm mb-4"
+        >
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
 
@@ -129,7 +144,10 @@ const UserProfilePage = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row md:items-start gap-6">
             <img
-              src={profile.profilePictureUrl || `https://ui-avatars.com/api/?size=160&name=${encodeURIComponent(profile.name)}`}
+              src={
+                profile.profilePictureUrl ||
+                `https://ui-avatars.com/api/?size=160&name=${encodeURIComponent(profile.name)}`
+              }
               alt={profile.name}
               className="w-24 h-24 rounded-full object-cover"
             />
@@ -145,10 +163,22 @@ const UserProfilePage = () => {
               </div>
               {profile.bio && <p className="text-gray-600 mb-3">{profile.bio}</p>}
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                {profile.region && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{profile.region}</span>}
-                {profile.timezone && <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{profile.timezone}</span>}
-                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />
-                  {profile.completedSessions} session{profile.completedSessions === 1 ? '' : 's'} completed
+                {profile.region && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {profile.region}
+                  </span>
+                )}
+                {profile.timezone && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {profile.timezone}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {profile.completedSessions} session{profile.completedSessions === 1 ? '' : 's'}{' '}
+                  completed
                 </span>
                 <span>Member since {formatDate(profile.joinedAt)}</span>
               </div>
@@ -160,7 +190,9 @@ const UserProfilePage = () => {
                   onClick={handleSendRequest}
                   disabled={alreadyRequested || sending}
                   className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${
-                    alreadyRequested ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                    alreadyRequested
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
                   {alreadyRequested ? 'Request Sent' : sending ? 'Sending…' : 'Send Match Request'}
@@ -200,12 +232,20 @@ const UserProfilePage = () => {
                 placeholder="Describe what happened…"
               />
               <div className="flex gap-2 mt-2">
-                <button onClick={handleReport} disabled={!reportReason.trim()}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg text-sm">
+                <button
+                  onClick={handleReport}
+                  disabled={!reportReason.trim()}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg text-sm"
+                >
                   Submit report
                 </button>
-                <button onClick={() => { setReporting(false); setReportReason(''); }}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                <button
+                  onClick={() => {
+                    setReporting(false);
+                    setReportReason('');
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                >
                   Cancel
                 </button>
               </div>
@@ -229,11 +269,18 @@ const UserProfilePage = () => {
                         {skill.proficiencyLevel}
                       </span>
                     </div>
-                    {skill.description && <p className="text-sm text-gray-600">{skill.description}</p>}
+                    {skill.description && (
+                      <p className="text-sm text-gray-600">{skill.description}</p>
+                    )}
                     {skill.availability?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {skill.availability.map((slot) => (
-                          <span key={slot} className="bg-white text-gray-600 px-2 py-0.5 rounded text-xs border">{slot}</span>
+                          <span
+                            key={slot}
+                            className="bg-white text-gray-600 px-2 py-0.5 rounded text-xs border"
+                          >
+                            {slot}
+                          </span>
                         ))}
                       </div>
                     )}
@@ -260,7 +307,9 @@ const UserProfilePage = () => {
                         Target: {skill.desiredProficiency}
                       </span>
                     </div>
-                    {skill.description && <p className="text-sm text-gray-600">{skill.description}</p>}
+                    {skill.description && (
+                      <p className="text-sm text-gray-600">{skill.description}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -281,7 +330,10 @@ const UserProfilePage = () => {
                     <span className="font-medium text-gray-900">{review.reviewerName}</span>
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'}`} />
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${i < review.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
+                        />
                       ))}
                     </div>
                   </div>

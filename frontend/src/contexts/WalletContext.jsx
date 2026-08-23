@@ -30,8 +30,6 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider value={{ getWallet, isLoading }}>
-      {children}
-    </WalletContext.Provider>
+    <WalletContext.Provider value={{ getWallet, isLoading }}>{children}</WalletContext.Provider>
   );
 };

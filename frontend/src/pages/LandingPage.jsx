@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Users, 
-  Brain, 
-  Star, 
-  ArrowRight, 
-  CheckCircle, 
+import {
+  Users,
+  Brain,
+  Star,
+  ArrowRight,
+  CheckCircle,
   MessageCircle,
   Calendar,
-  Award
+  Award,
 } from 'lucide-react';
 
 const LandingPage = () => {
@@ -16,17 +16,20 @@ const LandingPage = () => {
     {
       icon: Brain,
       title: 'AI-Powered Matching',
-      description: 'Our intelligent algorithm finds perfect learning partners based on your skills, goals, and preferences.',
+      description:
+        'Our intelligent algorithm finds perfect learning partners based on your skills, goals, and preferences.',
     },
     {
       icon: Users,
       title: 'Community-Driven',
-      description: 'Join a vibrant community of learners and teachers sharing knowledge through skill exchange.',
+      description:
+        'Join a vibrant community of learners and teachers sharing knowledge through skill exchange.',
     },
     {
       icon: Star,
       title: 'Reputation System',
-      description: 'Build trust through our karma-based reputation system that ensures quality interactions.',
+      description:
+        'Build trust through our karma-based reputation system that ensures quality interactions.',
     },
     {
       icon: MessageCircle,
@@ -36,7 +39,8 @@ const LandingPage = () => {
     {
       icon: Calendar,
       title: 'Session Scheduling',
-      description: 'Easily schedule and manage learning sessions with built-in calendar integration.',
+      description:
+        'Easily schedule and manage learning sessions with built-in calendar integration.',
     },
     {
       icon: Award,
@@ -49,20 +53,26 @@ const LandingPage = () => {
     {
       name: 'Sarah Chen',
       role: 'Frontend Developer',
-      image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quote: 'SkillSwap helped me learn React in exchange for teaching design principles. The AI matching was spot-on!',
+      image:
+        'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
+      quote:
+        'SkillSwap helped me learn React in exchange for teaching design principles. The AI matching was spot-on!',
     },
     {
       name: 'Miguel Rodriguez',
       role: 'Data Scientist',
-      image: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quote: 'I taught Python and learned digital marketing. The community is incredibly supportive and knowledgeable.',
+      image:
+        'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400',
+      quote:
+        'I taught Python and learned digital marketing. The community is incredibly supportive and knowledgeable.',
     },
     {
       name: 'Emma Thompson',
       role: 'Product Manager',
-      image: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quote: 'The karma system ensures quality interactions. I\'ve made lasting connections while learning new skills.',
+      image:
+        'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400',
+      quote:
+        "The karma system ensures quality interactions. I've made lasting connections while learning new skills.",
     },
   ];
 
@@ -103,12 +113,14 @@ const LandingPage = () => {
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Exchange Skills,
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {' '}Expand Knowledge
+                {' '}
+                Expand Knowledge
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Join the future of learning where AI connects you with perfect learning partners. 
-              Teach what you know, learn what you need, all through our intelligent skill exchange platform.
+              Join the future of learning where AI connects you with perfect learning partners.
+              Teach what you know, learn what you need, all through our intelligent skill exchange
+              platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -136,9 +148,7 @@ const LandingPage = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               How SkillSwap Works
             </h2>
-            <p className="text-xl text-gray-600">
-              Simple steps to start your learning journey
-            </p>
+            <p className="text-xl text-gray-600">Simple steps to start your learning journey</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -176,16 +186,17 @@ const LandingPage = () => {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Powerful Features
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Powerful Features</h2>
             <p className="text-xl text-gray-600">
               Everything you need for successful skill exchange
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={index}
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
                 <feature.icon className="w-8 h-8 text-blue-600 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
@@ -202,9 +213,7 @@ const LandingPage = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               What Our Community Says
             </h2>
-            <p className="text-xl text-gray-600">
-              Real stories from real learners
-            </p>
+            <p className="text-xl text-gray-600">Real stories from real learners</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (

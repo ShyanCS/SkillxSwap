@@ -65,7 +65,9 @@ describe('createLogger', () => {
     const [prefix, tag] = sink.warn.mock.calls[0];
     expect(prefix).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(tag).toBe('[warn]');
-    expect(sink.warn).toHaveBeenLastCalledWith(expect.any(String), '[warn]', 'payload', { code: 42 });
+    expect(sink.warn).toHaveBeenLastCalledWith(expect.any(String), '[warn]', 'payload', {
+      code: 42,
+    });
   });
 
   it('routes a suppressed-sink method through console.error rather than dropping the entry', () => {

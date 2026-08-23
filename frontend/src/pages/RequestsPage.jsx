@@ -1,22 +1,22 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useMatch } from '../contexts/MatchContext';
-import { 
-  Send, 
-  Inbox, 
-  Clock, 
-  Check, 
-  X, 
-  User, 
+import {
+  Send,
+  Inbox,
+  Clock,
+  Check,
+  X,
+  User,
   MessageCircle,
   Calendar,
   Star,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import logger from '../lib/logger';
 
 const RequestsPage = () => {
-    const { getSentRequest, getRecievedRequest, respondToRequest } = useMatch();
+  const { getSentRequest, getRecievedRequest, respondToRequest } = useMatch();
   const [activeTab, setActiveTab] = useState('received');
 
   // Mock data - replace with actual API calls
@@ -39,12 +39,10 @@ const RequestsPage = () => {
   const handleAcceptRequest = async (requestId) => {
     try {
       await respondToRequest(requestId, 'Accepted');
-      setReceivedRequests(prev =>
-        prev.map(request =>
-          request.id === requestId
-            ? { ...request, status: 'accepted' }
-            : request
-        )
+      setReceivedRequests((prev) =>
+        prev.map((request) =>
+          request.id === requestId ? { ...request, status: 'accepted' } : request,
+        ),
       );
     } catch (error) {
       logger.error('Failed to accept request:', error);
@@ -54,12 +52,10 @@ const RequestsPage = () => {
   const handleRejectRequest = async (requestId) => {
     try {
       await respondToRequest(requestId, 'Rejected');
-      setReceivedRequests(prev =>
-        prev.map(request =>
-          request.id === requestId
-            ? { ...request, status: 'rejected' }
-            : request
-        )
+      setReceivedRequests((prev) =>
+        prev.map((request) =>
+          request.id === requestId ? { ...request, status: 'rejected' } : request,
+        ),
       );
     } catch (error) {
       logger.error('Failed to reject request:', error);
@@ -94,7 +90,7 @@ const RequestsPage = () => {
 
   const RequestCard = ({ request, type, onAccept, onReject }) => {
     const user = type === 'received' ? request.sender : request.recipient;
-    
+
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-shadow">
         {/* Header */}
@@ -111,12 +107,18 @@ const RequestsPage = () => {
                 <Star className="w-3 h-3 text-yellow-500 fill-current" />
                 <span>{user.rating}</span>
                 <span>•</span>
-                <span>{user.sessionsCompleted === 1 ? '1 session' : `${user.sessionsCompleted} sessions`}</span>
+                <span>
+                  {user.sessionsCompleted === 1
+                    ? '1 session'
+                    : `${user.sessionsCompleted} sessions`}
+                </span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(request.status)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(request.status)}`}
+            >
               {getStatusIcon(request.status)}
               {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
             </span>
@@ -127,35 +129,35 @@ const RequestsPage = () => {
         {/* Skills Exchange */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {request.skillWanted.map((req)=>(
+            {request.skillWanted.map((req) => (
               <div className="bg-blue-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-800">
-                  {type === 'received' ? 'They Want to Learn' : 'You Want to Learn'}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-blue-800">
+                    {type === 'received' ? 'They Want to Learn' : 'You Want to Learn'}
+                  </span>
+                </div>
+                <h4 className="font-medium text-gray-900">{req.name}</h4>
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                  {req.desiredProficiency}
                 </span>
               </div>
-              <h4 className="font-medium text-gray-900">{req.name}</h4>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                {req.desiredProficiency}
-              </span>
-            </div>
             ))}
 
-          {request.skillOffered.map((req)=>(
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm font-medium text-green-800">
-                  {type === 'received' ? 'They Offer' : 'You Offer'}
+            {request.skillOffered.map((req) => (
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">
+                    {type === 'received' ? 'They Offer' : 'You Offer'}
+                  </span>
+                </div>
+                <h4 className="font-medium text-gray-900">{req.name}</h4>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                  {req.proficiencyLevel}
                 </span>
               </div>
-              <h4 className="font-medium text-gray-900">{req.name}</h4>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                {req.proficiencyLevel}
-              </span>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
 
@@ -186,7 +188,7 @@ const RequestsPage = () => {
                 </button>
               </>
             )}
-            
+
             {request.status === 'accepted' && (
               <div className="flex gap-2">
                 <Link
@@ -217,9 +219,7 @@ const RequestsPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Match Requests</h1>
-          <p className="text-gray-600">
-            Manage incoming and outgoing skill exchange requests
-          </p>
+          <p className="text-gray-600">Manage incoming and outgoing skill exchange requests</p>
         </div>
 
         {/* Stats */}
@@ -229,7 +229,7 @@ const RequestsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Pending Requests</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {receivedRequests.filter(r => r.status === 'pending').length}
+                  {receivedRequests.filter((r) => r.status === 'pending').length}
                 </p>
               </div>
               <Inbox className="w-8 h-8 text-yellow-600" />
@@ -242,7 +242,10 @@ const RequestsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Accepted Requests</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {[...receivedRequests, ...sentRequests].filter(r => r.status === 'accepted').length}
+                  {
+                    [...receivedRequests, ...sentRequests].filter((r) => r.status === 'accepted')
+                      .length
+                  }
                 </p>
               </div>
               <Check className="w-8 h-8 text-green-600" />
@@ -294,7 +297,7 @@ const RequestsPage = () => {
             {activeTab === 'received' && (
               <div className="space-y-6">
                 {receivedRequests.length > 0 ? (
-                  receivedRequests.map(request => (
+                  receivedRequests.map((request) => (
                     <RequestCard
                       key={request.id}
                       request={request}
@@ -325,12 +328,8 @@ const RequestsPage = () => {
             {activeTab === 'sent' && (
               <div className="space-y-6">
                 {sentRequests.length > 0 ? (
-                  sentRequests.map(request => (
-                    <RequestCard
-                      key={request.id}
-                      request={request}
-                      type="sent"
-                    />
+                  sentRequests.map((request) => (
+                    <RequestCard key={request.id} request={request} type="sent" />
                   ))
                 ) : (
                   <div className="text-center py-12">

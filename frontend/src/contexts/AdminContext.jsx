@@ -59,11 +59,19 @@ export const AdminProvider = ({ children }) => {
   const resolveReport = async (id) => await apiMutate(`/api/admin/reports/${id}/resolve`, 'PUT');
 
   return (
-    <AdminContext.Provider value={{
-      getStats, getUsers, suspendUser, activateUser,
-      getSkills, deleteSkill, getReports, resolveReport,
-      isLoading,
-    }}>
+    <AdminContext.Provider
+      value={{
+        getStats,
+        getUsers,
+        suspendUser,
+        activateUser,
+        getSkills,
+        deleteSkill,
+        getReports,
+        resolveReport,
+        isLoading,
+      }}
+    >
       {children}
     </AdminContext.Provider>
   );

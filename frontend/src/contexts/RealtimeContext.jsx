@@ -100,7 +100,7 @@ export const RealtimeProvider = ({ children }) => {
         }
         const handlers = listenersRef.current.get(payload.type);
         if (!handlers) return;
-        handlers.forEach(handler => {
+        handlers.forEach((handler) => {
           try {
             handler(payload.payload);
           } catch (error) {
@@ -144,7 +144,10 @@ export const RealtimeProvider = ({ children }) => {
       clearTimers();
       setIsConnected(false);
       const socket = socketRef.current;
-      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+      if (
+        socket &&
+        (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+      ) {
         socket.close();
       }
       socketRef.current = null;

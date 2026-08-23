@@ -22,9 +22,5 @@ export const DashboardProvider = ({ children }) => {
     return data;
   };
 
-  return (
-    <DashboardContext.Provider value={{ getDashboard }}>
-      {children}
-    </DashboardContext.Provider>
-  );
+  return <DashboardContext.Provider value={{ getDashboard }}>{children}</DashboardContext.Provider>;
 };

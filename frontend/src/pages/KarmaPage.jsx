@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Coins,
-  TrendingUp,
-  TrendingDown,
-  Gift,
-  Clock
-} from 'lucide-react';
+import { Coins, TrendingUp, TrendingDown, Gift, Clock } from 'lucide-react';
 import { useWallet } from '../contexts/WalletContext';
 import logger from '../lib/logger';
 
@@ -34,7 +28,7 @@ const KarmaPage = () => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -55,8 +49,12 @@ const KarmaPage = () => {
 
   const isPositive = (type) => type === 'EARN' || type === 'ADMIN_CREDIT' || type === 'REFUND';
 
-  const earned = wallet.transactions.filter(t => t.type === 'EARN').reduce((sum, t) => sum + t.amount, 0);
-  const spent = wallet.transactions.filter(t => t.type === 'SPEND').reduce((sum, t) => sum + t.amount, 0);
+  const earned = wallet.transactions
+    .filter((t) => t.type === 'EARN')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const spent = wallet.transactions
+    .filter((t) => t.type === 'SPEND')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-4">
@@ -112,7 +110,7 @@ const KarmaPage = () => {
               <p className="text-gray-500 text-center py-8">Loading...</p>
             ) : wallet.transactions.length > 0 ? (
               <div className="space-y-3">
-                {wallet.transactions.map(tx => (
+                {wallet.transactions.map((tx) => (
                   <div key={tx.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="p-2 bg-white rounded-full shadow-sm">
                       {getTransactionIcon(tx.type)}
@@ -121,8 +119,11 @@ const KarmaPage = () => {
                       <p className="text-sm text-gray-900">{tx.description}</p>
                       <p className="text-xs text-gray-500">{formatDate(tx.createdAt)}</p>
                     </div>
-                    <div className={`text-sm font-medium ${isPositive(tx.type) ? 'text-green-600' : 'text-red-600'}`}>
-                      {isPositive(tx.type) ? '+' : '-'}{tx.amount}
+                    <div
+                      className={`text-sm font-medium ${isPositive(tx.type) ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {isPositive(tx.type) ? '+' : '-'}
+                      {tx.amount}
                     </div>
                   </div>
                 ))}

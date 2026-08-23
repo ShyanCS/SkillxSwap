@@ -11,7 +11,7 @@ import {
   Users,
   MessageCircle,
   TrendingUp,
-  Zap
+  Zap,
 } from 'lucide-react';
 import ErrorBanner from '../components/common/ErrorBanner';
 import logger from '../lib/logger';
@@ -23,7 +23,7 @@ const MatchingPage = () => {
     proficiency: '',
     region: '',
     timezone: '',
-    availability: ''
+    availability: '',
   });
   const [matches, setMatches] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -42,9 +42,9 @@ const MatchingPage = () => {
   }, []);
 
   const handleFilterChange = (field, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -54,7 +54,7 @@ const MatchingPage = () => {
       proficiency: '',
       region: '',
       timezone: '',
-      availability: ''
+      availability: '',
     });
   };
 
@@ -75,8 +75,8 @@ const MatchingPage = () => {
         setSending(true);
         await sendMatchRequest(
           match.user.id,
-          match.skillsOffered.map(skill => skill.id || skill.userSkillId),
-          match.skillsRequested.map(skill => skill.id || skill.userSkillId)
+          match.skillsOffered.map((skill) => skill.id || skill.userSkillId),
+          match.skillsRequested.map((skill) => skill.id || skill.userSkillId),
         );
         setNotice({ tone: 'success', text: `Match request sent to ${match.user.name}!` });
         setAlreadyRequested(true);
@@ -92,12 +92,17 @@ const MatchingPage = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all duration-200">
         {/* Compatibility Score Badge */}
         <div className="flex justify-between items-start mb-4">
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-            match.compatibilityScore >= 90 ? 'bg-green-100 text-green-800' :
-            match.compatibilityScore >= 80 ? 'bg-blue-100 text-blue-800' :
-            match.compatibilityScore >= 70 ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <div
+            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+              match.compatibilityScore >= 90
+                ? 'bg-green-100 text-green-800'
+                : match.compatibilityScore >= 80
+                  ? 'bg-blue-100 text-blue-800'
+                  : match.compatibilityScore >= 70
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-gray-100 text-gray-800'
+            }`}
+          >
             <Zap className="w-4 h-4" />
             {match.compatibilityScore}% Match
           </div>
@@ -131,7 +136,11 @@ const MatchingPage = () => {
               </div>
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
-                <span>{match.user.sessionsCompleted === 1 ? '1 session' : `${match.user.sessionsCompleted} sessions`}</span>
+                <span>
+                  {match.user.sessionsCompleted === 1
+                    ? '1 session'
+                    : `${match.user.sessionsCompleted} sessions`}
+                </span>
               </div>
             </div>
           </div>
@@ -196,12 +205,12 @@ const MatchingPage = () => {
             onClick={handleSendRequest}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
               alreadyRequested
-                ? "bg-gray-300 cursor-not-allowed text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? 'bg-gray-300 cursor-not-allowed text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
           >
             <MessageCircle className="w-4 h-4" />
-            {alreadyRequested ? "Request Sent" : (sending ? "Sending..." : "Send Request")}
+            {alreadyRequested ? 'Request Sent' : sending ? 'Sending...' : 'Send Request'}
           </button>
         </div>
       </div>
@@ -246,8 +255,12 @@ const MatchingPage = () => {
                 <p className="text-sm text-gray-600">Avg Compatibility</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {matches.length > 0
-                    ? Math.round(matches.reduce((sum, match) => sum + match.compatibilityScore, 0) / matches.length)
-                    : 0}%
+                    ? Math.round(
+                        matches.reduce((sum, match) => sum + match.compatibilityScore, 0) /
+                          matches.length,
+                      )
+                    : 0}
+                  %
                 </p>
               </div>
               <Zap className="w-8 h-8 text-yellow-600" />
@@ -292,9 +305,7 @@ const MatchingPage = () => {
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Proficiency
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Proficiency</label>
                 <select
                   value={filters.proficiency}
                   onChange={(e) => handleFilterChange('proficiency', e.target.value)}
@@ -307,9 +318,7 @@ const MatchingPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Region
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
                 <select
                   value={filters.region}
                   onChange={(e) => handleFilterChange('region', e.target.value)}
@@ -325,9 +334,7 @@ const MatchingPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Timezone
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
                 <select
                   value={filters.timezone}
                   onChange={(e) => handleFilterChange('timezone', e.target.value)}
@@ -360,9 +367,7 @@ const MatchingPage = () => {
         {/* Matches */}
         <div className="grid gap-6 mb-8">
           {matches.length > 0 ? (
-            matches.map(match => (
-              <MatchCard key={match.id} match={match} />
-            ))
+            matches.map((match) => <MatchCard key={match.id} match={match} />)
           ) : (
             <div className="text-center py-12 bg-white rounded-xl shadow-sm">
               <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />

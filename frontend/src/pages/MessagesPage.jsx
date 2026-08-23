@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Search,
-  Send,
-  Calendar
-} from 'lucide-react';
+import { Search, Send, Calendar } from 'lucide-react';
 import { useMessaging } from '../contexts/MessagingContext';
 import { useRealtime } from '../contexts/RealtimeContext';
 import logger from '../lib/logger';
@@ -70,7 +66,7 @@ const MessagesPage = () => {
     try {
       const data = await getMessages(selectedConversation.conversationId, pageInfo.page + 1);
       stickToBottomRef.current = false;
-      setMessages(prev => [...[...data.items].reverse(), ...prev]);
+      setMessages((prev) => [...[...data.items].reverse(), ...prev]);
       setPageInfo({ page: data.page, hasNext: data.hasNext });
       // Prepending grows the scroll area upward, which would otherwise shove
       // the current view down by exactly the height of the new content.
@@ -95,14 +91,14 @@ const MessagesPage = () => {
       // have open still bumps its unread badge and preview.
       fetchConversations();
 
-      setSelectedConversation(current => {
+      setSelectedConversation((current) => {
         if (current?.partner.id !== senderId) return current;
         stickToBottomRef.current = true;
-        setMessages(prev => (
+        setMessages((prev) =>
           // The sender's own echo and a reconnect replay can both re-deliver a
           // message we already have.
-          prev.some(m => m.id === message.id) ? prev : [...prev, message]
-        ));
+          prev.some((m) => m.id === message.id) ? prev : [...prev, message],
+        );
         return current;
       });
     });
@@ -121,7 +117,7 @@ const MessagesPage = () => {
     try {
       const sent = await sendMessage(selectedConversation.partner.id, body);
       stickToBottomRef.current = true;
-      setMessages(prev => [...prev, sent]);
+      setMessages((prev) => [...prev, sent]);
       fetchConversations();
     } catch (error) {
       logger.error('Failed to send message:', error);
@@ -131,7 +127,7 @@ const MessagesPage = () => {
   const formatMessageTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -140,14 +136,17 @@ const MessagesPage = () => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.partner.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredConversations = conversations.filter((conv) =>
+    conv.partner.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="min-h-screen bg-gray-50 pt-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
+        <div
+          className="bg-white rounded-xl shadow-sm overflow-hidden"
+          style={{ height: 'calc(100vh - 120px)' }}
+        >
           <div className="flex h-full">
             {/* Sidebar - Conversation List */}
             <div className="w-80 border-r border-gray-200 flex flex-col">
@@ -175,18 +174,24 @@ const MessagesPage = () => {
                     No conversations yet. Accept a match request to start messaging.
                   </p>
                 ) : (
-                  filteredConversations.map(conv => (
+                  filteredConversations.map((conv) => (
                     <button
                       key={conv.partner.id}
                       type="button"
                       onClick={() => openConversation(conv)}
                       className={`block w-full text-left p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedConversation?.partner.id === conv.partner.id ? 'bg-blue-50 border-blue-200' : ''
+                        selectedConversation?.partner.id === conv.partner.id
+                          ? 'bg-blue-50 border-blue-200'
+                          : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <img
-                          src={conv.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(conv.partner.name)}
+                          src={
+                            conv.partner.profilePictureUrl ||
+                            'https://ui-avatars.com/api/?name=' +
+                              encodeURIComponent(conv.partner.name)
+                          }
                           alt={conv.partner.name}
                           className="w-12 h-12 rounded-full object-cover"
                         />
@@ -226,7 +231,11 @@ const MessagesPage = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={selectedConversation.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedConversation.partner.name)}
+                          src={
+                            selectedConversation.partner.profilePictureUrl ||
+                            'https://ui-avatars.com/api/?name=' +
+                              encodeURIComponent(selectedConversation.partner.name)
+                          }
                           alt={selectedConversation.partner.name}
                           className="w-10 h-10 rounded-full object-cover"
                         />
@@ -261,24 +270,30 @@ const MessagesPage = () => {
                         </button>
                       </div>
                     )}
-                    {messages.map(message => (
+                    {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.senderId === selectedConversation.partner.id ? 'justify-start' : 'justify-end'
+                          message.senderId === selectedConversation.partner.id
+                            ? 'justify-start'
+                            : 'justify-end'
                         }`}
                       >
-                        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.senderId === selectedConversation.partner.id
-                            ? 'bg-gray-100 text-gray-900'
-                            : 'bg-blue-600 text-white'
-                        }`}>
-                          <p className="text-sm">{message.body}</p>
-                          <p className={`text-xs mt-1 ${
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                             message.senderId === selectedConversation.partner.id
-                              ? 'text-gray-500'
-                              : 'text-blue-100'
-                          }`}>
+                              ? 'bg-gray-100 text-gray-900'
+                              : 'bg-blue-600 text-white'
+                          }`}
+                        >
+                          <p className="text-sm">{message.body}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              message.senderId === selectedConversation.partner.id
+                                ? 'text-gray-500'
+                                : 'text-blue-100'
+                            }`}
+                          >
                             {formatMessageTime(message.sentAt)}
                           </p>
                         </div>

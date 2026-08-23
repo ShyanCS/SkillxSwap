@@ -55,7 +55,9 @@ export const ReviewProvider = ({ children }) => {
   };
 
   return (
-    <ReviewContext.Provider value={{ getReviewableSessions, getGivenReviews, submitReview, isLoading }}>
+    <ReviewContext.Provider
+      value={{ getReviewableSessions, getGivenReviews, submitReview, isLoading }}
+    >
       {children}
     </ReviewContext.Provider>
   );

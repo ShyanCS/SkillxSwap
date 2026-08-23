@@ -58,17 +58,23 @@ const AskAIPage = () => {
         throw new Error(data.error || 'The assistant could not answer that.');
       }
 
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        text: data.answer,
-        isError: data.available === false,
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: data.answer,
+          isError: data.available === false,
+        },
+      ]);
     } catch (err) {
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        text: err.message || 'Something went wrong reaching the assistant.',
-        isError: true,
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: err.message || 'Something went wrong reaching the assistant.',
+          isError: true,
+        },
+      ]);
     } finally {
       setSending(false);
     }
@@ -95,20 +101,26 @@ const AskAIPage = () => {
             <div>
               <p className="font-medium">The assistant isn't enabled on this deployment.</p>
               <p className="text-sm">
-                An administrator needs to set <code className="bg-amber-100 px-1 rounded">AI_ENABLED</code> and{' '}
+                An administrator needs to set{' '}
+                <code className="bg-amber-100 px-1 rounded">AI_ENABLED</code> and{' '}
                 <code className="bg-amber-100 px-1 rounded">GEMINI_API_KEY</code> to turn it on.
               </p>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-sm flex flex-col" style={{ height: 'calc(100vh - 300px)', minHeight: '420px' }}>
+        <div
+          className="bg-white rounded-xl shadow-sm flex flex-col"
+          style={{ height: 'calc(100vh - 300px)', minHeight: '420px' }}
+        >
           {/* Conversation */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center">
                 <Bot className="w-12 h-12 text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-6">Ask anything about learning or teaching a skill.</p>
+                <p className="text-gray-500 mb-6">
+                  Ask anything about learning or teaching a skill.
+                </p>
                 <div className="grid sm:grid-cols-2 gap-2 w-full max-w-xl">
                   {SUGGESTIONS.map((s) => (
                     <button
@@ -124,19 +136,28 @@ const AskAIPage = () => {
               </div>
             ) : (
               messages.map((message, i) => (
-                <div key={i} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  key={i}
+                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   {message.role === 'assistant' && (
-                    <div className={`p-2 rounded-full h-fit ${message.isError ? 'bg-amber-100' : 'bg-blue-100'}`}>
-                      <Bot className={`w-4 h-4 ${message.isError ? 'text-amber-600' : 'text-blue-600'}`} />
+                    <div
+                      className={`p-2 rounded-full h-fit ${message.isError ? 'bg-amber-100' : 'bg-blue-100'}`}
+                    >
+                      <Bot
+                        className={`w-4 h-4 ${message.isError ? 'text-amber-600' : 'text-blue-600'}`}
+                      />
                     </div>
                   )}
-                  <div className={`max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap ${
-                    message.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : message.isError
-                        ? 'bg-amber-50 text-amber-900 border border-amber-200'
-                        : 'bg-gray-100 text-gray-900'
-                  }`}>
+                  <div
+                    className={`max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap ${
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : message.isError
+                          ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                          : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
                     <p className="text-sm">{message.text}</p>
                   </div>
                   {message.role === 'user' && (
@@ -170,7 +191,10 @@ const AskAIPage = () => {
           {/* Composer */}
           <div className="border-t border-gray-200 p-4">
             <form
-              onSubmit={(e) => { e.preventDefault(); ask(input); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                ask(input);
+              }}
               className="flex items-center gap-2"
             >
               <input
@@ -191,7 +215,8 @@ const AskAIPage = () => {
               </button>
             </form>
             <p className="text-xs text-gray-400 mt-2">
-              The assistant can't see your messages, credits, or account, and can't act on your behalf.
+              The assistant can't see your messages, credits, or account, and can't act on your
+              behalf.
             </p>
           </div>
         </div>

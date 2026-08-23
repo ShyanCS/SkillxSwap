@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useSkills } from "../contexts/SkillsContext";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useSkills } from '../contexts/SkillsContext';
 import {
   Plus,
   Edit3,
@@ -11,36 +11,36 @@ import {
   TrendingUp,
   Star,
   Users,
-} from "lucide-react";
-import ErrorBanner from "../components/common/ErrorBanner";
-import logger from "../lib/logger";
+} from 'lucide-react';
+import ErrorBanner from '../components/common/ErrorBanner';
+import logger from '../lib/logger';
 
 const MySkillsPage = () => {
   const { user, fetchUserDetails } = useAuth();
   const { addSkill, getSkill, deleteSkill, updateSkill, listSkill } = useSkills();
-  const [activeTab, setActiveTab] = useState("offered");
+  const [activeTab, setActiveTab] = useState('offered');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [modalType, setModalType] = useState("offer");
+  const [modalType, setModalType] = useState('offer');
   const [reloadFlag, setReloadFlag] = useState(false);
 
   // Mock data - replace with actual data from API
   const [offeredSkills, setOfferedSkills] = useState([]);
   const [requestedSkills, setRequestedSkills] = useState([]);
   const [allSkills, setAllSkills] = useState([]);
-  const [skillSearch, setSkillSearch] = useState("");
+  const [skillSearch, setSkillSearch] = useState('');
 
   const [editSkillId, setEditSkillId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   // Validation / save failures for the add-edit modal, shown inline instead
   // of a blocking window.alert().
-  const [skillFormError, setSkillFormError] = useState("");
+  const [skillFormError, setSkillFormError] = useState('');
 
   useEffect(() => {
     const fetchSkills = async () => {
       try {
         const [offeredData, requestedData] = await Promise.all([
-          getSkill("offer"),
-          getSkill("request"),
+          getSkill('offer'),
+          getSkill('request'),
         ]);
 
         setOfferedSkills(offeredData);
@@ -69,32 +69,32 @@ const MySkillsPage = () => {
   }, [showAddModal]);
 
   const [formData, setFormData] = useState({
-    name: "",
-    skillId: "", // <-- Add this line
-    description: "",
-    proficiencyLevel: "Intermediate",
-    desiredProficiency: "Intermediate",
-    urgency: "Medium",
+    name: '',
+    skillId: '', // <-- Add this line
+    description: '',
+    proficiencyLevel: 'Intermediate',
+    desiredProficiency: 'Intermediate',
+    urgency: 'Medium',
     availability: [],
   });
 
-  const proficiencyLevels = ["Beginner", "Intermediate", "Advanced"];
-  const urgencyLevels = ["Low", "Medium", "High"];
+  const proficiencyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+  const urgencyLevels = ['Low', 'Medium', 'High'];
   const availabilityOptions = [
-    "Monday AM",
-    "Monday PM",
-    "Tuesday AM",
-    "Tuesday PM",
-    "Wednesday AM",
-    "Wednesday PM",
-    "Thursday AM",
-    "Thursday PM",
-    "Friday AM",
-    "Friday PM",
-    "Saturday AM",
-    "Saturday PM",
-    "Sunday AM",
-    "Sunday PM",
+    'Monday AM',
+    'Monday PM',
+    'Tuesday AM',
+    'Tuesday PM',
+    'Wednesday AM',
+    'Wednesday PM',
+    'Thursday AM',
+    'Thursday PM',
+    'Friday AM',
+    'Friday PM',
+    'Saturday AM',
+    'Saturday PM',
+    'Sunday AM',
+    'Sunday PM',
   ];
 
   const handleInputChange = (field, value) => {
@@ -106,28 +106,26 @@ const MySkillsPage = () => {
 
   const toggleAvailability = (slot) => {
     const current = formData.availability;
-    const updated = current.includes(slot)
-      ? current.filter((s) => s !== slot)
-      : [...current, slot];
+    const updated = current.includes(slot) ? current.filter((s) => s !== slot) : [...current, slot];
 
-    handleInputChange("availability", updated);
+    handleInputChange('availability', updated);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const selectedSkill = allSkills.find((s) => s.name === formData.name);
     if (!selectedSkill) {
-      setSkillFormError("Please select a skill from the suggestions.");
+      setSkillFormError('Please select a skill from the suggestions.');
       return;
     }
-    setSkillFormError("");
+    setSkillFormError('');
 
     const newSkill = {
       ...formData, // includes name and skillId
       type: modalType,
-      status: "Active",
+      status: 'Active',
       matchCount: 0,
-      sessionCount: modalType === "offer" ? 0 : undefined,
+      sessionCount: modalType === 'offer' ? 0 : undefined,
       newSkillId: formData.skillId, // <-- send newSkillId in body
     };
 
@@ -142,7 +140,7 @@ const MySkillsPage = () => {
       // Previously this path had no handling at all: a rejected save left an
       // unhandled promise rejection and a modal that silently stayed open.
       logger.error('Failed to save skill:', error);
-      setSkillFormError(error.message || "Failed to save the skill. Please try again.");
+      setSkillFormError(error.message || 'Failed to save the skill. Please try again.');
       return;
     }
 
@@ -151,12 +149,12 @@ const MySkillsPage = () => {
     setReloadFlag((prev) => !prev);
     // Reset form
     setFormData({
-      name: "",
-      skillId: "", // <-- Reset this field
-      description: "",
-      proficiencyLevel: "Intermediate",
-      desiredProficiency: "Intermediate",
-      urgency: "Medium",
+      name: '',
+      skillId: '', // <-- Reset this field
+      description: '',
+      proficiencyLevel: 'Intermediate',
+      desiredProficiency: 'Intermediate',
+      urgency: 'Medium',
       availability: [],
     });
     setShowAddModal(false);
@@ -165,14 +163,14 @@ const MySkillsPage = () => {
   const openAddModal = (type) => {
     setModalType(type);
     setShowAddModal(true);
-    setSkillSearch(""); // Reset skill search input
+    setSkillSearch(''); // Reset skill search input
     setFormData({
-      name: "",
-      skillId: "", // <-- Reset this field
-      description: "",
-      proficiencyLevel: "Intermediate",
-      desiredProficiency: "Intermediate",
-      urgency: "Medium",
+      name: '',
+      skillId: '', // <-- Reset this field
+      description: '',
+      proficiencyLevel: 'Intermediate',
+      desiredProficiency: 'Intermediate',
+      urgency: 'Medium',
       availability: [],
     });
     setIsEditMode(false);
@@ -183,11 +181,11 @@ const MySkillsPage = () => {
     setModalType(skill.type);
     setFormData({
       name: skill.name,
-      skillId: skill.skillId || "", // <-- Set skillId from skill object
+      skillId: skill.skillId || '', // <-- Set skillId from skill object
       description: skill.description,
-      proficiencyLevel: skill.proficiencyLevel || "Intermediate",
-      desiredProficiency: skill.desiredProficiency || "Intermediate",
-      urgency: skill.urgency || "Medium",
+      proficiencyLevel: skill.proficiencyLevel || 'Intermediate',
+      desiredProficiency: skill.desiredProficiency || 'Intermediate',
+      urgency: skill.urgency || 'Medium',
       availability: skill.availability || [],
     });
     setSkillSearch(skill.name); // <-- Set skillSearch so input is filled
@@ -208,14 +206,12 @@ const MySkillsPage = () => {
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {skill.name}
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">{skill.name}</h3>
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                skill.status === "Active"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-600"
+                skill.status === 'Active'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-600'
               }`}
             >
               {skill.status}
@@ -224,16 +220,13 @@ const MySkillsPage = () => {
           <p className="text-gray-600 text-sm mb-3">{skill.description}</p>
 
           <div className="flex flex-wrap gap-2 mb-3">
-            {type === "offer" ? (
+            {type === 'offer' ? (
               <>
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                   {skill.proficiencyLevel}
                 </span>
                 {skill.availability?.map((slot) => (
-                  <span
-                    key={slot}
-                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                  >
+                  <span key={slot} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                     {slot}
                   </span>
                 ))}
@@ -245,11 +238,11 @@ const MySkillsPage = () => {
                 </span>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${
-                    skill.urgency === "High"
-                      ? "bg-red-100 text-red-800"
-                      : skill.urgency === "Medium"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-green-100 text-green-800"
+                    skill.urgency === 'High'
+                      ? 'bg-red-100 text-red-800'
+                      : skill.urgency === 'Medium'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
                   }`}
                 >
                   {skill.urgency} Priority
@@ -263,7 +256,7 @@ const MySkillsPage = () => {
               <Users className="w-4 h-4" />
               <span>{skill.matchCount} matches</span>
             </div>
-            {type === "offer" && (
+            {type === 'offer' && (
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 <span>{skill.sessionCount} sessions</span>
@@ -297,9 +290,7 @@ const MySkillsPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Skills</h1>
-          <p className="text-gray-600">
-            Manage the skills you offer to teach and want to learn
-          </p>
+          <p className="text-gray-600">Manage the skills you offer to teach and want to learn</p>
         </div>
 
         {/* Stats Cards */}
@@ -308,9 +299,7 @@ const MySkillsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Skills Offered</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {offeredSkills.length}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{offeredSkills.length}</p>
               </div>
               <BookOpen className="w-8 h-8 text-blue-600" />
             </div>
@@ -320,9 +309,7 @@ const MySkillsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Skills Requested</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {requestedSkills.length}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{requestedSkills.length}</p>
               </div>
               <Target className="w-8 h-8 text-purple-600" />
             </div>
@@ -333,14 +320,8 @@ const MySkillsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Total Matches</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {offeredSkills.reduce(
-                    (sum, skill) => sum + skill.matchCount,
-                    0
-                  ) +
-                    requestedSkills.reduce(
-                      (sum, skill) => sum + skill.matchCount,
-                      0
-                    )}
+                  {offeredSkills.reduce((sum, skill) => sum + skill.matchCount, 0) +
+                    requestedSkills.reduce((sum, skill) => sum + skill.matchCount, 0)}
                 </p>
               </div>
               <Users className="w-8 h-8 text-green-600" />
@@ -352,10 +333,7 @@ const MySkillsPage = () => {
               <div>
                 <p className="text-sm text-gray-600">Sessions Taught</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {offeredSkills.reduce(
-                    (sum, skill) => sum + skill.sessionCount,
-                    0
-                  )}
+                  {offeredSkills.reduce((sum, skill) => sum + skill.sessionCount, 0)}
                 </p>
               </div>
               <Star className="w-8 h-8 text-yellow-600" />
@@ -368,21 +346,21 @@ const MySkillsPage = () => {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
               <button
-                onClick={() => setActiveTab("offered")}
+                onClick={() => setActiveTab('offered')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "offered"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                  activeTab === 'offered'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 Skills I Offer ({offeredSkills.length})
               </button>
               <button
-                onClick={() => setActiveTab("requested")}
+                onClick={() => setActiveTab('requested')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "requested"
-                    ? "border-purple-500 text-purple-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                  activeTab === 'requested'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 Skills I Want to Learn ({requestedSkills.length})
@@ -394,36 +372,31 @@ const MySkillsPage = () => {
             {/* Add Skill Button */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
-                {activeTab === "offered"
-                  ? "Skills You Offer"
-                  : "Skills You Want to Learn"}
+                {activeTab === 'offered' ? 'Skills You Offer' : 'Skills You Want to Learn'}
               </h2>
               <button
-                onClick={() =>
-                  openAddModal(activeTab === "offered" ? "offer" : "request")
-                }
+                onClick={() => openAddModal(activeTab === 'offered' ? 'offer' : 'request')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === "offered"
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                  activeTab === 'offered'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
                 }`}
               >
                 <Plus className="w-4 h-4" />
-                Add{" "}
-                {activeTab === "offered" ? "Skill to Teach" : "Skill to Learn"}
+                Add {activeTab === 'offered' ? 'Skill to Teach' : 'Skill to Learn'}
               </button>
             </div>
 
             {/* Skills Grid */}
             <div className="grid gap-6">
-              {activeTab === "offered" ? (
+              {activeTab === 'offered' ? (
                 offeredSkills.length > 0 ? (
                   offeredSkills.map((skill) => (
                     <SkillCard
                       key={skill.id}
                       skill={skill}
                       type="offer"
-                      onDelete={(id) => handleDeleteSkill(id, "offer")}
+                      onDelete={(id) => handleDeleteSkill(id, 'offer')}
                     />
                   ))
                 ) : (
@@ -436,7 +409,7 @@ const MySkillsPage = () => {
                       Start by adding a skill you can teach to others
                     </p>
                     <button
-                      onClick={() => openAddModal("offer")}
+                      onClick={() => openAddModal('offer')}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
                     >
                       Add Your First Skill
@@ -449,20 +422,18 @@ const MySkillsPage = () => {
                     key={skill.id}
                     skill={skill}
                     type="request"
-                    onDelete={(id) => handleDeleteSkill(id, "request")}
+                    onDelete={(id) => handleDeleteSkill(id, 'request')}
                   />
                 ))
               ) : (
                 <div className="text-center py-12">
                   <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No learning goals yet
-                  </h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No learning goals yet</h3>
                   <p className="text-gray-500 mb-4">
                     Add skills you want to learn from the community
                   </p>
                   <button
-                    onClick={() => openAddModal("request")}
+                    onClick={() => openAddModal('request')}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium"
                   >
                     Add Learning Goal
@@ -479,9 +450,7 @@ const MySkillsPage = () => {
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {modalType === "offer"
-                    ? "Add Skill to Teach"
-                    : "Add Skill to Learn"}
+                  {modalType === 'offer' ? 'Add Skill to Teach' : 'Add Skill to Learn'}
                 </h2>
               </div>
 
@@ -489,12 +458,10 @@ const MySkillsPage = () => {
                 <ErrorBanner
                   message={skillFormError}
                   tone="warning"
-                  onDismiss={() => setSkillFormError("")}
+                  onDismiss={() => setSkillFormError('')}
                 />
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Skill Name
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Skill Name</label>
                   <input
                     type="text"
                     value={skillSearch}
@@ -507,9 +474,7 @@ const MySkillsPage = () => {
                     !allSkills.some((s) => s.name.toLowerCase() === skillSearch.toLowerCase()) && (
                       <div className="border rounded-lg bg-white mt-1 max-h-40 overflow-y-auto shadow-lg z-10">
                         {allSkills
-                          .filter((s) =>
-                            s.name.toLowerCase().includes(skillSearch.toLowerCase())
-                          )
+                          .filter((s) => s.name.toLowerCase().includes(skillSearch.toLowerCase()))
                           .map((s) => (
                             <button
                               key={s.id}
@@ -528,7 +493,7 @@ const MySkillsPage = () => {
                             </button>
                           ))}
                         {allSkills.filter((s) =>
-                          s.name.toLowerCase().includes(skillSearch.toLowerCase())
+                          s.name.toLowerCase().includes(skillSearch.toLowerCase()),
                         ).length === 0 && (
                           <div className="px-3 py-2 text-gray-400">No matches found</div>
                         )}
@@ -543,20 +508,18 @@ const MySkillsPage = () => {
                   <textarea
                     required
                     value={formData.description}
-                    onChange={(e) =>
-                      handleInputChange("description", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={
-                      modalType === "offer"
-                        ? "Describe your expertise and what you can teach..."
-                        : "Describe what you want to learn and your goals..."
+                      modalType === 'offer'
+                        ? 'Describe your expertise and what you can teach...'
+                        : 'Describe what you want to learn and your goals...'
                     }
                   />
                 </div>
 
-                {modalType === "offer" ? (
+                {modalType === 'offer' ? (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -564,9 +527,7 @@ const MySkillsPage = () => {
                       </label>
                       <select
                         value={formData.proficiencyLevel}
-                        onChange={(e) =>
-                          handleInputChange("proficiencyLevel", e.target.value)
-                        }
+                        onChange={(e) => handleInputChange('proficiencyLevel', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         {proficiencyLevels.map((level) => (
@@ -589,8 +550,8 @@ const MySkillsPage = () => {
                             onClick={() => toggleAvailability(slot)}
                             className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                               formData.availability.includes(slot)
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                           >
                             {slot}
@@ -607,12 +568,7 @@ const MySkillsPage = () => {
                       </label>
                       <select
                         value={formData.desiredProficiency}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "desiredProficiency",
-                            e.target.value
-                          )
-                        }
+                        onChange={(e) => handleInputChange('desiredProficiency', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         {proficiencyLevels.map((level) => (
@@ -629,9 +585,7 @@ const MySkillsPage = () => {
                       </label>
                       <select
                         value={formData.urgency}
-                        onChange={(e) =>
-                          handleInputChange("urgency", e.target.value)
-                        }
+                        onChange={(e) => handleInputChange('urgency', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         {urgencyLevels.map((level) => (
@@ -649,14 +603,14 @@ const MySkillsPage = () => {
                     type="button"
                     onClick={() => {
                       setShowAddModal(false);
-                      setSkillSearch(""); // Reset skill search input
+                      setSkillSearch(''); // Reset skill search input
                       setFormData({
-                        name: "",
-                        skillId: "", // <-- Reset this field
-                        description: "",
-                        proficiencyLevel: "Intermediate",
-                        desiredProficiency: "Intermediate",
-                        urgency: "Medium",
+                        name: '',
+                        skillId: '', // <-- Reset this field
+                        description: '',
+                        proficiencyLevel: 'Intermediate',
+                        desiredProficiency: 'Intermediate',
+                        urgency: 'Medium',
                         availability: [],
                       });
                       setIsEditMode(false);
@@ -669,9 +623,9 @@ const MySkillsPage = () => {
                   <button
                     type="submit"
                     className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${
-                      modalType === "offer"
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : "bg-purple-600 hover:bg-purple-700"
+                      modalType === 'offer'
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : 'bg-purple-600 hover:bg-purple-700'
                     }`}
                   >
                     Add Skill

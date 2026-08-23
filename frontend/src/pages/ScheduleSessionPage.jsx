@@ -9,11 +9,20 @@ import {
   MapPin,
   ArrowLeft,
   ArrowRight,
-  Check
+  Check,
 } from 'lucide-react';
 
 // Index 0 is unused: the API uses ISO day numbering (1 = Monday).
-const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  '',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 const formatMinutes = (minutes) => {
   const hours = Math.floor(minutes / 60);
@@ -81,7 +90,7 @@ const ScheduleSessionPage = () => {
         scheduledAt: new Date(scheduledAt).toISOString(),
         durationMinutes: duration,
         sessionType,
-        location: sessionType === 'in-person' ? location : (location || 'Online'),
+        location: sessionType === 'in-person' ? location : location || 'Online',
         notes,
       });
       navigate('/sessions');
@@ -126,17 +135,17 @@ const ScheduleSessionPage = () => {
           <div className="flex items-center justify-between mb-6">
             {[1, 2, 3].map((stepNumber) => (
               <div key={stepNumber} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  step >= stepNumber
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    step >= stepNumber ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
                   {step > stepNumber ? <Check className="w-5 h-5" /> : stepNumber}
                 </div>
                 {stepNumber < 3 && (
-                  <div className={`w-20 h-1 mx-4 ${
-                    step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'
-                  }`} />
+                  <div
+                    className={`w-20 h-1 mx-4 ${step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'}`}
+                  />
                 )}
               </div>
             ))}
@@ -165,15 +174,20 @@ const ScheduleSessionPage = () => {
               ) : matches.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500 mb-2">You don't have any accepted matches yet.</p>
-                  <p className="text-sm text-gray-400">Accept a match request first, then come back here to schedule a session.</p>
+                  <p className="text-sm text-gray-400">
+                    Accept a match request first, then come back here to schedule a session.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4 mb-6">
-                  {matches.map(match => (
+                  {matches.map((match) => (
                     <button
                       key={match.matchId}
                       type="button"
-                      onClick={() => { setSelectedMatch(match); setSelectedSkill(null); }}
+                      onClick={() => {
+                        setSelectedMatch(match);
+                        setSelectedSkill(null);
+                      }}
                       className={`block w-full text-left border rounded-lg p-4 cursor-pointer transition-colors ${
                         selectedMatch?.matchId === match.matchId
                           ? 'border-blue-500 bg-blue-50'
@@ -182,21 +196,33 @@ const ScheduleSessionPage = () => {
                     >
                       <div className="flex items-center gap-4">
                         <img
-                          src={match.partner.profilePictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(match.partner.name)}
+                          src={
+                            match.partner.profilePictureUrl ||
+                            'https://ui-avatars.com/api/?name=' +
+                              encodeURIComponent(match.partner.name)
+                          }
                           alt={match.partner.name}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{match.partner.name}</h3>
-                          <p className="text-sm text-gray-500">Timezone: {match.partner.timezone}</p>
+                          <p className="text-sm text-gray-500">
+                            Timezone: {match.partner.timezone}
+                          </p>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {match.teachableByPartner.map(skill => (
-                              <span key={`p-${skill.skillId}`} className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                            {match.teachableByPartner.map((skill) => (
+                              <span
+                                key={`p-${skill.skillId}`}
+                                className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800"
+                              >
                                 {skill.name} (they teach)
                               </span>
                             ))}
-                            {match.teachableByMe.map(skill => (
-                              <span key={`m-${skill.skillId}`} className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {match.teachableByMe.map((skill) => (
+                              <span
+                                key={`m-${skill.skillId}`}
+                                className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                              >
                                 {skill.name} (you teach)
                               </span>
                             ))}
@@ -215,12 +241,13 @@ const ScheduleSessionPage = () => {
                 <div>
                   <h3 className="text-lg font-medium mb-4">Select Skill</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedMatch.teachableByPartner.map(skill => (
+                    {selectedMatch.teachableByPartner.map((skill) => (
                       <button
                         key={`p-${skill.skillId}`}
                         onClick={() => setSelectedSkill({ ...skill, teacherRole: 'partner' })}
                         className={`p-3 text-left border rounded-lg transition-colors ${
-                          selectedSkill?.skillId === skill.skillId && selectedSkill?.teacherRole === 'partner'
+                          selectedSkill?.skillId === skill.skillId &&
+                          selectedSkill?.teacherRole === 'partner'
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
@@ -229,12 +256,13 @@ const ScheduleSessionPage = () => {
                         <div className="text-sm text-green-600">They teach</div>
                       </button>
                     ))}
-                    {selectedMatch.teachableByMe.map(skill => (
+                    {selectedMatch.teachableByMe.map((skill) => (
                       <button
                         key={`m-${skill.skillId}`}
                         onClick={() => setSelectedSkill({ ...skill, teacherRole: 'me' })}
                         className={`p-3 text-left border rounded-lg transition-colors ${
-                          selectedSkill?.skillId === skill.skillId && selectedSkill?.teacherRole === 'me'
+                          selectedSkill?.skillId === skill.skillId &&
+                          selectedSkill?.teacherRole === 'me'
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
@@ -274,9 +302,9 @@ const ScheduleSessionPage = () => {
                         ))}
                       </ul>
                       <p className="text-xs text-blue-700 mt-2">
-                        Shown in their timezone ({partnerAvailability.timezone}). Pick the
-                        time in yours below &mdash; the two are matched on the actual
-                        moment, not the clock reading.
+                        Shown in their timezone ({partnerAvailability.timezone}). Pick the time in
+                        yours below &mdash; the two are matched on the actual moment, not the clock
+                        reading.
                       </p>
                     </>
                   )}
@@ -296,9 +324,7 @@ const ScheduleSessionPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(parseInt(e.target.value))}
@@ -359,7 +385,11 @@ const ScheduleSessionPage = () => {
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder={sessionType === 'in-person' ? 'Enter meeting location...' : 'e.g. Zoom/Meet link'}
+                    placeholder={
+                      sessionType === 'in-person'
+                        ? 'Enter meeting location...'
+                        : 'e.g. Zoom/Meet link'
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -391,11 +421,15 @@ const ScheduleSessionPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Teacher:</span>
-                      <span className="font-medium">{selectedSkill?.teacherRole === 'me' ? 'You' : selectedMatch?.partner.name}</span>
+                      <span className="font-medium">
+                        {selectedSkill?.teacherRole === 'me' ? 'You' : selectedMatch?.partner.name}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Date & Time:</span>
-                      <span className="font-medium">{scheduledAt && new Date(scheduledAt).toLocaleString()}</span>
+                      <span className="font-medium">
+                        {scheduledAt && new Date(scheduledAt).toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Duration:</span>
