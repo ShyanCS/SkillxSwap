@@ -14,6 +14,7 @@ import {
   Star
 } from 'lucide-react';
 import { useSession } from '../contexts/SessionContext';
+import logger from '../lib/logger';
 
 const SessionsPage = () => {
   const { getSessions, cancelSession, completeSession } = useSession();
@@ -26,7 +27,7 @@ const SessionsPage = () => {
       const data = await getSessions();
       setSessions(data);
     } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+      logger.error('Failed to fetch sessions:', error);
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,7 @@ const SessionsPage = () => {
       await cancelSession(sessionId);
       await fetchSessions();
     } catch (error) {
-      console.error('Failed to cancel session:', error);
+      logger.error('Failed to cancel session:', error);
     }
   };
 
@@ -109,7 +110,7 @@ const SessionsPage = () => {
       await completeSession(sessionId);
       await fetchSessions();
     } catch (error) {
-      console.error('Failed to complete session:', error);
+      logger.error('Failed to complete session:', error);
     }
   };
 

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useMessaging } from '../contexts/MessagingContext';
 import { useRealtime } from '../contexts/RealtimeContext';
+import logger from '../lib/logger';
 
 const MessagesPage = () => {
   const { getConversations, getMessages, sendMessage } = useMessaging();
@@ -30,7 +31,7 @@ const MessagesPage = () => {
       const data = await getConversations();
       setConversations(data);
     } catch (error) {
-      console.error('Failed to fetch conversations:', error);
+      logger.error('Failed to fetch conversations:', error);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ const MessagesPage = () => {
       // Refresh the list in the background so unread counts/read receipts update.
       fetchConversations();
     } catch (error) {
-      console.error('Failed to load messages:', error);
+      logger.error('Failed to load messages:', error);
     }
   };
 
@@ -77,7 +78,7 @@ const MessagesPage = () => {
         if (container) container.scrollTop = container.scrollHeight - heightBefore;
       });
     } catch (error) {
-      console.error('Failed to load older messages:', error);
+      logger.error('Failed to load older messages:', error);
     } finally {
       setLoadingOlder(false);
     }
@@ -123,7 +124,7 @@ const MessagesPage = () => {
       setMessages(prev => [...prev, sent]);
       fetchConversations();
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
     }
   };
 

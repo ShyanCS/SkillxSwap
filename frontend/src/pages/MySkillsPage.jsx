@@ -12,6 +12,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import logger from "../lib/logger";
 
 const MySkillsPage = () => {
   const { user, fetchUserDetails } = useAuth();
@@ -41,7 +42,7 @@ const MySkillsPage = () => {
         setOfferedSkills(offeredData);
         setRequestedSkills(requestedData);
       } catch (error) {
-        console.error("Failed to fetch skills:", error);
+        logger.error('Failed to fetch skills:', error);
       }
     };
 
@@ -54,10 +55,9 @@ const MySkillsPage = () => {
         try {
           const data = await listSkill(); // This calls the imported function
           setAllSkills(Array.isArray(data) ? data : []);
-          console.log("Fetched skills:", data);
         } catch (err) {
           setAllSkills([]);
-          console.error("Failed to fetch skills:", err);
+          logger.error('Failed to fetch skill catalog:', err);
         }
       }
     };

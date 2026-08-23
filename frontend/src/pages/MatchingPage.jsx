@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Zap
 } from 'lucide-react';
+import logger from '../lib/logger';
 
 const MatchingPage = () => {
   const { getMatches, sendMatchRequest, hasAlreadyRequested } = useMatch();
@@ -32,7 +33,7 @@ const MatchingPage = () => {
         const matchesData = await getMatches();
         setMatches(matchesData);
       } catch (error) {
-        console.error("Failed to fetch skills:", error);
+        logger.error('Failed to fetch matches:', error);
       }
     };
     fetchMatches();
@@ -70,8 +71,6 @@ const MatchingPage = () => {
     const handleSendRequest = async () => {
       try {
         setSending(true);
-        console.log(match.skillsOffered);
-        console.log(match.skillsRequested);
         await sendMatchRequest(
           match.user.id,
           match.skillsOffered.map(skill => skill.id || skill.userSkillId),

@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { API_BASE_URL } from "../config/api";
 import { Plus, X, User, MapPin, Clock, BookOpen, Target } from "lucide-react";
 import AvailabilityEditor from "../components/profile/AvailabilityEditor";
+import logger from "../lib/logger";
 
 const ProfileSetupPage = () => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const ProfileSetupPage = () => {
       }));
     } catch (err) {
       setUploadError("Could not upload image. Try again.");
-      console.error(err);
+      logger.error('Profile photo upload failed:', err);
     } finally {
       setUploading(false);
     }
@@ -123,7 +124,7 @@ const ProfileSetupPage = () => {
       await updateProfile(formData);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Profile setup error:", error);
+      logger.error('Profile setup error:', error);
     }
   };
 

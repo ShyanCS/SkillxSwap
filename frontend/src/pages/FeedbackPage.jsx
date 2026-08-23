@@ -8,6 +8,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useReview } from '../contexts/ReviewContext';
+import logger from '../lib/logger';
 
 const FeedbackPage = () => {
   const { getReviewableSessions, getGivenReviews, submitReview } = useReview();
@@ -31,7 +32,7 @@ const FeedbackPage = () => {
       setPendingSessions(sessions);
       setFeedbackHistory(history);
     } catch (error) {
-      console.error('Failed to fetch feedback data:', error);
+      logger.error('Failed to fetch feedback data:', error);
     } finally {
       setLoading(false);
     }

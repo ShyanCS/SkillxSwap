@@ -13,6 +13,7 @@ import {
   Star,
   AlertCircle
 } from 'lucide-react';
+import logger from '../lib/logger';
 
 const RequestsPage = () => {
     const { getSentRequest, getRecievedRequest, respondToRequest } = useMatch();
@@ -27,12 +28,10 @@ const RequestsPage = () => {
       try {
         const sentRequests = await getSentRequest();
         const recievedRequests = await getRecievedRequest();
-        console.log(sentRequests);
-        console.log(recievedRequests);
         setReceivedRequests(recievedRequests);
         setSentRequests(sentRequests);
       } catch (error) {
-        console.error("Failed to fetch skills:", error);
+        logger.error('Failed to fetch match requests:', error);
       }
     };
     fetchRequests();
@@ -48,7 +47,7 @@ const RequestsPage = () => {
         )
       );
     } catch (error) {
-      console.error('Failed to accept request:', error);
+      logger.error('Failed to accept request:', error);
     }
   };
 
@@ -63,7 +62,7 @@ const RequestsPage = () => {
         )
       );
     } catch (error) {
-      console.error('Failed to reject request:', error);
+      logger.error('Failed to reject request:', error);
     }
   };
 

@@ -7,6 +7,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useWallet } from '../contexts/WalletContext';
+import logger from '../lib/logger';
 
 const KarmaPage = () => {
   const { getWallet } = useWallet();
@@ -19,7 +20,7 @@ const KarmaPage = () => {
         const data = await getWallet();
         setWallet(data);
       } catch (error) {
-        console.error('Failed to fetch wallet:', error);
+        logger.error('Failed to fetch wallet:', error);
       } finally {
         setLoading(false);
       }
