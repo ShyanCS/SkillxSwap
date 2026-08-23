@@ -8,23 +8,21 @@ import com.skillswap.backend.matching.dto.UserSummary;
 import com.skillswap.backend.matching.entity.Match;
 import com.skillswap.backend.matching.entity.MatchRequest;
 import com.skillswap.backend.matching.repository.MatchRepository;
+import com.skillswap.backend.notification.service.NotificationService;
 import com.skillswap.backend.session.dto.CreateSessionRequest;
 import com.skillswap.backend.session.dto.SchedulableMatchResponse;
 import com.skillswap.backend.session.dto.SchedulableSkill;
 import com.skillswap.backend.session.dto.SessionResponse;
 import com.skillswap.backend.session.entity.Session;
 import com.skillswap.backend.session.repository.SessionRepository;
-import com.skillswap.backend.skill.entity.UserSkill;
 import com.skillswap.backend.skill.repository.SkillRepository;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
-import com.skillswap.backend.notification.service.NotificationService;
 import com.skillswap.backend.wallet.service.WalletService;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -64,8 +62,7 @@ public class SessionService {
                 match.getId(),
                 UserSummary.from(partnerUser),
                 hydrateSkills(partnerOfferedIds),
-                hydrateSkills(myOfferedIds)
-        );
+                hydrateSkills(myOfferedIds));
     }
 
     private List<SchedulableSkill> hydrateSkills(Long[] userSkillIds) {
@@ -73,13 +70,15 @@ public class SessionService {
             return List.of();
         }
         return userSkillRepository.findAllByIdIn(List.of(userSkillIds)).stream()
-                .map(us -> new SchedulableSkill(us.getSkill().getId(), us.getSkill().getName(), us.getDescription()))
+                .map(us -> new SchedulableSkill(
+                        us.getSkill().getId(), us.getSkill().getName(), us.getDescription()))
                 .toList();
     }
 
     @Transactional
     public SessionResponse createSession(Long viewerId, CreateSessionRequest request) {
-        Match match = matchRepository.findById(request.matchId())
+        Match match = matchRepository
+                .findById(request.matchId())
                 .orElseThrow(() -> ApiException.badRequest("Match not found"));
 
         Long user1Id = match.getUser1().getId();
@@ -92,13 +91,15 @@ public class SessionService {
         }
         Long learnerId = request.teacherId().equals(user1Id) ? user2Id : user1Id;
 
-        userSkillRepository.findFirstByUserIdAndTypeAndSkillId(request.teacherId(), "offer", request.skillId())
+        userSkillRepository
+                .findFirstByUserIdAndTypeAndSkillId(request.teacherId(), "offer", request.skillId())
                 .orElseThrow(() -> ApiException.badRequest("Teacher does not offer this skill"));
 
-        User teacher = userRepository.findById(request.teacherId())
+        User teacher = userRepository
+                .findById(request.teacherId())
                 .orElseThrow(() -> ApiException.badRequest("Teacher not found"));
-        User learner = userRepository.findById(learnerId)
-                .orElseThrow(() -> ApiException.badRequest("Learner not found"));
+        User learner =
+                userRepository.findById(learnerId).orElseThrow(() -> ApiException.badRequest("Learner not found"));
 
         requireInFuture(request.scheduledAt());
         requireBothAvailable(teacher, learner, request.scheduledAt(), request.durationMinutes());
@@ -121,7 +122,9 @@ public class SessionService {
 
         Long otherParticipantId = viewerId.equals(user1Id) ? user2Id : user1Id;
         User viewer = userRepository.findById(viewerId).orElseThrow();
-        notificationService.notify(otherParticipantId, "SESSION_SCHEDULED",
+        notificationService.notify(
+                otherParticipantId,
+                "SESSION_SCHEDULED",
                 viewer.getName() + " scheduled a session with you",
                 "A " + session.getSkill().getName() + " session is scheduled for " + session.getScheduledAt() + ".");
 
@@ -157,9 +160,7 @@ public class SessionService {
         // Widened on the low side so an earlier, longer session that runs into
         // this slot is still considered.
         List<Session> nearby = sessionRepository.findScheduledForUsersBetween(
-                List.of(teacher.getId(), learner.getId()),
-                startsAt.minusDays(1),
-                endsAt);
+                List.of(teacher.getId(), learner.getId()), startsAt.minusDays(1), endsAt);
 
         for (Session existing : nearby) {
             OffsetDateTime existingEnd = existing.getScheduledAt().plusMinutes(existing.getDurationMinutes());
@@ -182,10 +183,11 @@ public class SessionService {
 
     @Transactional
     public SessionResponse updateStatus(Long sessionId, Long userId, String newStatus) {
-        Session session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> ApiException.notFound("Session not found"));
+        Session session =
+                sessionRepository.findById(sessionId).orElseThrow(() -> ApiException.notFound("Session not found"));
 
-        if (!session.getTeacher().getId().equals(userId) && !session.getLearner().getId().equals(userId)) {
+        if (!session.getTeacher().getId().equals(userId)
+                && !session.getLearner().getId().equals(userId)) {
             throw ApiException.forbidden("Not a participant in this session");
         }
 

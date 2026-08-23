@@ -2,7 +2,6 @@ package com.skillswap.backend.common.ratelimit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-
 import java.time.Duration;
 
 /**

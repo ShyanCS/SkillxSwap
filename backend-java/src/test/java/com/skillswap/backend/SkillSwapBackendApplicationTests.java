@@ -12,6 +12,5 @@ class SkillSwapBackendApplicationTests extends IntegrationTestBase {
 
     @Test
     @DisplayName("application context loads and entities match the migrated schema")
-    void contextLoads() {
-    }
+    void contextLoads() {}
 }

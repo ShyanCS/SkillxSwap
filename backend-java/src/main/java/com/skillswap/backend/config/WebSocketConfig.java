@@ -7,6 +7,7 @@ import com.skillswap.backend.realtime.RealtimeGateway;
 import com.skillswap.backend.realtime.RealtimeSessionRegistry;
 import com.skillswap.backend.realtime.RealtimeWebSocketHandler;
 import com.skillswap.backend.realtime.RedisRealtimeGateway;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.List;
 
 /**
  * Wires the realtime push socket at {@code /ws}.
@@ -73,8 +72,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     /** Subscribes this instance to the fan-out channel so it can serve its own sockets. */
     @Bean
     @ConditionalOnProperty(name = "app.redis.enabled", havingValue = "true")
-    public RedisMessageListenerContainer realtimeListenerContainer(RedisConnectionFactory connectionFactory,
-                                                                    RedisRealtimeGateway gateway) {
+    public RedisMessageListenerContainer realtimeListenerContainer(
+            RedisConnectionFactory connectionFactory, RedisRealtimeGateway gateway) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(gateway, new ChannelTopic(RedisRealtimeGateway.CHANNEL));

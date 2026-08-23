@@ -3,6 +3,7 @@ package com.skillswap.backend.config;
 import com.skillswap.backend.common.ratelimit.InMemoryRateLimitStore;
 import com.skillswap.backend.common.ratelimit.RateLimitStore;
 import com.skillswap.backend.common.ratelimit.RedisRateLimitStore;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +13,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
-
-import java.util.List;
 
 /**
  * Chooses where rate-limit counters live.

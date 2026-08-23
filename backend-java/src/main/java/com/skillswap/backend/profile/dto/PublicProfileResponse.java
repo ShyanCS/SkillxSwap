@@ -1,7 +1,6 @@
 package com.skillswap.backend.profile.dto;
 
 import com.skillswap.backend.skill.dto.UserSkillResponse;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -23,16 +22,8 @@ public record PublicProfileResponse(
         OffsetDateTime joinedAt,
         List<UserSkillResponse> skillsOffered,
         List<UserSkillResponse> skillsRequested,
-        List<ProfileReview> recentFeedback
-) {
+        List<ProfileReview> recentFeedback) {
 
     public record ProfileReview(
-            Long id,
-            String reviewerName,
-            int rating,
-            String comment,
-            String skillName,
-            OffsetDateTime createdAt
-    ) {
-    }
+            Long id, String reviewerName, int rating, String comment, String skillName, OffsetDateTime createdAt) {}
 }

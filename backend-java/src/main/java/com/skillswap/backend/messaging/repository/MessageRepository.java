@@ -1,14 +1,13 @@
 package com.skillswap.backend.messaging.repository;
 
 import com.skillswap.backend.messaging.entity.Message;
+import java.time.OffsetDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.time.OffsetDateTime;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
@@ -33,14 +32,16 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
      * broken outright, since only the fetched page would ever be marked read.
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
+    @Query(
+            """
             update Message m
                set m.readAt = :now
              where m.conversation.id = :conversationId
                and m.sender.id <> :userId
                and m.readAt is null
             """)
-    int markConversationRead(@Param("conversationId") Long conversationId,
-                             @Param("userId") Long userId,
-                             @Param("now") OffsetDateTime now);
+    int markConversationRead(
+            @Param("conversationId") Long conversationId,
+            @Param("userId") Long userId,
+            @Param("now") OffsetDateTime now);
 }

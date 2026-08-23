@@ -10,8 +10,7 @@ public record UserSummary(
         String timezone,
         String profilePictureUrl,
         Integer sessionsCompleted,
-        Double rating
-) {
+        Double rating) {
     public static UserSummary from(User user) {
         return new UserSummary(
                 user.getId(),
@@ -21,7 +20,6 @@ public record UserSummary(
                 user.getTimezone(),
                 user.getProfilePictureUrl(),
                 user.getSessionsCompleted(),
-                user.getAverageRating().doubleValue()
-        );
+                user.getAverageRating().doubleValue());
     }
 }

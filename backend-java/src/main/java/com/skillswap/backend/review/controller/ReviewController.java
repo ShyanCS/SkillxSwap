@@ -6,6 +6,7 @@ import com.skillswap.backend.review.dto.ReviewResponse;
 import com.skillswap.backend.review.service.ReviewService;
 import com.skillswap.backend.session.dto.SessionResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -29,8 +28,8 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ReviewResponse create(@AuthenticationPrincipal CustomUserDetails principal,
-                                  @Valid @RequestBody CreateReviewRequest request) {
+    public ReviewResponse create(
+            @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody CreateReviewRequest request) {
         return reviewService.createReview(principal.getId(), request);
     }
 

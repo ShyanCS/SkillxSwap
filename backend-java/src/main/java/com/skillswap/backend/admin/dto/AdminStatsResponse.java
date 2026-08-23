@@ -6,6 +6,4 @@ public record AdminStatsResponse(
         long scheduledSessions,
         long completedSessions,
         long creditsInCirculation,
-        long openReports
-) {
-}
+        long openReports) {}

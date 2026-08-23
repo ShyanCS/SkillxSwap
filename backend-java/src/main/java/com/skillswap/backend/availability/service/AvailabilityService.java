@@ -7,11 +7,6 @@ import com.skillswap.backend.availability.dto.AvailabilityDtos.SlotDto;
 import com.skillswap.backend.availability.entity.AvailabilitySlot;
 import com.skillswap.backend.availability.repository.AvailabilityRepository;
 import com.skillswap.backend.common.exception.ApiException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -21,6 +16,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -34,10 +33,10 @@ public class AvailabilityService {
 
     @Transactional(readOnly = true)
     public AvailabilityResponse getAvailability(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.notFound("User not found"));
-        List<SlotDto> slots = availabilityRepository.findByUserIdOrderByDayOfWeekAscStartMinuteAsc(userId)
-                .stream().map(SlotDto::from).toList();
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
+        List<SlotDto> slots = availabilityRepository.findByUserIdOrderByDayOfWeekAscStartMinuteAsc(userId).stream()
+                .map(SlotDto::from)
+                .toList();
         return new AvailabilityResponse(zoneIdOf(user).getId(), slots);
     }
 
@@ -48,8 +47,7 @@ public class AvailabilityService {
                 throw ApiException.badRequest("A slot's end time must be after its start time.");
             }
         }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.notFound("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
 
         // Delete-then-insert: the editor submits the whole week, and diffing
         // against existing rows would add complexity with no observable gain.
@@ -77,22 +75,21 @@ public class AvailabilityService {
      */
     @Transactional(readOnly = true)
     public boolean isAvailableFor(User user, OffsetDateTime startsAt, int durationMinutes) {
-        List<AvailabilitySlot> slots = availabilityRepository
-                .findByUserIdOrderByDayOfWeekAscStartMinuteAsc(user.getId());
+        List<AvailabilitySlot> slots =
+                availabilityRepository.findByUserIdOrderByDayOfWeekAscStartMinuteAsc(user.getId());
         if (slots.isEmpty()) {
             return true;
         }
         return covers(slots, zoneIdOf(user), startsAt, durationMinutes);
     }
 
-    private boolean covers(Collection<AvailabilitySlot> slots, ZoneId zone,
-                            OffsetDateTime startsAt, int durationMinutes) {
+    private boolean covers(
+            Collection<AvailabilitySlot> slots, ZoneId zone, OffsetDateTime startsAt, int durationMinutes) {
         LocalDate reference = startsAt.atZoneSameInstant(zone).toLocalDate();
         List<WeekIntervals.Interval> available = WeekIntervals.project(slots, zone, reference);
 
-        ZonedDateTime weekStartUtc = reference
-                .minusDays(reference.getDayOfWeek().getValue() - 1L)
-                .atStartOfDay(UTC);
+        ZonedDateTime weekStartUtc =
+                reference.minusDays(reference.getDayOfWeek().getValue() - 1L).atStartOfDay(UTC);
         int start = Math.floorMod(
                 (int) ChronoUnit.MINUTES.between(weekStartUtc, startsAt.atZoneSameInstant(UTC)),
                 WeekIntervals.MINUTES_PER_WEEK);
@@ -114,8 +111,8 @@ public class AvailabilityService {
      */
     @Transactional(readOnly = true)
     public Map<Long, Integer> weeklyOverlapMinutes(User viewer, Collection<User> candidates) {
-        List<AvailabilitySlot> mine = availabilityRepository
-                .findByUserIdOrderByDayOfWeekAscStartMinuteAsc(viewer.getId());
+        List<AvailabilitySlot> mine =
+                availabilityRepository.findByUserIdOrderByDayOfWeekAscStartMinuteAsc(viewer.getId());
         if (mine.isEmpty() || candidates.isEmpty()) {
             return Map.of();
         }
@@ -124,15 +121,19 @@ public class AvailabilityService {
         List<WeekIntervals.Interval> myIntervals = WeekIntervals.project(mine, zoneIdOf(viewer), reference);
 
         // One query for every candidate rather than one per candidate.
-        Map<Long, List<AvailabilitySlot>> byUser = availabilityRepository
-                .findByUserIdIn(candidates.stream().map(User::getId).toList())
-                .stream().collect(Collectors.groupingBy(slot -> slot.getUser().getId()));
+        Map<Long, List<AvailabilitySlot>> byUser =
+                availabilityRepository
+                        .findByUserIdIn(candidates.stream().map(User::getId).toList())
+                        .stream()
+                        .collect(Collectors.groupingBy(slot -> slot.getUser().getId()));
 
         return candidates.stream()
                 .filter(candidate -> byUser.containsKey(candidate.getId()))
-                .collect(Collectors.toMap(User::getId, candidate -> WeekIntervals.overlapMinutes(
-                        myIntervals,
-                        WeekIntervals.project(byUser.get(candidate.getId()), zoneIdOf(candidate), reference))));
+                .collect(Collectors.toMap(
+                        User::getId,
+                        candidate -> WeekIntervals.overlapMinutes(
+                                myIntervals,
+                                WeekIntervals.project(byUser.get(candidate.getId()), zoneIdOf(candidate), reference))));
     }
 
     /**

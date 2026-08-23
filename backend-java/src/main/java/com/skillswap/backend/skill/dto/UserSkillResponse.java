@@ -1,7 +1,6 @@
 package com.skillswap.backend.skill.dto;
 
 import com.skillswap.backend.skill.entity.UserSkill;
-
 import java.time.OffsetDateTime;
 
 public record UserSkillResponse(
@@ -15,8 +14,7 @@ public record UserSkillResponse(
         String proficiencyLevel,
         String desiredProficiency,
         String urgency,
-        String[] availability
-) {
+        String[] availability) {
     public static UserSkillResponse from(UserSkill userSkill) {
         return new UserSkillResponse(
                 userSkill.getId(),
@@ -29,7 +27,6 @@ public record UserSkillResponse(
                 userSkill.getProficiencyLevel(),
                 userSkill.getDesiredProficiency(),
                 userSkill.getUrgency(),
-                userSkill.getAvailability()
-        );
+                userSkill.getAvailability());
     }
 }

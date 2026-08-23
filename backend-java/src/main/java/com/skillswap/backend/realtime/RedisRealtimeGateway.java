@@ -1,5 +1,7 @@
 package com.skillswap.backend.realtime;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -7,9 +9,6 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * Fans events out through Redis pub/sub so they reach the user regardless of
@@ -43,8 +42,11 @@ public class RedisRealtimeGateway implements RealtimeGateway, MessageListener {
             // Degrade to this instance's own sockets rather than losing the
             // event entirely -- a Redis outage shouldn't black out realtime for
             // the users who happen to be connected here.
-            log.warn("Redis fan-out failed for event {} to user {}; delivering locally only: {}",
-                    event.type(), userId, e.toString());
+            log.warn(
+                    "Redis fan-out failed for event {} to user {}; delivering locally only: {}",
+                    event.type(),
+                    userId,
+                    e.toString());
             deliverLocally(userId, event);
         }
     }

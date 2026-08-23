@@ -2,7 +2,6 @@ package com.skillswap.backend.session.dto;
 
 import com.skillswap.backend.matching.dto.UserSummary;
 import com.skillswap.backend.session.entity.Session;
-
 import java.time.OffsetDateTime;
 
 public record SessionResponse(
@@ -17,15 +16,15 @@ public record SessionResponse(
         String location,
         String notes,
         String status,
-        OffsetDateTime createdAt
-) {
+        OffsetDateTime createdAt) {
     public static SessionResponse from(Session session, Long viewerId) {
         boolean viewerIsTeacher = session.getTeacher().getId().equals(viewerId);
         var partnerUser = viewerIsTeacher ? session.getLearner() : session.getTeacher();
         return new SessionResponse(
                 session.getId(),
                 UserSummary.from(partnerUser),
-                new SchedulableSkill(session.getSkill().getId(), session.getSkill().getName(), session.getNotes()),
+                new SchedulableSkill(
+                        session.getSkill().getId(), session.getSkill().getName(), session.getNotes()),
                 viewerIsTeacher ? "teacher" : "learner",
                 session.getScheduledAt(),
                 session.getScheduledAt().plusMinutes(session.getDurationMinutes()),
@@ -34,7 +33,6 @@ public record SessionResponse(
                 session.getLocation(),
                 session.getNotes(),
                 session.getStatus().toLowerCase(),
-                session.getCreatedAt()
-        );
+                session.getCreatedAt());
     }
 }

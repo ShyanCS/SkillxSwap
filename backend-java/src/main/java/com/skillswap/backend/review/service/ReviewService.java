@@ -11,14 +11,13 @@ import com.skillswap.backend.review.repository.ReviewRepository;
 import com.skillswap.backend.session.dto.SessionResponse;
 import com.skillswap.backend.session.entity.Session;
 import com.skillswap.backend.session.repository.SessionRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +35,8 @@ public class ReviewService {
                 .toList();
 
         List<Long> completedIds = completed.stream().map(Session::getId).toList();
-        Set<Long> alreadyReviewed = completedIds.isEmpty() ? Set.of()
+        Set<Long> alreadyReviewed = completedIds.isEmpty()
+                ? Set.of()
                 : reviewRepository.findByReviewerIdAndSessionIdIn(userId, completedIds).stream()
                         .map(r -> r.getSession().getId())
                         .collect(java.util.stream.Collectors.toSet());
@@ -49,7 +49,8 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse createReview(Long reviewerId, CreateReviewRequest request) {
-        Session session = sessionRepository.findById(request.sessionId())
+        Session session = sessionRepository
+                .findById(request.sessionId())
                 .orElseThrow(() -> ApiException.badRequest("Session not found"));
 
         if (!"Completed".equals(session.getStatus())) {
@@ -63,12 +64,14 @@ public class ReviewService {
         }
         Long revieweeId = reviewerId.equals(teacherId) ? learnerId : teacherId;
 
-        if (reviewRepository.findBySessionIdAndReviewerId(session.getId(), reviewerId).isPresent()) {
+        if (reviewRepository
+                .findBySessionIdAndReviewerId(session.getId(), reviewerId)
+                .isPresent()) {
             throw ApiException.badRequest("You have already reviewed this session");
         }
 
-        User reviewee = userRepository.findById(revieweeId)
-                .orElseThrow(() -> ApiException.badRequest("Reviewee not found"));
+        User reviewee =
+                userRepository.findById(revieweeId).orElseThrow(() -> ApiException.badRequest("Reviewee not found"));
 
         Review review = Review.builder()
                 .session(session)
@@ -82,7 +85,9 @@ public class ReviewService {
         applyRatingToReviewee(reviewee, request.rating());
 
         User reviewer = userRepository.findById(reviewerId).orElseThrow();
-        notificationService.notify(revieweeId, "REVIEW_RECEIVED",
+        notificationService.notify(
+                revieweeId,
+                "REVIEW_RECEIVED",
                 reviewer.getName() + " left you a " + request.rating() + "-star review",
                 request.comment() != null ? request.comment() : "No comment left.");
 
@@ -92,7 +97,8 @@ public class ReviewService {
     private void applyRatingToReviewee(User reviewee, int newRating) {
         int newCount = reviewee.getRatingCount() + 1;
         BigDecimal totalBefore = reviewee.getAverageRating().multiply(BigDecimal.valueOf(reviewee.getRatingCount()));
-        BigDecimal newAverage = totalBefore.add(BigDecimal.valueOf(newRating))
+        BigDecimal newAverage = totalBefore
+                .add(BigDecimal.valueOf(newRating))
                 .divide(BigDecimal.valueOf(newCount), 2, RoundingMode.HALF_UP);
         reviewee.setAverageRating(newAverage);
         reviewee.setRatingCount(newCount);

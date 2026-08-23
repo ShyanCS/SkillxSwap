@@ -9,12 +9,11 @@ import com.skillswap.backend.review.repository.ReviewRepository;
 import com.skillswap.backend.session.repository.SessionRepository;
 import com.skillswap.backend.skill.dto.UserSkillResponse;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +28,7 @@ public class ProfileService {
 
     @Transactional
     public User updateProfile(Long userId, UpdateProfileRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.badRequest("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.badRequest("User not found"));
 
         user.setProfilePictureUrl(request.profilePictureUrl());
         user.setBio(request.bio());
@@ -42,8 +40,7 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public PublicProfileResponse getPublicProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.notFound("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
 
         List<UserSkillResponse> offered = userSkillRepository.findByUserIdAndType(userId, "offer").stream()
                 .map(UserSkillResponse::from)
@@ -52,17 +49,18 @@ public class ProfileService {
                 .map(UserSkillResponse::from)
                 .toList();
 
-        List<PublicProfileResponse.ProfileReview> feedback = reviewRepository
-                .findByRevieweeIdOrderByIdDesc(userId, PageRequest.of(0, RECENT_FEEDBACK_LIMIT))
-                .stream()
-                .map(review -> new PublicProfileResponse.ProfileReview(
-                        review.getId(),
-                        review.getReviewer().getName(),
-                        review.getRating(),
-                        review.getComment(),
-                        review.getSession().getSkill().getName(),
-                        review.getCreatedAt()))
-                .toList();
+        List<PublicProfileResponse.ProfileReview> feedback =
+                reviewRepository
+                        .findByRevieweeIdOrderByIdDesc(userId, PageRequest.of(0, RECENT_FEEDBACK_LIMIT))
+                        .stream()
+                        .map(review -> new PublicProfileResponse.ProfileReview(
+                                review.getId(),
+                                review.getReviewer().getName(),
+                                review.getRating(),
+                                review.getComment(),
+                                review.getSession().getSkill().getName(),
+                                review.getCreatedAt()))
+                        .toList();
 
         return new PublicProfileResponse(
                 user.getId(),
@@ -77,7 +75,6 @@ public class ProfileService {
                 user.getCreatedAt(),
                 offered,
                 requested,
-                feedback
-        );
+                feedback);
     }
 }

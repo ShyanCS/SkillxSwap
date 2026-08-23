@@ -1,11 +1,10 @@
 package com.skillswap.backend.common.ratelimit;
 
+import java.time.Duration;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
-
-import java.time.Duration;
-import java.util.List;
 
 /**
  * Buckets shared by every API instance, so a limit of 5/hour means 5/hour for
@@ -27,6 +26,7 @@ public class RedisRateLimitStore implements RateLimitStore {
 
     /** Rate-limits every log line about an outage down to one per interval. */
     private static final long OUTAGE_LOG_INTERVAL_MILLIS = 30_000L;
+
     private volatile long lastOutageLogAt = 0L;
 
     public RedisRateLimitStore(StringRedisTemplate redis, RedisScript<List> script, RateLimitStore fallback) {

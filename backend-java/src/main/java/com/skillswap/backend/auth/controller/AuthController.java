@@ -12,6 +12,7 @@ import com.skillswap.backend.auth.security.CustomUserDetails;
 import com.skillswap.backend.auth.security.JwtService;
 import com.skillswap.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,8 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,7 +50,9 @@ public class AuthController {
         User user = authService.register(request);
         String token = jwtService.generateToken(user);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, cookieUtil.buildTokenCookie(token).toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookieUtil.buildTokenCookie(token).toString())
                 .body(Map.of("message", "User registered successfully"));
     }
 
@@ -60,7 +61,9 @@ public class AuthController {
         User user = authService.login(request);
         String token = jwtService.generateToken(user);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieUtil.buildTokenCookie(token).toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookieUtil.buildTokenCookie(token).toString())
                 .body(Map.of("message", "User Loggedin Sucessfully!"));
     }
 
@@ -73,7 +76,9 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieUtil.buildExpiredTokenCookie().toString())
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookieUtil.buildExpiredTokenCookie().toString())
                 .body(Map.of("message", "Logged out successfully"));
     }
 

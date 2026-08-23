@@ -9,6 +9,4 @@ public record MatchResultResponse(
         List<MatchSkillItem> skillsRequested,
         int compatibilityScore,
         List<String> mutualInterests,
-        String lastActive
-) {
-}
+        String lastActive) {}

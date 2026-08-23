@@ -8,6 +8,8 @@ import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.report.dto.ReportResponse;
 import com.skillswap.backend.report.service.ReportService;
 import com.skillswap.backend.skill.dto.SkillCatalogResponse;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,9 +19,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
 
 /** Every endpoint here is admin-only, enforced by SecurityConfig's /api/admin/** rule. */
 @RestController
@@ -36,9 +35,10 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public PageResponse<AdminUserResponse> users(@RequestParam(required = false) String q,
-                                                  @RequestParam(required = false) Integer page,
-                                                  @RequestParam(required = false) Integer size) {
+    public PageResponse<AdminUserResponse> users(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         return adminService.getUsers(q, page, size);
     }
 

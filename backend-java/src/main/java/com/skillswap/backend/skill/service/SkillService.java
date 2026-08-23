@@ -10,11 +10,10 @@ import com.skillswap.backend.skill.entity.Skill;
 import com.skillswap.backend.skill.entity.UserSkill;
 import com.skillswap.backend.skill.repository.SkillRepository;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * DTO mapping happens inside these @Transactional methods, not in the
@@ -31,8 +30,8 @@ public class SkillService {
 
     @Transactional
     public UserSkillResponse addSkill(Long userId, AddSkillRequest request) {
-        Skill skill = skillRepository.findById(request.skillId())
-                .orElseThrow(() -> ApiException.badRequest("Unknown skill"));
+        Skill skill =
+                skillRepository.findById(request.skillId()).orElseThrow(() -> ApiException.badRequest("Unknown skill"));
 
         UserSkill.UserSkillBuilder builder = UserSkill.builder()
                 .user(userRepository.getReferenceById(userId))
@@ -42,11 +41,9 @@ public class SkillService {
                 .status("Active");
 
         if ("offer".equals(request.type())) {
-            builder.proficiencyLevel(request.proficiencyLevel())
-                    .availability(request.availability());
+            builder.proficiencyLevel(request.proficiencyLevel()).availability(request.availability());
         } else {
-            builder.urgency(request.urgency())
-                    .desiredProficiency(request.desiredProficiency());
+            builder.urgency(request.urgency()).desiredProficiency(request.desiredProficiency());
         }
 
         return UserSkillResponse.from(userSkillRepository.save(builder.build()));
@@ -68,11 +65,13 @@ public class SkillService {
 
     @Transactional
     public UserSkillResponse updateSkill(Long userSkillId, Long userId, UpdateSkillRequest request) {
-        UserSkill userSkill = userSkillRepository.findByIdAndUserId(userSkillId, userId)
+        UserSkill userSkill = userSkillRepository
+                .findByIdAndUserId(userSkillId, userId)
                 .orElseThrow(() -> ApiException.badRequest("Skill not found"));
 
         if (request.newSkillId() != null) {
-            Skill skill = skillRepository.findById(request.newSkillId())
+            Skill skill = skillRepository
+                    .findById(request.newSkillId())
                     .orElseThrow(() -> ApiException.badRequest("Unknown skill"));
             userSkill.setSkill(skill);
         }
@@ -93,7 +92,8 @@ public class SkillService {
 
     @Transactional
     public void deleteSkill(Long userSkillId, Long userId) {
-        UserSkill userSkill = userSkillRepository.findByIdAndUserId(userSkillId, userId)
+        UserSkill userSkill = userSkillRepository
+                .findByIdAndUserId(userSkillId, userId)
                 .orElseThrow(() -> ApiException.badRequest("Skill not found"));
         userSkillRepository.delete(userSkill);
     }

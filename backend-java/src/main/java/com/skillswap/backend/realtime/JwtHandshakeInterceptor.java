@@ -4,6 +4,7 @@ import com.skillswap.backend.auth.security.JwtAuthenticationFilter;
 import com.skillswap.backend.auth.security.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -11,8 +12,6 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
-
-import java.util.Map;
 
 /**
  * Authenticates the WebSocket handshake from the same httpOnly JWT cookie the
@@ -31,10 +30,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     private final JwtService jwtService;
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request,
-                                    ServerHttpResponse response,
-                                    WebSocketHandler wsHandler,
-                                    Map<String, Object> attributes) {
+    public boolean beforeHandshake(
+            ServerHttpRequest request,
+            ServerHttpResponse response,
+            WebSocketHandler wsHandler,
+            Map<String, Object> attributes) {
         String token = extractToken(request);
         if (token == null) {
             return false;
@@ -52,10 +52,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public void afterHandshake(ServerHttpRequest request,
-                                ServerHttpResponse response,
-                                WebSocketHandler wsHandler,
-                                Exception exception) {
+    public void afterHandshake(
+            ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
         // Nothing to do.
     }
 

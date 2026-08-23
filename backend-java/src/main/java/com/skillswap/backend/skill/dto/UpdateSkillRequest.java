@@ -7,6 +7,4 @@ public record UpdateSkillRequest(
         String[] availability,
         String desiredProficiency,
         String urgency,
-        String status
-) {
-}
+        String status) {}

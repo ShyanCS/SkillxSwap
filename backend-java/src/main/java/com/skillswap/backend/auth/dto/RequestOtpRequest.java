@@ -6,6 +6,4 @@ import jakarta.validation.constraints.Pattern;
 
 public record RequestOtpRequest(
         @NotBlank @Email String email,
-        @NotBlank @Pattern(regexp = "register|reset", message = "must be 'register' or 'reset'") String purpose
-) {
-}
+        @NotBlank @Pattern(regexp = "register|reset", message = "must be 'register' or 'reset'") String purpose) {}

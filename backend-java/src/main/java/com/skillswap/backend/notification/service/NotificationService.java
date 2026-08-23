@@ -2,15 +2,16 @@ package com.skillswap.backend.notification.service;
 
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
-import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.common.dto.PageRequests;
 import com.skillswap.backend.common.dto.PageResponse;
+import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.common.mail.MailService;
 import com.skillswap.backend.notification.dto.NotificationResponse;
 import com.skillswap.backend.notification.entity.Notification;
 import com.skillswap.backend.notification.repository.NotificationRepository;
 import com.skillswap.backend.realtime.RealtimeEvent;
 import com.skillswap.backend.realtime.RealtimeGateway;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +41,7 @@ public class NotificationService {
      */
     @Transactional
     public void notify(Long userId, String type, String title, String body) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.badRequest("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.badRequest("User not found"));
 
         Notification saved = notificationRepository.save(Notification.builder()
                 .user(user)
@@ -76,7 +74,8 @@ public class NotificationService {
 
     @Transactional
     public void markRead(Long notificationId, Long userId) {
-        Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
+        Notification notification = notificationRepository
+                .findByIdAndUserId(notificationId, userId)
                 .orElseThrow(() -> ApiException.notFound("Notification not found"));
         if (notification.getReadAt() == null) {
             notification.setReadAt(java.time.OffsetDateTime.now());

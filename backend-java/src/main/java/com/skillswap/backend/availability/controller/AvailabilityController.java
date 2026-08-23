@@ -27,8 +27,9 @@ public class AvailabilityController {
     }
 
     @PutMapping
-    public AvailabilityResponse updateAvailability(@AuthenticationPrincipal CustomUserDetails principal,
-                                                    @Valid @RequestBody UpdateAvailabilityRequest request) {
+    public AvailabilityResponse updateAvailability(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody UpdateAvailabilityRequest request) {
         return availabilityService.replaceAvailability(principal.getId(), request.slots());
     }
 

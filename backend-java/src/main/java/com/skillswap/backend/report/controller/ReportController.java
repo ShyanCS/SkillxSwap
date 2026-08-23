@@ -21,8 +21,8 @@ public class ReportController {
     private final ReportService reportService;
 
     @PostMapping
-    public ReportResponse create(@AuthenticationPrincipal CustomUserDetails principal,
-                                  @Valid @RequestBody CreateReportRequest request) {
+    public ReportResponse create(
+            @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody CreateReportRequest request) {
         return reportService.createReport(principal.getId(), request);
     }
 }

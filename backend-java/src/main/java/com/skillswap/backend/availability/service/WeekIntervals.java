@@ -1,7 +1,6 @@
 package com.skillswap.backend.availability.service;
 
 import com.skillswap.backend.availability.entity.AvailabilitySlot;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -32,8 +31,7 @@ final class WeekIntervals {
 
     static final int MINUTES_PER_WEEK = 7 * 24 * 60;
 
-    private WeekIntervals() {
-    }
+    private WeekIntervals() {}
 
     /** Half-open [start, end) in minutes from Monday 00:00 UTC. */
     record Interval(int start, int end) {
@@ -75,7 +73,9 @@ final class WeekIntervals {
     private static ZonedDateTime localInstant(LocalDate day, int minuteOfDay, ZoneId zone) {
         // A DST spring-forward can make the nominal local time non-existent;
         // atZone resolves that forward to a real instant rather than throwing.
-        return LocalDateTime.of(day, java.time.LocalTime.MIDNIGHT).plusMinutes(minuteOfDay).atZone(zone);
+        return LocalDateTime.of(day, java.time.LocalTime.MIDNIGHT)
+                .plusMinutes(minuteOfDay)
+                .atZone(zone);
     }
 
     /** Normalises into [0, MINUTES_PER_WEEK), splitting anything crossing the boundary. */

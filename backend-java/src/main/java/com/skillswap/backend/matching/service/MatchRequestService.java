@@ -15,13 +15,12 @@ import com.skillswap.backend.notification.service.NotificationService;
 import com.skillswap.backend.skill.dto.UserSkillResponse;
 import com.skillswap.backend.skill.entity.UserSkill;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +37,8 @@ public class MatchRequestService {
         if (request.receiverId().equals(senderId)) {
             throw ApiException.badRequest("Cannot send request to yourself");
         }
-        User receiver = userRepository.findById(request.receiverId())
+        User receiver = userRepository
+                .findById(request.receiverId())
                 .orElseThrow(() -> ApiException.badRequest("Receiver not found"));
 
         List<Long> offeredIds = request.skillsOffered().stream().distinct().toList();
@@ -53,7 +53,8 @@ public class MatchRequestService {
         if (existing.isPresent()) {
             MatchRequest matchRequest = existing.get();
             matchRequest.setSenderOfferedUserSkillIds(union(matchRequest.getSenderOfferedUserSkillIds(), requestedIds));
-            matchRequest.setReceiverOfferedUserSkillIds(union(matchRequest.getReceiverOfferedUserSkillIds(), offeredIds));
+            matchRequest.setReceiverOfferedUserSkillIds(
+                    union(matchRequest.getReceiverOfferedUserSkillIds(), offeredIds));
             matchRequestRepository.save(matchRequest);
             return;
         }
@@ -68,7 +69,9 @@ public class MatchRequestService {
         matchRequestRepository.save(matchRequest);
 
         User sender = userRepository.findById(senderId).orElseThrow();
-        notificationService.notify(receiver.getId(), "MATCH_REQUEST_RECEIVED",
+        notificationService.notify(
+                receiver.getId(),
+                "MATCH_REQUEST_RECEIVED",
                 "New match request from " + sender.getName(),
                 sender.getName() + " wants to exchange skills with you.");
     }
@@ -103,12 +106,18 @@ public class MatchRequestService {
                 .toList();
     }
 
-    private MatchRequestResponse toResponse(MatchRequest r, MatchRequestParticipant sender, MatchRequestParticipant recipient) {
+    private MatchRequestResponse toResponse(
+            MatchRequest r, MatchRequestParticipant sender, MatchRequestParticipant recipient) {
         List<UserSkillResponse> skillOffered = hydrate(r.getSenderOfferedUserSkillIds());
         List<UserSkillResponse> skillWanted = hydrate(r.getReceiverOfferedUserSkillIds());
         return new MatchRequestResponse(
-                r.getId(), sender, recipient, skillOffered, skillWanted, r.getCreatedAt(), r.getStatus().toLowerCase()
-        );
+                r.getId(),
+                sender,
+                recipient,
+                skillOffered,
+                skillWanted,
+                r.getCreatedAt(),
+                r.getStatus().toLowerCase());
     }
 
     private List<UserSkillResponse> hydrate(Long[] userSkillIds) {
@@ -122,7 +131,8 @@ public class MatchRequestService {
 
     @Transactional
     public MatchRequestResponse respond(Long requestId, Long userId, RespondRequest request) {
-        MatchRequest matchRequest = matchRequestRepository.findById(requestId)
+        MatchRequest matchRequest = matchRequestRepository
+                .findById(requestId)
                 .orElseThrow(() -> ApiException.notFound("Request not found"));
 
         if (!matchRequest.getReceiver().getId().equals(userId)) {
@@ -142,10 +152,14 @@ public class MatchRequestService {
         }
 
         String receiverName = matchRequest.getReceiver().getName();
-        notificationService.notify(matchRequest.getSender().getId(), "MATCH_REQUEST_" + request.status().toUpperCase(),
-                receiverName + (request.status().equals("Accepted") ? " accepted" : " declined") + " your match request",
+        notificationService.notify(
+                matchRequest.getSender().getId(),
+                "MATCH_REQUEST_" + request.status().toUpperCase(),
+                receiverName + (request.status().equals("Accepted") ? " accepted" : " declined")
+                        + " your match request",
                 "Accepted".equals(request.status())
-                        ? receiverName + " accepted your skill exchange request. You can now message and schedule sessions."
+                        ? receiverName
+                                + " accepted your skill exchange request. You can now message and schedule sessions."
                         : receiverName + " declined your skill exchange request.");
 
         return toResponse(matchRequest, MatchRequestParticipant.from(matchRequest.getSender()), null);

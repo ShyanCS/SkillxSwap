@@ -1,13 +1,12 @@
 package com.skillswap.backend.profile.service;
 
 import com.skillswap.backend.profile.dto.CloudinarySignatureResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Computes a Cloudinary signed-upload signature without pulling in the full
@@ -28,9 +27,10 @@ public class CloudinarySignatureService {
     private final String apiKey;
     private final String apiSecret;
 
-    public CloudinarySignatureService(@Value("${app.cloudinary.cloud-name}") String cloudName,
-                                       @Value("${app.cloudinary.api-key}") String apiKey,
-                                       @Value("${app.cloudinary.api-secret}") String apiSecret) {
+    public CloudinarySignatureService(
+            @Value("${app.cloudinary.cloud-name}") String cloudName,
+            @Value("${app.cloudinary.api-key}") String apiKey,
+            @Value("${app.cloudinary.api-secret}") String apiSecret) {
         this.cloudName = cloudName;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;

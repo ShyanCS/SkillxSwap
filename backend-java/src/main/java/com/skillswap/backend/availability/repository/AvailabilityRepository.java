@@ -1,10 +1,9 @@
 package com.skillswap.backend.availability.repository;
 
 import com.skillswap.backend.availability.entity.AvailabilitySlot;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Collection;
 import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AvailabilityRepository extends JpaRepository<AvailabilitySlot, Long> {
 

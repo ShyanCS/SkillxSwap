@@ -9,12 +9,11 @@ import com.skillswap.backend.auth.entity.OtpPurpose;
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
 import com.skillswap.backend.common.exception.ApiException;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +63,8 @@ public class AuthService {
 
     public User login(LoginRequest request) {
         String email = normalize(request.email());
-        User user = userRepository.findByEmail(email)
+        User user = userRepository
+                .findByEmail(email)
                 .orElseThrow(() -> ApiException.badRequest("Email or Password is invalid"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
@@ -79,8 +79,7 @@ public class AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         String email = normalize(request.email());
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> ApiException.badRequest("Invalid Email"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> ApiException.badRequest("Invalid Email"));
 
         otpService.requireVerified(email);
 

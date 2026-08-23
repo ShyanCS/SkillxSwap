@@ -1,6 +1,7 @@
 package com.skillswap.backend.config;
 
 import com.skillswap.backend.auth.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +20,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -56,8 +55,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                         // Explicit, rather than relying on the framework's default
                         // authenticated-vs-anonymous resolution to pick 403 over 401
                         // for an authenticated-but-insufficient-role request.
@@ -67,16 +65,26 @@ public class SecurityConfig {
                         // forward to /error, which re-enters this filter chain as a new,
                         // anonymous request. Without this, that forwarded request itself
                         // gets denied and translated to 401, clobbering the real 403.
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/error")
+                        .permitAll()
+                        .requestMatchers("/api/health")
+                        .permitAll()
                         // Liveness/readiness probes for the container runtime.
                         // Only health is exposed (see management.endpoints in
                         // application.yml) and it never renders details.
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/auth/request-otp", "/api/auth/verify-otp",
-                                "/api/auth/register", "/api/auth/login", "/api/auth/reset").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                        .requestMatchers(
+                                "/api/auth/request-otp",
+                                "/api/auth/verify-otp",
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/reset")
+                        .permitAll()
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

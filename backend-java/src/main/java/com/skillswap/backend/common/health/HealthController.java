@@ -1,13 +1,12 @@
 package com.skillswap.backend.common.health;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor

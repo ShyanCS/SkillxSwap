@@ -7,11 +7,10 @@ import com.skillswap.backend.report.dto.CreateReportRequest;
 import com.skillswap.backend.report.dto.ReportResponse;
 import com.skillswap.backend.report.entity.Report;
 import com.skillswap.backend.report.repository.ReportRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +24,8 @@ public class ReportService {
         if (request.reportedUserId().equals(reporterId)) {
             throw ApiException.badRequest("You cannot report yourself");
         }
-        User reportedUser = userRepository.findById(request.reportedUserId())
+        User reportedUser = userRepository
+                .findById(request.reportedUserId())
                 .orElseThrow(() -> ApiException.badRequest("Reported user not found"));
 
         Report report = Report.builder()
@@ -46,8 +46,8 @@ public class ReportService {
 
     @Transactional
     public ReportResponse resolveReport(Long reportId) {
-        Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> ApiException.notFound("Report not found"));
+        Report report =
+                reportRepository.findById(reportId).orElseThrow(() -> ApiException.notFound("Report not found"));
         report.setStatus("Resolved");
         return ReportResponse.from(reportRepository.save(report));
     }

@@ -1,15 +1,17 @@
 package com.skillswap.backend.skill.repository;
 
 import com.skillswap.backend.skill.entity.UserSkill;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     List<UserSkill> findByUserIdAndType(Long userId, String type);
+
     long countByUserIdAndType(Long userId, String type);
+
     Optional<UserSkill> findByIdAndUserId(Long id, Long userId);
+
     List<UserSkill> findAllByIdIn(List<Long> ids);
 
     // Matching engine: other users' rows of a given type for a set of skills.

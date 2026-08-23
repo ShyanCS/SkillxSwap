@@ -1,5 +1,7 @@
 package com.skillswap.backend.wallet;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.skillswap.backend.IntegrationTestBase;
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
@@ -13,13 +15,10 @@ import com.skillswap.backend.session.service.SessionService;
 import com.skillswap.backend.skill.entity.Skill;
 import com.skillswap.backend.skill.repository.SkillRepository;
 import com.skillswap.backend.wallet.service.WalletService;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.OffsetDateTime;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The credit ledger is the closest thing this system has to money, so these
@@ -28,13 +27,26 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class WalletCreditTransferTest extends IntegrationTestBase {
 
-    @Autowired UserRepository userRepository;
-    @Autowired SkillRepository skillRepository;
-    @Autowired MatchRequestRepository matchRequestRepository;
-    @Autowired MatchRepository matchRepository;
-    @Autowired SessionRepository sessionRepository;
-    @Autowired SessionService sessionService;
-    @Autowired WalletService walletService;
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    SkillRepository skillRepository;
+
+    @Autowired
+    MatchRequestRepository matchRequestRepository;
+
+    @Autowired
+    MatchRepository matchRepository;
+
+    @Autowired
+    SessionRepository sessionRepository;
+
+    @Autowired
+    SessionService sessionService;
+
+    @Autowired
+    WalletService walletService;
 
     private static final int STARTER_BALANCE = 5;
 

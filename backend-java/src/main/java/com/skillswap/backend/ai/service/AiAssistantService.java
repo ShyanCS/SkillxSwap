@@ -3,19 +3,19 @@ package com.skillswap.backend.ai.service;
 import com.skillswap.backend.ai.dto.AiDtos;
 import com.skillswap.backend.skill.entity.UserSkill;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class AiAssistantService {
 
-    private static final String SYSTEM_INSTRUCTION = """
+    private static final String SYSTEM_INSTRUCTION =
+            """
             You are the SkillSwap study assistant. SkillSwap is a peer-to-peer platform \
             where members teach a skill they know and learn a skill they want, paying each \
             other in non-monetary "skill credits" rather than money.
@@ -46,14 +46,14 @@ public class AiAssistantService {
     @Transactional(readOnly = true)
     public AiDtos.AskResponse ask(Long userId, String question) {
         if (!isConfigured()) {
-            return AiDtos.AskResponse.unavailable(
-                    "The AI assistant isn't enabled on this deployment yet. "
-                            + "You can still browse skills, message your matches, and schedule sessions.");
+            return AiDtos.AskResponse.unavailable("The AI assistant isn't enabled on this deployment yet. "
+                    + "You can still browse skills, message your matches, and schedule sessions.");
         }
 
         String prompt = buildPrompt(userId, question);
 
-        return geminiClient.generate(SYSTEM_INSTRUCTION, prompt)
+        return geminiClient
+                .generate(SYSTEM_INSTRUCTION, prompt)
                 .map(AiDtos.AskResponse::of)
                 .orElseGet(() -> AiDtos.AskResponse.unavailable(
                         "The assistant couldn't answer that right now. Please try again in a moment."));
@@ -83,16 +83,14 @@ public class AiAssistantService {
                 <question>
                 %s
                 </question>
-                """.formatted(teaching, learning, question);
+                """
+                .formatted(teaching, learning, question);
     }
 
     private String summarise(List<UserSkill> skills) {
         if (skills.isEmpty()) {
             return "(none listed)";
         }
-        return skills.stream()
-                .map(us -> us.getSkill().getName())
-                .distinct()
-                .collect(Collectors.joining(", "));
+        return skills.stream().map(us -> us.getSkill().getName()).distinct().collect(Collectors.joining(", "));
     }
 }

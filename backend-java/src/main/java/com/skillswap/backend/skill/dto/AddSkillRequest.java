@@ -11,6 +11,4 @@ public record AddSkillRequest(
         String proficiencyLevel,
         String[] availability,
         String desiredProficiency,
-        String urgency
-) {
-}
+        String urgency) {}

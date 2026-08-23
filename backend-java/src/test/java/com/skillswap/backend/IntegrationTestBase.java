@@ -4,16 +4,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-// Boot 4 relocated this from org.springframework.boot.test.autoconfigure.web.servlet
-// as part of splitting the web stacks into separate modules.
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Shared setup for integration tests: a real PostgreSQL container with the
@@ -56,7 +54,8 @@ public abstract class IntegrationTestBase {
      */
     @BeforeEach
     void resetDatabase() {
-        jdbcTemplate.execute("""
+        jdbcTemplate.execute(
+                """
                 TRUNCATE TABLE
                     reviews, wallet_transactions, wallets, sessions, matches,
                     match_requests, messages, conversations, notifications,

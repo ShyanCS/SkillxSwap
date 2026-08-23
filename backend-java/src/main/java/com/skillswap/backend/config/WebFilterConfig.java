@@ -17,8 +17,7 @@ public class WebFilterConfig {
      */
     @Bean
     public FilterRegistrationBean<RequestIdFilter> requestIdFilterRegistration() {
-        FilterRegistrationBean<RequestIdFilter> registration =
-                new FilterRegistrationBean<>(new RequestIdFilter());
+        FilterRegistrationBean<RequestIdFilter> registration = new FilterRegistrationBean<>(new RequestIdFilter());
         registration.addUrlPatterns("/*");
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;

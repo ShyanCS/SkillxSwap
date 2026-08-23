@@ -1,5 +1,7 @@
 package com.skillswap.backend.config;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -7,9 +9,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /**
  * Refuses to start the application if production is misconfigured in a way that
@@ -53,9 +52,8 @@ public class ProductionConfigValidator implements BeanFactoryPostProcessor {
     private void validateJwtSecret(String secret) {
         int bytes = secret.getBytes(StandardCharsets.UTF_8).length;
         if (bytes < MIN_SECRET_BYTES) {
-            throw new IllegalStateException(
-                    "JWT_SECRET is too short (" + bytes + " bytes). Use at least " + MIN_SECRET_BYTES
-                            + " bytes of random data, e.g. `openssl rand -base64 48`.");
+            throw new IllegalStateException("JWT_SECRET is too short (" + bytes + " bytes). Use at least "
+                    + MIN_SECRET_BYTES + " bytes of random data, e.g. `openssl rand -base64 48`.");
         }
         if (secret.contains("dev-only") || secret.contains("change-me") || secret.contains("insecure")) {
             throw new IllegalStateException(
@@ -68,7 +66,8 @@ public class ProductionConfigValidator implements BeanFactoryPostProcessor {
         if (rawOrigins.isBlank()) {
             throw new IllegalStateException("CORS_ALLOWED_ORIGINS must list your frontend origin(s) in production.");
         }
-        for (String origin : Arrays.stream(rawOrigins.split(",")).map(String::trim).toList()) {
+        for (String origin :
+                Arrays.stream(rawOrigins.split(",")).map(String::trim).toList()) {
             if (origin.isEmpty()) {
                 continue;
             }

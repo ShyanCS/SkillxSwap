@@ -12,14 +12,13 @@ import com.skillswap.backend.session.repository.SessionRepository;
 import com.skillswap.backend.skill.dto.SkillCatalogResponse;
 import com.skillswap.backend.skill.repository.SkillRepository;
 import com.skillswap.backend.wallet.repository.WalletRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +38,7 @@ public class AdminService {
                 sessionRepository.countByStatus("Scheduled"),
                 sessionRepository.countByStatus("Completed"),
                 walletRepository.sumAllBalances(),
-                reportRepository.countByStatus("Open")
-        );
+                reportRepository.countByStatus("Open"));
     }
 
     @Transactional(readOnly = true)
@@ -58,8 +56,7 @@ public class AdminService {
         if (userId.equals(adminId) && !enabled) {
             throw ApiException.badRequest("You cannot suspend your own account");
         }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> ApiException.notFound("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("User not found"));
         user.setEnabled(enabled);
         return AdminUserResponse.from(userRepository.save(user));
     }

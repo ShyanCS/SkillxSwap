@@ -24,11 +24,13 @@ public class MailService {
      * so the provider rejects the message or it lands in spam.
      */
     private final String fromAddress;
+
     private final String fromName;
 
-    public MailService(JavaMailSender mailSender,
-                        @Value("${app.mail.from}") String fromAddress,
-                        @Value("${app.mail.from-name}") String fromName) {
+    public MailService(
+            JavaMailSender mailSender,
+            @Value("${app.mail.from}") String fromAddress,
+            @Value("${app.mail.from-name}") String fromName) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
@@ -37,9 +39,7 @@ public class MailService {
     /** RFC 5322 "Display Name <address>" so inboxes show a name, not a bare address. */
     private SimpleMailMessage compose(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromName == null || fromName.isBlank()
-                ? fromAddress
-                : fromName + " <" + fromAddress + ">");
+        message.setFrom(fromName == null || fromName.isBlank() ? fromAddress : fromName + " <" + fromAddress + ">");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);

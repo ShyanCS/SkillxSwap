@@ -1,7 +1,6 @@
 package com.skillswap.backend.report.dto;
 
 import com.skillswap.backend.report.entity.Report;
-
 import java.time.OffsetDateTime;
 
 public record ReportResponse(
@@ -12,8 +11,7 @@ public record ReportResponse(
         String reportedUserName,
         String reason,
         String status,
-        OffsetDateTime createdAt
-) {
+        OffsetDateTime createdAt) {
     public static ReportResponse from(Report report) {
         return new ReportResponse(
                 report.getId(),
@@ -23,7 +21,6 @@ public record ReportResponse(
                 report.getReportedUser().getName(),
                 report.getReason(),
                 report.getStatus(),
-                report.getCreatedAt()
-        );
+                report.getCreatedAt());
     }
 }

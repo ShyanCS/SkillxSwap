@@ -14,6 +14,4 @@ public record MatchSkillItem(
         String name,
         String proficiencyLevel,
         String desiredProficiency,
-        String description
-) {
-}
+        String description) {}

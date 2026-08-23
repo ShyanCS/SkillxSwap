@@ -1,5 +1,10 @@
 package com.skillswap.backend.ai.service;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,17 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-// Spring Boot 4 ships Jackson 3, whose packages live under `tools.jackson`.
-// (The `com.fasterxml.jackson` v2 jars on the tree are runtime-only, pulled in
-// transitively by JJWT, and are not on the compile classpath.)
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Thin client over the Gemini generateContent REST API.
@@ -43,6 +39,7 @@ public class GeminiClient {
 
     /** Kept low: the caller is a user waiting on an HTTP response, not a batch job. */
     private static final int MAX_ATTEMPTS = 3;
+
     private static final Duration RETRY_BACKOFF = Duration.ofMillis(600);
 
     private final RestClient restClient;
@@ -50,10 +47,11 @@ public class GeminiClient {
     private final String apiKey;
     private final String model;
 
-    public GeminiClient(ObjectMapper objectMapper,
-                         @Value("${app.ai.endpoint}") String endpoint,
-                         @Value("${app.ai.api-key}") String apiKey,
-                         @Value("${app.ai.model}") String model) {
+    public GeminiClient(
+            ObjectMapper objectMapper,
+            @Value("${app.ai.endpoint}") String endpoint,
+            @Value("${app.ai.api-key}") String apiKey,
+            @Value("${app.ai.model}") String model) {
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.model = model;
@@ -77,13 +75,8 @@ public class GeminiClient {
     public Optional<String> generate(String systemInstruction, String userMessage) {
         Map<String, Object> payload = Map.of(
                 "system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))),
-                "contents", List.of(Map.of(
-                        "role", "user",
-                        "parts", List.of(Map.of("text", userMessage)))),
-                "generationConfig", Map.of(
-                        "temperature", 0.4,
-                        "maxOutputTokens", 800)
-        );
+                "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", userMessage)))),
+                "generationConfig", Map.of("temperature", 0.4, "maxOutputTokens", 800));
 
         String requestJson;
         try {
@@ -124,16 +117,21 @@ public class GeminiClient {
                 // Called out separately because the cause is operational, not a
                 // code defect: the key is out of quota and the fix is a bigger
                 // plan or fewer calls, not a retry or a redeploy.
-                log.error("Gemini quota exhausted for this API key (model={}). "
-                        + "The assistant will keep returning 'unavailable' until quota resets.", model);
+                log.error(
+                        "Gemini quota exhausted for this API key (model={}). "
+                                + "The assistant will keep returning 'unavailable' until quota resets.",
+                        model);
                 return Optional.empty();
             }
             if (response.status() >= 400) {
                 // Permanent failures (bad key, retired model id, malformed
                 // request) are logged with the upstream message, which is what
                 // makes a retired model diagnosable in seconds.
-                log.error("Gemini returned HTTP {} (model={}): {}",
-                        response.status(), model, abbreviate(response.body()));
+                log.error(
+                        "Gemini returned HTTP {} (model={}): {}",
+                        response.status(),
+                        model,
+                        abbreviate(response.body()));
                 return Optional.empty();
             }
             return extractText(response.body());
@@ -141,8 +139,7 @@ public class GeminiClient {
         return Optional.empty();
     }
 
-    private record RawResponse(int status, String body) {
-    }
+    private record RawResponse(int status, String body) {}
 
     /**
      * Reads the response as raw bytes, bypassing HTTP message converters.
@@ -156,7 +153,8 @@ public class GeminiClient {
      * mattering.
      */
     private RawResponse send(String requestJson) {
-        return restClient.post()
+        return restClient
+                .post()
                 .uri("/{model}:generateContent", model)
                 .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +199,8 @@ public class GeminiClient {
 
         JsonNode parts = response.path("candidates").path(0).path("content").path("parts");
         if (!parts.isArray() || parts.isEmpty()) {
-            log.warn("Gemini returned no content; finishReason={}",
+            log.warn(
+                    "Gemini returned no content; finishReason={}",
                     response.path("candidates").path(0).path("finishReason").asText("unknown"));
             return Optional.empty();
         }

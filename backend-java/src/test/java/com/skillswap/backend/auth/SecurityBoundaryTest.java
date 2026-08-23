@@ -1,22 +1,22 @@
 package com.skillswap.backend.auth;
 
-import com.skillswap.backend.IntegrationTestBase;
-import com.skillswap.backend.auth.entity.Role;
-import com.skillswap.backend.auth.entity.User;
-import com.skillswap.backend.auth.repository.UserRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import jakarta.servlet.http.Cookie;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.assertj.core.api.Assertions.assertThat;
+
+import com.skillswap.backend.IntegrationTestBase;
+import com.skillswap.backend.auth.entity.Role;
+import com.skillswap.backend.auth.entity.User;
+import com.skillswap.backend.auth.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Access-control boundaries. These are the checks whose failure is silent and
@@ -27,8 +27,11 @@ class SecurityBoundaryTest extends IntegrationTestBase {
 
     private static final String PASSWORD = "correct-horse-battery";
 
-    @Autowired UserRepository userRepository;
-    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("protected endpoints reject anonymous callers")
@@ -103,9 +106,11 @@ class SecurityBoundaryTest extends IntegrationTestBase {
     @Test
     @DisplayName("registration is refused without a verified OTP")
     void registrationRequiresVerifiedOtp() throws Exception {
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {"name":"Sneaky","email":"sneaky@example.com","password":"password123"}
                                 """))
                 .andExpect(status().isBadRequest())

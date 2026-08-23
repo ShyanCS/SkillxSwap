@@ -16,15 +16,14 @@ import com.skillswap.backend.messaging.repository.MessageRepository;
 import com.skillswap.backend.notification.service.NotificationService;
 import com.skillswap.backend.realtime.RealtimeEvent;
 import com.skillswap.backend.realtime.RealtimeGateway;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,14 +37,15 @@ public class MessagingService {
     private final RealtimeGateway realtimeGateway;
 
     /** Envelope for a pushed chat message: the client needs to know which conversation it belongs to. */
-    public record IncomingMessage(Long conversationId, Long senderId, MessageResponse message) {
-    }
+    public record IncomingMessage(Long conversationId, Long senderId, MessageResponse message) {}
 
     @Transactional(readOnly = true)
     public List<ConversationSummaryResponse> getConversations(Long userId) {
         Map<Long, Conversation> conversationByPartnerId = new LinkedHashMap<>();
         for (Conversation c : conversationRepository.findAllForUser(userId)) {
-            Long partnerId = c.getUser1().getId().equals(userId) ? c.getUser2().getId() : c.getUser1().getId();
+            Long partnerId = c.getUser1().getId().equals(userId)
+                    ? c.getUser2().getId()
+                    : c.getUser1().getId();
             conversationByPartnerId.put(partnerId, c);
         }
 
@@ -60,13 +60,13 @@ public class MessagingService {
             }
 
             Message last = messageRepository.findFirstByConversationIdOrderBySentAtDesc(conversation.getId());
-            long unread = messageRepository.countByConversationIdAndSenderIdNotAndReadAtIsNull(conversation.getId(), userId);
+            long unread =
+                    messageRepository.countByConversationIdAndSenderIdNotAndReadAtIsNull(conversation.getId(), userId);
             result.add(new ConversationSummaryResponse(
                     conversation.getId(),
                     UserSummary.from(partner),
                     last != null ? MessageResponse.from(last) : null,
-                    unread
-            ));
+                    unread));
         }
 
         result.sort((a, b) -> {
@@ -88,7 +88,8 @@ public class MessagingService {
      */
     @Transactional
     public PageResponse<MessageResponse> getMessages(Long conversationId, Long userId, Integer page, Integer size) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+        Conversation conversation = conversationRepository
+                .findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("Conversation not found"));
         requireParticipant(conversation, userId);
 
@@ -96,14 +97,14 @@ public class MessagingService {
 
         Pageable pageable = PageRequests.of(page, size);
         return PageResponse.of(
-                messageRepository.findByConversationIdOrderByIdDesc(conversationId, pageable),
-                MessageResponse::from);
+                messageRepository.findByConversationIdOrderByIdDesc(conversationId, pageable), MessageResponse::from);
     }
 
     @Transactional
     public MessageResponse sendMessage(Long senderId, Long partnerId, String body) {
         boolean matched = matchRepository.findAllForUser(senderId).stream()
-                .anyMatch(m -> m.getUser1().getId().equals(partnerId) || m.getUser2().getId().equals(partnerId));
+                .anyMatch(m -> m.getUser1().getId().equals(partnerId)
+                        || m.getUser2().getId().equals(partnerId));
         if (!matched) {
             throw ApiException.forbidden("You can only message users you've matched with");
         }
@@ -120,7 +121,9 @@ public class MessagingService {
         Message saved = messageRepository.save(message);
 
         User sender = userRepository.findById(senderId).orElseThrow();
-        notificationService.notify(partnerId, "MESSAGE_RECEIVED",
+        notificationService.notify(
+                partnerId,
+                "MESSAGE_RECEIVED",
                 "New message from " + sender.getName(),
                 body.length() > 140 ? body.substring(0, 140) + "..." : body);
 
@@ -128,8 +131,8 @@ public class MessagingService {
         // Push the message itself so an open chat renders it without waiting for
         // a poll. Delivery is best-effort by design -- the message is already
         // committed, so a dropped frame costs latency, not data.
-        realtimeGateway.publish(partnerId, RealtimeEvent.message(
-                new IncomingMessage(conversation.getId(), senderId, response)));
+        realtimeGateway.publish(
+                partnerId, RealtimeEvent.message(new IncomingMessage(conversation.getId(), senderId, response)));
 
         return response;
     }
@@ -137,7 +140,8 @@ public class MessagingService {
     private Conversation getOrCreateConversation(Long userAId, Long userBId) {
         Long lowId = Math.min(userAId, userBId);
         Long highId = Math.max(userAId, userBId);
-        return conversationRepository.findByUser1_IdAndUser2_Id(lowId, highId)
+        return conversationRepository
+                .findByUser1_IdAndUser2_Id(lowId, highId)
                 .orElseGet(() -> conversationRepository.save(Conversation.builder()
                         .user1(userRepository.getReferenceById(lowId))
                         .user2(userRepository.getReferenceById(highId))
@@ -145,7 +149,8 @@ public class MessagingService {
     }
 
     private void requireParticipant(Conversation conversation, Long userId) {
-        if (!conversation.getUser1().getId().equals(userId) && !conversation.getUser2().getId().equals(userId)) {
+        if (!conversation.getUser1().getId().equals(userId)
+                && !conversation.getUser2().getId().equals(userId)) {
             throw ApiException.forbidden("Not a participant in this conversation");
         }
     }

@@ -3,6 +3,8 @@ package com.skillswap.backend.config;
 import com.skillswap.backend.auth.entity.Role;
 import com.skillswap.backend.auth.entity.User;
 import com.skillswap.backend.auth.repository.UserRepository;
+import java.util.Locale;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,9 +12,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
-import java.util.Optional;
 
 /**
  * Promotes a configured email to ADMIN on startup so a fresh deployment has a
@@ -49,8 +48,10 @@ public class AdminBootstrap {
 
         Optional<User> found = userRepository.findByEmail(email);
         if (found.isEmpty()) {
-            log.warn("ADMIN_BOOTSTRAP_EMAIL is set to '{}' but no such account exists yet. "
-                    + "Register that email through the normal signup flow, then restart to grant admin.", email);
+            log.warn(
+                    "ADMIN_BOOTSTRAP_EMAIL is set to '{}' but no such account exists yet. "
+                            + "Register that email through the normal signup flow, then restart to grant admin.",
+                    email);
             return;
         }
 

@@ -4,6 +4,7 @@ import com.skillswap.backend.auth.security.CustomUserDetails;
 import com.skillswap.backend.common.dto.PageResponse;
 import com.skillswap.backend.notification.dto.NotificationResponse;
 import com.skillswap.backend.notification.service.NotificationService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
@@ -23,9 +22,10 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public PageResponse<NotificationResponse> list(@AuthenticationPrincipal CustomUserDetails principal,
-                                                    @RequestParam(required = false) Integer page,
-                                                    @RequestParam(required = false) Integer size) {
+    public PageResponse<NotificationResponse> list(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         return notificationService.getNotifications(principal.getId(), page, size);
     }
 

@@ -5,12 +5,11 @@ import com.skillswap.backend.auth.entity.OtpVerification;
 import com.skillswap.backend.auth.repository.OtpVerificationRepository;
 import com.skillswap.backend.common.exception.ApiException;
 import com.skillswap.backend.common.mail.MailService;
+import java.security.SecureRandom;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.security.SecureRandom;
-import java.time.OffsetDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +36,9 @@ public class OtpService {
         // Synchronous on purpose: the UI tells the member to go check their
         // inbox, so a delivery failure has to surface as an error here rather
         // than leave them waiting for a code that never sends.
-        mailService.sendSync(email, "Your SkillSwap verification code",
+        mailService.sendSync(
+                email,
+                "Your SkillSwap verification code",
                 "Your OTP is " + otp + ". It expires in " + ttlMinutes + " minutes.");
     }
 

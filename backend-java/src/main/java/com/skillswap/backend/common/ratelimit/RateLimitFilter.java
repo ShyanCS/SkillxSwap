@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 /**
  * Rejects abusive callers before they reach application code.
@@ -38,9 +37,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final RateLimiterService rateLimiter;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                     @NonNull HttpServletResponse response,
-                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
         RateLimiterService.Limit limit = limitFor(request);
         if (limit == null) {
             filterChain.doFilter(request, response);
@@ -71,9 +72,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (path.equals("/api/auth/request-otp")) {
             return RateLimiterService.Limit.OTP;
         }
-        if (path.equals("/api/auth/login")
-                || path.equals("/api/auth/register")
-                || path.equals("/api/auth/reset")) {
+        if (path.equals("/api/auth/login") || path.equals("/api/auth/register") || path.equals("/api/auth/reset")) {
             return RateLimiterService.Limit.LOGIN;
         }
         return null;
@@ -94,7 +93,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
         // Matches the {"error": "..."} envelope the frontend already parses.
-        response.getWriter().write(
-                "{\"error\":\"Too many requests. Please try again in " + retryAfterSeconds + " seconds.\"}");
+        response.getWriter()
+                .write("{\"error\":\"Too many requests. Please try again in " + retryAfterSeconds + " seconds.\"}");
     }
 }

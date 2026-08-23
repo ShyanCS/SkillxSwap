@@ -13,8 +13,7 @@ public record UserResponse(
         String profilePictureUrl,
         Integer sessionsCompleted,
         Role role,
-        Double rating
-) {
+        Double rating) {
     public static UserResponse from(User user) {
         return new UserResponse(
                 user.getId(),
@@ -26,7 +25,6 @@ public record UserResponse(
                 user.getProfilePictureUrl(),
                 user.getSessionsCompleted(),
                 user.getRole(),
-                user.getAverageRating().doubleValue()
-        );
+                user.getAverageRating().doubleValue());
     }
 }

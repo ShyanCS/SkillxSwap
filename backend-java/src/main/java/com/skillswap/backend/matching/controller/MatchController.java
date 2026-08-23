@@ -8,6 +8,8 @@ import com.skillswap.backend.matching.dto.SendMatchRequestRequest;
 import com.skillswap.backend.matching.service.MatchRequestService;
 import com.skillswap.backend.matching.service.MatchingService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +19,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/match-requests")
@@ -35,8 +34,8 @@ public class MatchController {
     }
 
     @PostMapping
-    public Map<String, String> sendRequest(@AuthenticationPrincipal CustomUserDetails principal,
-                                            @Valid @RequestBody SendMatchRequestRequest request) {
+    public Map<String, String> sendRequest(
+            @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody SendMatchRequestRequest request) {
         matchRequestService.sendRequest(principal.getId(), request);
         return Map.of("message", "Match request sent");
     }
@@ -52,9 +51,10 @@ public class MatchController {
     }
 
     @PutMapping("/{id}")
-    public Map<String, Object> respond(@AuthenticationPrincipal CustomUserDetails principal,
-                                        @PathVariable Long id,
-                                        @Valid @RequestBody RespondRequest request) {
+    public Map<String, Object> respond(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long id,
+            @Valid @RequestBody RespondRequest request) {
         MatchRequestResponse updated = matchRequestService.respond(id, principal.getId(), request);
         return Map.of("message", "Request " + request.status(), "request", updated);
     }

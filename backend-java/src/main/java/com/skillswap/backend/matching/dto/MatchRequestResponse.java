@@ -1,7 +1,6 @@
 package com.skillswap.backend.matching.dto;
 
 import com.skillswap.backend.skill.dto.UserSkillResponse;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -18,6 +17,4 @@ public record MatchRequestResponse(
         List<UserSkillResponse> skillOffered,
         List<UserSkillResponse> skillWanted,
         OffsetDateTime sentAt,
-        String status
-) {
-}
+        String status) {}

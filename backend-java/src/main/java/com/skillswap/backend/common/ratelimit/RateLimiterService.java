@@ -1,9 +1,8 @@
 package com.skillswap.backend.common.ratelimit;
 
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
 
 /**
  * Per-client rate limiting for abuse-prone endpoints.
@@ -32,10 +31,11 @@ public class RateLimiterService {
     private final int loginPer15Min;
     private final int aiPerHour;
 
-    public RateLimiterService(RateLimitStore store,
-                               @Value("${app.ratelimit.otp-per-hour}") int otpPerHour,
-                               @Value("${app.ratelimit.login-per-15min}") int loginPer15Min,
-                               @Value("${app.ratelimit.ai-per-hour}") int aiPerHour) {
+    public RateLimiterService(
+            RateLimitStore store,
+            @Value("${app.ratelimit.otp-per-hour}") int otpPerHour,
+            @Value("${app.ratelimit.login-per-15min}") int loginPer15Min,
+            @Value("${app.ratelimit.ai-per-hour}") int aiPerHour) {
         this.store = store;
         this.otpPerHour = otpPerHour;
         this.loginPer15Min = loginPer15Min;

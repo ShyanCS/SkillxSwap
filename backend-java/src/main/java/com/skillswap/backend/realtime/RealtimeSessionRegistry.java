@@ -1,14 +1,13 @@
 package com.skillswap.backend.realtime;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 /**
  * The live WebSocket connections held by <em>this</em> instance, keyed by user.
@@ -24,7 +23,9 @@ public class RealtimeSessionRegistry {
     private final Map<Long, Set<WebSocketSession>> sessionsByUser = new ConcurrentHashMap<>();
 
     public void register(Long userId, WebSocketSession session) {
-        sessionsByUser.computeIfAbsent(userId, id -> ConcurrentHashMap.newKeySet()).add(session);
+        sessionsByUser
+                .computeIfAbsent(userId, id -> ConcurrentHashMap.newKeySet())
+                .add(session);
     }
 
     public void unregister(Long userId, WebSocketSession session) {

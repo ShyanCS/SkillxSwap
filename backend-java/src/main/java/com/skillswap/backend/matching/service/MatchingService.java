@@ -9,10 +9,6 @@ import com.skillswap.backend.matching.dto.MatchSkillItem;
 import com.skillswap.backend.matching.dto.UserSummary;
 import com.skillswap.backend.skill.entity.UserSkill;
 import com.skillswap.backend.skill.repository.UserSkillRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -20,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Rule-based reciprocal matcher: a candidate only appears if there's mutual
@@ -35,8 +34,7 @@ public class MatchingService {
             User user,
             List<MatchSkillItem> skillsOffered,
             List<MatchSkillItem> skillsRequested,
-            Set<String> mutualInterests
-    ) {
+            Set<String> mutualInterests) {
         static Entry empty(User user) {
             return new Entry(user, new ArrayList<>(), new ArrayList<>(), new LinkedHashSet<>());
         }
@@ -46,6 +44,7 @@ public class MatchingService {
     private static final int FULLY_COMPATIBLE_OVERLAP_MINUTES = 8 * 60;
     /** Skill fit still dominates; availability can lift a score by at most 30%. */
     private static final float SKILL_WEIGHT = 0.7f;
+
     private static final float AVAILABILITY_WEIGHT = 0.3f;
 
     private final UserSkillRepository userSkillRepository;
@@ -57,65 +56,72 @@ public class MatchingService {
         List<UserSkill> myOffered = userSkillRepository.findByUserIdAndType(currentUserId, "offer");
         List<UserSkill> myRequested = userSkillRepository.findByUserIdAndType(currentUserId, "request");
 
-        Map<Long, UserSkill> myOfferedBySkillId = myOffered.stream()
-                .collect(Collectors.toMap(us -> us.getSkill().getId(), us -> us, (a, b) -> a));
+        Map<Long, UserSkill> myOfferedBySkillId =
+                myOffered.stream().collect(Collectors.toMap(us -> us.getSkill().getId(), us -> us, (a, b) -> a));
 
-        List<Long> myRequestedSkillIds = myRequested.stream().map(us -> us.getSkill().getId()).distinct().toList();
+        List<Long> myRequestedSkillIds =
+                myRequested.stream().map(us -> us.getSkill().getId()).distinct().toList();
         List<Long> myOfferedSkillIds = myOfferedBySkillId.keySet().stream().toList();
 
-        List<UserSkill> othersOfferingWhatIWant = myRequestedSkillIds.isEmpty() ? List.of()
+        List<UserSkill> othersOfferingWhatIWant = myRequestedSkillIds.isEmpty()
+                ? List.of()
                 : userSkillRepository.findByTypeAndSkill_IdInAndUser_IdNot("offer", myRequestedSkillIds, currentUserId);
-        List<UserSkill> othersWantingWhatIOffer = myOfferedSkillIds.isEmpty() ? List.of()
+        List<UserSkill> othersWantingWhatIOffer = myOfferedSkillIds.isEmpty()
+                ? List.of()
                 : userSkillRepository.findByTypeAndSkill_IdInAndUser_IdNot("request", myOfferedSkillIds, currentUserId);
 
         Map<Long, Entry> byUser = new LinkedHashMap<>();
 
         for (UserSkill theirOffer : othersOfferingWhatIWant) {
             Entry entry = byUser.computeIfAbsent(theirOffer.getUser().getId(), id -> Entry.empty(theirOffer.getUser()));
-            entry.skillsOffered().add(new MatchSkillItem(
-                    theirOffer.getId(),
-                    theirOffer.getSkill().getId(),
-                    theirOffer.getSkill().getName(),
-                    theirOffer.getProficiencyLevel(),
-                    null,
-                    theirOffer.getDescription()
-            ));
+            entry.skillsOffered()
+                    .add(new MatchSkillItem(
+                            theirOffer.getId(),
+                            theirOffer.getSkill().getId(),
+                            theirOffer.getSkill().getName(),
+                            theirOffer.getProficiencyLevel(),
+                            null,
+                            theirOffer.getDescription()));
             entry.mutualInterests().add(theirOffer.getSkill().getName());
         }
 
         for (UserSkill theirRequest : othersWantingWhatIOffer) {
-            Entry entry = byUser.computeIfAbsent(theirRequest.getUser().getId(), id -> Entry.empty(theirRequest.getUser()));
-            UserSkill myOfferForThisSkill = myOfferedBySkillId.get(theirRequest.getSkill().getId());
+            Entry entry =
+                    byUser.computeIfAbsent(theirRequest.getUser().getId(), id -> Entry.empty(theirRequest.getUser()));
+            UserSkill myOfferForThisSkill =
+                    myOfferedBySkillId.get(theirRequest.getSkill().getId());
             if (myOfferForThisSkill == null) {
                 continue; // shouldn't happen given the query filter, but guard anyway
             }
-            entry.skillsRequested().add(new MatchSkillItem(
-                    myOfferForThisSkill.getId(),
-                    theirRequest.getSkill().getId(),
-                    theirRequest.getSkill().getName(),
-                    null,
-                    theirRequest.getDesiredProficiency(),
-                    theirRequest.getDescription()
-            ));
+            entry.skillsRequested()
+                    .add(new MatchSkillItem(
+                            myOfferForThisSkill.getId(),
+                            theirRequest.getSkill().getId(),
+                            theirRequest.getSkill().getName(),
+                            null,
+                            theirRequest.getDesiredProficiency(),
+                            theirRequest.getDescription()));
             entry.mutualInterests().add(theirRequest.getSkill().getName());
         }
 
         int myTotalListings = myOffered.size() + myRequested.size();
 
         List<Entry> reciprocal = byUser.values().stream()
-                .filter(e -> !e.skillsOffered().isEmpty() && !e.skillsRequested().isEmpty())
+                .filter(e ->
+                        !e.skillsOffered().isEmpty() && !e.skillsRequested().isEmpty())
                 .toList();
 
-        User viewer = userRepository.findById(currentUserId)
-                .orElseThrow(() -> ApiException.notFound("User not found"));
+        User viewer = userRepository.findById(currentUserId).orElseThrow(() -> ApiException.notFound("User not found"));
         Map<Long, Integer> overlapByUser = availabilityService.weeklyOverlapMinutes(
                 viewer, reciprocal.stream().map(Entry::user).toList());
 
         List<MatchResultResponse> results = new ArrayList<>();
         for (Entry entry : reciprocal) {
-            int rawCount = entry.skillsOffered().size() + entry.skillsRequested().size();
+            int rawCount =
+                    entry.skillsOffered().size() + entry.skillsRequested().size();
             int skillScore = myTotalListings == 0 ? 0 : Math.min(100, Math.round(rawCount * 100f / myTotalListings));
-            int score = applyAvailabilityWeight(skillScore, overlapByUser.get(entry.user().getId()));
+            int score = applyAvailabilityWeight(
+                    skillScore, overlapByUser.get(entry.user().getId()));
             results.add(new MatchResultResponse(
                     entry.user().getId(),
                     UserSummary.from(entry.user()),
@@ -123,8 +129,7 @@ public class MatchingService {
                     entry.skillsRequested(),
                     score,
                     entry.mutualInterests().stream().toList(),
-                    "Just now"
-            ));
+                    "Just now"));
         }
 
         results.sort((a, b) -> b.compatibilityScore() - a.compatibilityScore());
