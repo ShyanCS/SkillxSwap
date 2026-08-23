@@ -213,9 +213,34 @@
 					  some Windows locales) are rejected by the server's tzdata,
 					  so every test fails at connection time. UTC also matches the
 					  TIMESTAMPTZ-based schema.
+
+					  @{argLine} is what JaCoCo's prepare-agent injects; referencing
+					  it here instead of overwriting the property keeps both agents.
 					-->
-					<argLine>-Duser.timezone=UTC</argLine>
+					<argLine>@{argLine} -Duser.timezone=UTC</argLine>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<!-- Coverage report after tests; consumed as a CI artifact. No
+					     threshold gate yet: the suite pins critical invariants
+					     first, coverage breadth follows. -->
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

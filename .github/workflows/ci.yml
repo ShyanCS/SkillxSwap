@@ -39,6 +39,14 @@ jobs:
           path: backend-java/target/surefire-reports/
           if-no-files-found: ignore
 
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backend-coverage
+          path: backend-java/target/site/jacoco/
+          if-no-files-found: ignore
+
   frontend:
     name: Frontend (lint + build)
     runs-on: ubuntu-latest
@@ -63,6 +71,18 @@ jobs:
       - name: Lint
         working-directory: frontend
         run: npm run lint
+
+      - name: Test (with coverage)
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/lcov.info
+          if-no-files-found: ignore
 
       - name: Build
         working-directory: frontend
