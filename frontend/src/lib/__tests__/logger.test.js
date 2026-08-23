@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createLogger } from './logger';
+import { createLogger } from '../logger';
 
 function fakeSink() {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };

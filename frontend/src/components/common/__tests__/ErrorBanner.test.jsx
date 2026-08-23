@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ErrorBanner from './ErrorBanner';
+import ErrorBanner from '../ErrorBanner';
 
 describe('ErrorBanner', () => {
   it('renders nothing when there is no message', () => {
