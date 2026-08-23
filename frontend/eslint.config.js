@@ -29,6 +29,15 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // JSX-only components read as "unused" to the base rule.
       'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
+      // All logging goes through src/lib/logger so verbosity is centrally
+      // controlled; logger.js itself is exempt below.
+      'no-console': 'error',
+    },
+  },
+  {
+    files: ['src/lib/logger.js'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];
