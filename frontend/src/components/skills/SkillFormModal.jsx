@@ -149,12 +149,20 @@ const SkillFormModal = ({ type, initial = null, onClose, onSave }) => {
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? 'Edit Skill' : type === 'offer' ? 'Add Skill to Teach' : 'Add Skill to Learn'}
+            {isEditMode
+              ? 'Edit Skill'
+              : type === 'offer'
+                ? 'Add Skill to Teach'
+                : 'Add Skill to Learn'}
           </h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <ErrorBanner message={validationError} tone="warning" onDismiss={() => setValidationError('')} />
+          <ErrorBanner
+            message={validationError}
+            tone="warning"
+            onDismiss={() => setValidationError('')}
+          />
           <ErrorBanner message={saveError} onDismiss={() => setSaveError('')} />
 
           <div>
@@ -268,7 +276,9 @@ const SkillFormModal = ({ type, initial = null, onClose, onSave }) => {
             <button
               type="submit"
               className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${
-                type === 'offer' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'
+                type === 'offer'
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-purple-600 hover:bg-purple-700'
               }`}
             >
               Add Skill

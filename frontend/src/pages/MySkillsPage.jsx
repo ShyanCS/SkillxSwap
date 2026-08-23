@@ -20,7 +20,10 @@ const MySkillsPage = () => {
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const [offeredData, requestedData] = await Promise.all([getSkill('offer'), getSkill('request')]);
+        const [offeredData, requestedData] = await Promise.all([
+          getSkill('offer'),
+          getSkill('request'),
+        ]);
         setOfferedSkills(offeredData);
         setRequestedSkills(requestedData);
       } catch (error) {
@@ -142,7 +145,12 @@ const MySkillsPage = () => {
                 {activeTab === 'offered' ? 'Skills You Offer' : 'Skills You Want to Learn'}
               </h2>
               <button
-                onClick={() => setModalState({ type: activeTab === 'offered' ? 'offer' : 'request', skill: null })}
+                onClick={() =>
+                  setModalState({
+                    type: activeTab === 'offered' ? 'offer' : 'request',
+                    skill: null,
+                  })
+                }
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === 'offered'
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -168,17 +176,21 @@ const MySkillsPage = () => {
                     />
                   ))
                 ) : (
-                <div className="text-center py-12">
-                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No skills offered yet</h3>
-                  <p className="text-gray-500 mb-4">Start by adding a skill you can teach to others</p>
-                  <button
-                    onClick={() => setModalState({ type: 'offer', skill: null })}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                  >
-                    Add Your First Skill
-                  </button>
-                </div>
+                  <div className="text-center py-12">
+                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No skills offered yet
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Start by adding a skill you can teach to others
+                    </p>
+                    <button
+                      onClick={() => setModalState({ type: 'offer', skill: null })}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                    >
+                      Add Your First Skill
+                    </button>
+                  </div>
                 )
               ) : requestedSkills.length > 0 ? (
                 requestedSkills.map((skill) => (
@@ -194,7 +206,9 @@ const MySkillsPage = () => {
                 <div className="text-center py-12">
                   <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No learning goals yet</h3>
-                  <p className="text-gray-500 mb-4">Add skills you want to learn from the community</p>
+                  <p className="text-gray-500 mb-4">
+                    Add skills you want to learn from the community
+                  </p>
                   <button
                     onClick={() => setModalState({ type: 'request', skill: null })}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium"

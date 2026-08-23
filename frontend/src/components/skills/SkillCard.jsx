@@ -13,7 +13,9 @@ const SkillCard = ({ skill, type, onDelete, onEdit }) => (
           <h3 className="text-lg font-semibold text-gray-900">{skill.name}</h3>
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              skill.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+              skill.status === 'Active'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-gray-100 text-gray-600'
             }`}
           >
             {skill.status}

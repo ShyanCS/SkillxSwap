@@ -2,11 +2,27 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
 import { useAvailability } from '../contexts/AvailabilityContext';
-import { Calendar as CalendarIcon, Video, MapPin, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Video,
+  MapPin,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+} from 'lucide-react';
 import useScheduleWizard from '../hooks/useScheduleWizard';
 
 // Index 0 is unused: the API uses ISO day numbering (1 = Monday).
-const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  '',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 const formatMinutes = (minutes) => {
   const hours = Math.floor(minutes / 60);
@@ -65,7 +81,9 @@ const ScheduleSessionPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Schedule a Session</h1>
-          <p className="text-gray-600">Book a learning session with one of your connected partners</p>
+          <p className="text-gray-600">
+            Book a learning session with one of your connected partners
+          </p>
         </div>
 
         {/* Progress Steps */}
@@ -111,7 +129,9 @@ const ScheduleSessionPage = () => {
                 <p className="text-gray-500">Loading your matches...</p>
               ) : matches.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 mb-2">You don&apos;t have any accepted matches yet.</p>
+                  <p className="text-gray-500 mb-2">
+                    You don&apos;t have any accepted matches yet.
+                  </p>
                   <p className="text-sm text-gray-400">
                     Accept a match request first, then come back here to schedule a session.
                   </p>
@@ -141,7 +161,9 @@ const ScheduleSessionPage = () => {
                         />
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{match.partner.name}</h3>
-                          <p className="text-sm text-gray-500">Timezone: {match.partner.timezone}</p>
+                          <p className="text-sm text-gray-500">
+                            Timezone: {match.partner.timezone}
+                          </p>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {match.teachableByPartner.map((skill) => (
                               <span
@@ -245,7 +267,10 @@ const ScheduleSessionPage = () => {
               )}
 
               <div className="mb-6">
-                <label htmlFor="session-datetime" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="session-datetime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Session Date & Time
                 </label>
                 <input
@@ -258,7 +283,10 @@ const ScheduleSessionPage = () => {
                 />
               </div>
               <div>
-                <label htmlFor="session-duration" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="session-duration"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Duration
                 </label>
                 <select
@@ -315,7 +343,10 @@ const ScheduleSessionPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="session-location" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="session-location"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     {sessionType === 'in-person' ? 'Meeting Location' : 'Meeting Link (optional)'}
                   </label>
                   <input
@@ -324,14 +355,19 @@ const ScheduleSessionPage = () => {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder={
-                      sessionType === 'in-person' ? 'Enter meeting location...' : 'e.g. Zoom/Meet link'
+                      sessionType === 'in-person'
+                        ? 'Enter meeting location...'
+                        : 'e.g. Zoom/Meet link'
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="session-notes" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="session-notes"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Session Notes (Optional)
                   </label>
                   <textarea

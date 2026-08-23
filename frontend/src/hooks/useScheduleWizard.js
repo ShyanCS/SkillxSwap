@@ -101,8 +101,7 @@ export function useScheduleWizard({
     setSubmitting(true);
     setError('');
     try {
-      const teacherId =
-        selectedSkill.teacherRole === 'me' ? userId : selectedMatch.partner.id;
+      const teacherId = selectedSkill.teacherRole === 'me' ? userId : selectedMatch.partner.id;
       await createSession({
         matchId: selectedMatch.matchId,
         skillId: selectedSkill.skillId,

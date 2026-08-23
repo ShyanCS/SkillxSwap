@@ -24,7 +24,12 @@ describe('SkillCard', () => {
   it('shows offer metadata for offered skills, including availability slots', () => {
     render(
       <SkillCard
-        skill={{ ...baseSkill, proficiencyLevel: 'Advanced', sessionCount: 4, availability: ['Monday AM'] }}
+        skill={{
+          ...baseSkill,
+          proficiencyLevel: 'Advanced',
+          sessionCount: 4,
+          availability: ['Monday AM'],
+        }}
         type="offer"
         onDelete={vi.fn()}
         onEdit={vi.fn()}
