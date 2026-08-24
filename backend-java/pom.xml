@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -33,7 +33,7 @@
 		  and the 2.x line dropped the standalone `postgresql` module that this
 		  suite uses, so staying on 1.x is deliberate rather than stale.
 		-->
-		<testcontainers.version>1.21.4</testcontainers.version>
+		<testcontainers.version>2.0.5</testcontainers.version>
 		<!--
 		  Above the BOM's 4.2.15: CVE-2026-56817 (9.8) and CVE-2026-56820 (9.1)
 		  against netty-transport are fixed upstream in 4.2.17. Netty arrives
