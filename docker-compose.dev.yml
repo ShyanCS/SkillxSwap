@@ -1,0 +1,69 @@
+# Zero-configuration full stack for evaluation and smoke testing:
+#
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Brings up PostgreSQL, Mailpit, the API, and an nginx-served frontend --
+# nothing else to install or configure. When everything is up:
+#
+#   app:        http://localhost:3000
+#   API:        http://localhost:8080/actuator/health
+#   Mailpit UI: http://localhost:8025   (OTP codes and notification emails land here)
+#
+# For day-to-day development you probably want the lighter setup from the
+# README instead (compose only for db+mailpit, Spring Boot and Vite run
+# natively for fast rebuilds). This file exists so a fresh clone can be
+# judged as a working product with one command.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: skillswap
+      POSTGRES_USER: skillswap
+      POSTGRES_PASSWORD: skillswap
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillswap -d skillswap"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025" # Web UI -- read OTPs here
+
+  api:
+    build: ./backend-java
+    depends_on:
+      db:
+        condition: service_healthy # Flyway needs a live database at startup
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      # Inside the compose network the services are reachable by name,
+      # overriding the dev profile's localhost defaults.
+      DB_URL: jdbc:postgresql://db:5432/skillswap
+      DB_USERNAME: skillswap
+      DB_PASSWORD: skillswap
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the bundle at build time; the browser talks to the
+        # published API port directly (cookies are SameSite=Lax, which
+        # spans ports on the same host).
+        VITE_API_BASE_URL: http://localhost:8080
+    depends_on:
+      - api
+    ports:
+      - "3000:8080" # container serves on 8080 internally (see frontend/Dockerfile)
+
+volumes:
+  dev-db-data:
