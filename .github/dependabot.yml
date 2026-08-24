@@ -1,0 +1,27 @@
+# Dependabot keeps dependencies current and surfaces CVEs as PRs instead of
+# letting them age silently. Weekly for both ecosystems; version updates are
+# grouped per area so a week's npm churn arrives as one reviewable PR.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: maven
+    directory: /backend-java
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
