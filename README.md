@@ -35,6 +35,21 @@ A peer-to-peer skill exchange platform: members teach a skill they know and lear
 
 **Prerequisites:** Java 17, Node.js, Docker.
 
+### One-command full stack
+
+A fresh clone becomes a running product with zero configuration:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Then open **http://localhost:3000** (app), http://localhost:8080/actuator/health
+(API health), and http://localhost:8025 (Mailpit — OTP codes land here). This
+mode builds container images, so iteration is slower than the native setup
+below; it exists for evaluation and smoke testing.
+
+### Native development (fast rebuilds)
+
 ```bash
 # 1. Start PostgreSQL + Mailpit
 cd backend-java && docker compose up -d
@@ -43,7 +58,7 @@ cd backend-java && docker compose up -d
 ./mvnw spring-boot:run
 
 # 3. Start the frontend (http://localhost:5173)
-cd ../frontend && npm install && npm run dev
+cd ../frontend && npm ci && npm run dev
 ```
 
 Flyway applies all migrations on startup. Since there's no real mail server locally, OTP and notification emails are captured by [Mailpit](https://mailpit.axllent.org/) — read them at **http://localhost:8025**.
@@ -57,10 +72,21 @@ AI_ENABLED=true GEMINI_API_KEY=your-key ./mvnw spring-boot:run
 ## Testing
 
 ```bash
+# Backend: unit + integration tests against a real PostgreSQL container,
+# plus Spotless formatting checks and the JaCoCo coverage report
 cd backend-java && ./mvnw verify
+
+# Frontend: Vitest component/hook suite with coverage thresholds
+cd frontend && npm test
+
+# Formatting (frontend)
+cd frontend && npm run format:check   # or `npm run format` to fix
 ```
 
-Tests run against a real PostgreSQL container via Testcontainers (Docker must be running), with the actual Flyway migrations applied and `ddl-auto: validate` on — so a JPA entity drifting from a migration fails the build. Coverage focuses on the invariants that matter most:
+Backend tests run via Testcontainers, so **Docker must be running**. They apply
+the actual Flyway migrations with `ddl-auto: validate` on — a JPA entity
+drifting from a migration fails the build. Coverage focuses on the invariants
+that matter most:
 
 - **Credit ledger** — transfers happen exactly once and stay balanced.
 - **Access control** — role boundaries, suspension, and cookie flags.
