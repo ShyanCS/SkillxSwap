@@ -55,6 +55,15 @@ jobs:
       # aggressive rate limiting and routinely times out. Flip
       # continue-on-error to false once the NVD_API_KEY repository secret is
       # set -- the step then becomes the blocking gate it is meant to be.
+      - name: Cache OWASP NVD data
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.dependency-check
+          # New key per run so refreshed advisories persist; restore-keys
+          # picks up the newest previous corpus instead of cold-starting.
+          key: odc-nvd-${{ github.run_id }}
+          restore-keys: |
+            odc-nvd-
       - name: OWASP dependency check
         working-directory: backend-java
         continue-on-error: true
