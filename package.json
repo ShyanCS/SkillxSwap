@@ -1,0 +1,18 @@
+{
+  "name": "skillxswap",
+  "private": true,
+  "version": "1.2.0",
+  "description": "Peer-to-peer skill exchange platform — React SPA + Spring Boot API + PostgreSQL. Orchestrates the two halves; see README.md.",
+  "scripts": {
+    "up": "docker compose -f docker-compose.dev.yml up --build",
+    "down": "docker compose -f docker-compose.dev.yml down",
+    "install:all": "npm ci --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "format:check": "npm run format:check --prefix frontend",
+    "test": "npm test --prefix frontend && cd backend-java && ./mvnw -B verify",
+    "test:frontend": "npm test --prefix frontend",
+    "test:backend": "cd backend-java && ./mvnw -B verify",
+    "build": "npm run build --prefix frontend"
+  },
+  "license": "MIT"
+}
