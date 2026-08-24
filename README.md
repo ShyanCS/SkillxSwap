@@ -86,7 +86,7 @@ flowchart LR
 | Realtime | WebSocket push (`/ws`), authenticated by the same JWT cookie as REST |
 | Tests | JUnit 5 + Testcontainers (real Postgres); Vitest + Testing Library |
 | Email | JavaMail over SMTP (Mailpit locally) |
-| Optional | Redis (multi-replica scaling), Gemini (AI assistant), Cloudinary (photos) |
+| Optional | Redis (multi-replica scaling), Gemini (AI assistant), Cloudinary (photos), Sentry (frontend error tracking) |
 
 ## Quick start
 
@@ -123,6 +123,9 @@ cd ../frontend && npm ci && npm run dev
 Dev defaults live in `backend-java/src/main/resources/application-dev.yml` — no
 `.env` required. Enable the AI assistant locally with
 `AI_ENABLED=true GEMINI_API_KEY=... ./mvnw spring-boot:run`.
+
+Optional integrations are inert unless configured: set `VITE_SENTRY_DSN` (at
+frontend build time) to activate frontend error tracking.
 
 ## Testing
 

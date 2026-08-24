@@ -1,5 +1,6 @@
 import React from 'react';
 import logger from '../../lib/logger';
+import * as Sentry from '@sentry/react';
 
 /**
  * Catches render-time exceptions anywhere below it. Without this, a single
@@ -17,9 +18,13 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Swap this for a real error-reporting service (Sentry et al.) when one
-    // exists; logger.error is the single seam to change.
     logger.error('Unhandled UI error:', error, errorInfo);
+    // Sentry is initialised only when VITE_SENTRY_DSN is configured; when
+    // it is not, this is a cheap no-op and the logger line above remains
+    // the record.
+    if (Sentry.getClient()) {
+      Sentry.captureException(error, { extra: { componentStack: errorInfo?.componentStack } });
+    }
   }
 
   render() {

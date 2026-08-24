@@ -41,14 +41,38 @@ Everything below must pass before you push; CI runs all of it.
 | Frontend format | `npm run format` | Prettier (`format:check` in CI) |
 | Frontend tests | `npm test` / `npm run test:coverage` | Vitest + Testing Library, coverage floor |
 
+## Running tests offline
+
+Both suites are designed to need **nothing beyond local Docker** after the
+first dependency download:
+
+```bash
+cd frontend && npm ci && npm test          # jsdom only; no network at runtime
+cd backend-java && ./mvnw verify           # Testcontainers Postgres; no network at runtime
+```
+
+Notes:
+
+- The very first `./mvnw verify` / `npm ci` downloads dependencies from Maven
+  Central / npm — that is the only moment a network is required. Afterwards the
+  builds work fully offline.
+- The OWASP NVD scan and the Flyway scratch-database gate run in CI only;
+  they are not part of `./mvnw verify` and never block a local run.
+- OTP/notification emails go to Mailpit inside Docker — nothing leaves your
+  machine. AI and Cloudinary integrations stay disabled unless you explicitly
+  provide keys.
+
 ## Commit conventions
 
+- Use [Conventional Commits](https://www.conventionalcommits.org/) prefixes
+  (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`) — release notes and
+  changelog entries are derived from them.
 - **One concern per commit**, and it ships together with the tests that pin
   its behavior. A feature without its test is an unfinished commit.
 - Keep mechanical changes isolated: a formatting-only commit should contain
   nothing else.
-- Write commit subjects as imperative sentences with a body explaining *why*
-  when the reason isn't obvious from the diff.
+- Write commit bodies explaining *why* when the reason isn't obvious from the
+  diff.
 
 ## Database changes
 
