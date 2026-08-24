@@ -50,10 +50,11 @@ jobs:
             -Dflyway.password=postgres
           docker rm -f flyway-check
 
-      # CVE scan of the Maven classpath. NVD_API_KEY (repository secret)
-      # lifts the public rate limit so the corpus downloads in minutes; the
-      # actions/cache step persists it across runs. Blocking: a critical
-      # finding fails the build.
+      # CVE scan of the Maven classpath. The key must be passed as the
+      # nvdApiKey system property -- the plugin ignores environment
+      # variables entirely, so the env block exists only to keep the secret
+      # out of the command line's echoed expansion (GitHub masks $NVD_API_KEY).
+      # Blocking: a CVSS 9+ finding fails the build.
       - name: Cache OWASP NVD data
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -68,6 +69,7 @@ jobs:
         run: >-
           ./mvnw -B org.owasp:dependency-check-maven:10.0.4:check
           -DfailBuildOnCVSS=9
+          -DnvdApiKey="$NVD_API_KEY"
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
