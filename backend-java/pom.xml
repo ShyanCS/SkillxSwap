@@ -207,6 +207,32 @@
 			  is bound to validate so any `mvnw verify` (local or CI) fails fast
 			  on unformatted code; run `mvnw spotless:apply` to fix.
 			-->
+			<!--
+			  Standalone Flyway runner for explicit schema checks (CI runs
+			  migrate + validate against a scratch database, separate from the
+			  application build). Driver modules are plugin-scoped so this adds
+			  nothing to the runtime classpath.
+			-->
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.7.2</version>
+				<dependencies>
+					<!-- Plugin-scoped dependencies do not inherit the Boot BOM's
+					     management, so both are pinned explicitly; keep the Flyway
+					     module on the same minor as the plugin itself. -->
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>11.7.2</version>
+					</dependency>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>42.7.5</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>

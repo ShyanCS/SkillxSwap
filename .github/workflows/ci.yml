@@ -31,6 +31,25 @@ jobs:
         working-directory: backend-java
         run: ./mvnw -B verify
 
+      # Explicit migration gate, separate from verify: a scratch Postgres
+      # gets the full chain applied from empty, then Flyway validates
+      # checksums. Catches broken/duplicated versions and edited history
+      # even when entity validation in the test suite happens to pass.
+      - name: Flyway migration integrity
+        working-directory: backend-java
+        run: |
+          docker run -d --name flyway-check \
+            -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=flyway_check \
+            -p 55432:5432 postgres:16
+          until docker exec flyway-check pg_isready -U postgres -d flyway_check >/dev/null 2>&1; do sleep 1; done
+          ./mvnw -B -Duser.timezone=UTC \
+            org.flywaydb:flyway-maven-plugin:11.7.2:migrate \
+            org.flywaydb:flyway-maven-plugin:11.7.2:validate \
+            -Dflyway.url=jdbc:postgresql://localhost:55432/flyway_check \
+            -Dflyway.user=postgres \
+            -Dflyway.password=postgres
+          docker rm -f flyway-check
+
       # CVE scan of the Maven classpath. Non-blocking for now: without an
       # NVD_API_KEY the first scan downloads the whole CVE corpus under
       # aggressive rate limiting and routinely times out. Flip
