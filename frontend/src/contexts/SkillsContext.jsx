@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+﻿import React, { createContext, useContext, useState } from 'react';
 import { API_BASE_URL } from '../config/api';
 import logger from '../lib/logger';
 
@@ -30,7 +30,7 @@ export const SkillsProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Failed to add skill');
       return data;
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +50,7 @@ export const SkillsProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Cannot get data');
       return data;
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +70,7 @@ export const SkillsProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Cannot get data');
       return data;
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +116,7 @@ export const SkillsProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Cannot delete data');
       return data;
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }

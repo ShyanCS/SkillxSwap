@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
 import logger from '../lib/logger';
 
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  // ✅ Actual login using backend
+  // âœ… Actual login using backend
   const login = async (email, password) => {
     setIsLoading(true);
     try {
@@ -63,13 +63,13 @@ export const AuthProvider = ({ children }) => {
       // Optionally: Fetch user after login
       await fetchUserDetails();
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ Optional API to fetch logged-in user (if not using /me in useEffect)
+  // âœ… Optional API to fetch logged-in user (if not using /me in useEffect)
   const fetchUserDetails = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Registration failed');
       await fetchUserDetails(); // Optionally fetch user after registration
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }) => {
       if (!res.ok) throw new Error(data.error || 'Profile update failed');
       setUser(data.user);
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error.message, { cause: error });
     } finally {
       setIsLoading(false);
     }

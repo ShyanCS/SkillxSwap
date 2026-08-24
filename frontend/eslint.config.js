@@ -32,6 +32,14 @@ export default [
       // All logging goes through src/lib/logger so verbosity is centrally
       // controlled; logger.js itself is exempt below.
       'no-console': 'error',
+      // React Compiler-era rules surfaced by the react-hooks v7 upgrade.
+      // They correctly flag legacy patterns (fetch-on-mount effects, card
+      // components defined inside pages) but fixing them is a dedicated
+      // refactor; kept visible as warnings until that lands.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/immutability': 'warn',
     },
   },
   {
