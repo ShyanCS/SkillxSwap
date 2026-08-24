@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
+import { registerSchema, requestOtpSchema, validate, verifyOtpSchema } from '../lib/validation';
 import { Users, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const RegisterPage = () => {
@@ -39,15 +40,9 @@ const RegisterPage = () => {
     setError('');
     setSuccess('');
 
-    if (!formData.email) {
-      setError('Please enter your email address first');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+    const [otpRequest, validationError] = validate(requestOtpSchema, { email: formData.email });
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -58,7 +53,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: formData.email, purpose: 'register' }),
+        body: JSON.stringify({ email: otpRequest.email, purpose: 'register' }),
       });
 
       const data = await response.json();
@@ -81,8 +76,12 @@ const RegisterPage = () => {
     setError('');
     setSuccess('');
 
-    if (!otp) {
-      setError('Please enter the OTP');
+    const [verified, validationError] = validate(verifyOtpSchema, {
+      email: formData.email,
+      otp,
+    });
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -93,10 +92,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: otp,
-        }),
+        body: JSON.stringify(verified),
       });
 
       const data = await response.json();
@@ -124,18 +120,16 @@ const RegisterPage = () => {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Registration payload comes out of the schema already stripped of
+    // confirmPassword and with the name/email trimmed.
+    const [registration, validationError] = validate(registerSchema, formData);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
-      await register(formData);
+      await register(registration);
       navigate('/profile-setup');
     } catch (err) {
       setError(err.message);

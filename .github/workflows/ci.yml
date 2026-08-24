@@ -31,6 +31,20 @@ jobs:
         working-directory: backend-java
         run: ./mvnw -B verify
 
+      # CVE scan of the Maven classpath. Non-blocking for now: without an
+      # NVD_API_KEY the first scan downloads the whole CVE corpus under
+      # aggressive rate limiting and routinely times out. Flip
+      # continue-on-error to false once the NVD_API_KEY repository secret is
+      # set -- the step then becomes the blocking gate it is meant to be.
+      - name: OWASP dependency check
+        working-directory: backend-java
+        continue-on-error: true
+        run: >-
+          ./mvnw -B org.owasp:dependency-check-maven:10.0.4:check
+          -DfailBuildOnCVSS=9
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
       - name: Publish test report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -67,6 +81,13 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci --ignore-scripts
+
+      # Gate on critical: the one known high (esbuild dev-server advisory via
+      # vite) is documented in package.json history and only affects exposed
+      # dev servers. Highs still appear in the log output above the gate.
+      - name: Audit dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=critical
 
       - name: Lint
         working-directory: frontend
