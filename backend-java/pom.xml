@@ -212,6 +212,9 @@
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>2.44.5</version>
 				<configuration>
+					<!-- Deterministic across OSes: line endings follow .gitattributes
+					     (LF) instead of the machine running the build. -->
+					<lineEndings>GIT_ATTRIBUTES</lineEndings>
 					<java>
 						<palantirJavaFormat/>
 						<importOrder/>

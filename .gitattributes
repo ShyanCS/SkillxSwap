@@ -1,0 +1,16 @@
+# Normalize all text files to LF in the repository and the working tree,
+# regardless of contributor OS. Mixed line endings previously leaked into
+# commits from Windows machines (core.autocrlf off), which broke
+# cross-platform tooling -- most visibly Spotless/Palantir formatting on
+# Linux CI.
+* text=auto eol=lf
+
+# Windows-only scripts genuinely need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets -- never normalize.
+*.png binary
+*.jpg binary
+*.ico binary
+*.jar binary
