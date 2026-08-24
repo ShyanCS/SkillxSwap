@@ -34,6 +34,13 @@
 		  suite uses, so staying on 1.x is deliberate rather than stale.
 		-->
 		<testcontainers.version>1.21.4</testcontainers.version>
+		<!--
+		  Above the BOM's 4.2.15: CVE-2026-56817 (9.8) and CVE-2026-56820 (9.1)
+		  against netty-transport are fixed upstream in 4.2.17. Netty arrives
+		  transitively via Lettuce (Redis) and the WebSocket starter; drop
+		  this override when the Boot BOM moves past the fix.
+		-->
+		<netty.version>4.2.17.Final</netty.version>
 	</properties>
 
 	<dependencyManagement>
