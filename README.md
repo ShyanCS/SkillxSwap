@@ -1,164 +1,228 @@
+<div align="center">
+
 # SkillSwap
 
-A peer-to-peer skill exchange platform: members teach a skill they know and learn a skill they want, matched by a rule-based recommendation engine and coordinated through a non-monetary Skill Credit economy instead of payment.
+**A peer-to-peer skill exchange platform — teach what you know, learn what you don't, settle up in credits instead of cash.**
 
-## Tech Stack
+[![CI](https://github.com/ShyanCS/SkillxSwap/actions/workflows/ci.yml/badge.svg)](https://github.com/ShyanCS/SkillxSwap/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ShyanCS/SkillxSwap)](https://github.com/ShyanCS/SkillxSwap/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-green)](https://skillx-swap.vercel.app)
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + Vite + Tailwind CSS, served by nginx in production |
-| Backend | Spring Boot 4.1 (Java 17), Spring Security (JWT), Spring Data JPA/Hibernate |
-| Database | PostgreSQL, schema versioned with Flyway |
-| Realtime | WebSocket push (`/ws`), authenticated by the same JWT cookie as the REST API |
-| Redis | Optional — only needed to run multiple API replicas (shared rate limits + WebSocket fan-out) |
-| Email | JavaMail over SMTP (Mailpit locally, any provider in production) |
-| AI assistant | Google Gemini (optional — the feature degrades gracefully when unconfigured) |
-| Photo storage | Cloudinary (optional, signed uploads) |
-| Tests | JUnit 5 + Testcontainers (real PostgreSQL) |
+</div>
+
+Members list a skill they can teach and a skill they want to learn. A rule-based
+matching engine finds reciprocal pairs, sessions are scheduled against real
+availability, and each completed session transfers one Skill Credit from learner
+to teacher — a closed-loop economy where the only way to earn learning time is
+to teach.
+
+## Why this exists
+
+Barter-style skill exchange shows up everywhere in the real world — university
+clubs trading coding for design help, coworking spaces running "skill swap
+Sundays", open-source communities pairing mentors, or companies letting employees
+teach each other instead of paying for courses. Almost all of it still runs on
+spreadsheets and group chats. SkillSwap is the piece that's usually missing:
+
+- **Discovery** — a categorized marketplace of who offers and wants what
+- **Trust** — post-session reviews feeding public ratings
+- **Fairness** — an append-only credit ledger so nobody's time goes unpaid
 
 ## Features
 
-- **Auth** — registration with email OTP verification, login, password reset, JWT httpOnly-cookie sessions, role-based access (user/admin), account suspension
-- **Profiles** — bio, region, timezone, photo, public profile pages with ratings and reviews
-- **Skill Marketplace** — categorized skill catalog; add/edit/remove skills you offer or want
-- **Matching Engine** — reciprocal skill matching with a normalized 0–100% compatibility score weighted by shared free time; send/accept/reject match requests
-- **Availability** — weekly recurring windows per user, stored in their own timezone and compared as real instants, so partners in different zones see genuinely overlapping hours
-- **Sessions** — schedule, list, cancel, and complete teaching sessions, validated against both participants' availability and existing bookings
-- **Credit Wallet** — starter balance, automatic credit transfer from learner to teacher on session completion, append-only transaction ledger
-- **Ratings & Reviews** — post-session reviews gated on completion, feeding a real average rating
-- **Messaging** — one-to-one chat between matched users with live WebSocket delivery, unread counts, read receipts, and paged history
-- **Notifications** — in-app and email alerts for match requests, sessions, reviews, and messages, pushed to open tabs in real time
-- **Study Assistant** — Gemini-backed help with study plans and session prep, scoped to your own skills
-- **Admin Panel** — platform stats, user suspend/activate, skill catalog management, user reports
+- **Auth** — registration with email OTP verification, login, password reset,
+  JWT httpOnly-cookie sessions, role-based access (user/admin), account suspension
+- **Profiles** — bio, region, timezone, photo (Cloudinary), public pages with ratings
+- **Skill Marketplace** — categorized catalog; manage skills you offer or want
+- **Matching Engine** — reciprocal matching with a 0–100% compatibility score
+  weighted by shared free time; send / accept / reject requests
+- **Availability** — weekly recurring windows per user's own timezone, compared
+  as real instants so cross-zone partners see genuinely overlapping hours
+- **Sessions** — schedule, cancel, complete; validated against both sides'
+  availability and existing bookings
+- **Credit Wallet** — starter balance, atomic transfer on completion,
+  append-only transaction ledger
+- **Ratings & Reviews** — gated on completed sessions, one per reviewer/session
+- **Messaging** — 1:1 chat between matched users over WebSocket, with unread
+  counts, read receipts, and paged history
+- **Notifications** — in-app + email alerts, pushed live to open tabs
+- **Study Assistant** — optional Gemini-backed help scoped to your skills
+- **Admin Panel** — platform stats, suspension, catalog management, user reports
 
-## Running Locally
+## Architecture
 
-**Prerequisites:** Java 17, Node.js, Docker.
+```mermaid
+flowchart LR
+    subgraph client [Browser]
+        SPA["React 18 SPA\n(Vite + Tailwind)"]
+    end
 
-### One-command full stack
+    subgraph server ["Spring Boot 4.1 API"]
+        SEC["Security filter chain\nJWT cookie + RBAC + rate limits"]
+        REST["REST controllers\n(12 domain modules)"]
+        WS["WebSocket push\n/chat + /ws topics"]
+        SEC --> REST
+    end
 
-A fresh clone becomes a running product with zero configuration:
+    DB[("PostgreSQL 16\nFlyway migrations")]
+    MAIL["SMTP\n(Mailpit in dev)"]
+    REDIS["Redis\n(optional, multi-replica)"]
+    GEMINI["Gemini API\n(optional)"]
+
+    SPA -- "HTTPS + cookie" --> SEC
+    SPA <-- "live events" --> WS
+    REST --> DB
+    REST --> MAIL
+    WS -. fan-out .-> REDIS
+    REST -. assistant .-> GEMINI
+```
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite + Tailwind CSS, nginx in production |
+| Backend | Spring Boot 4.1 (Java 17), Spring Security (JWT), Spring Data JPA |
+| Database | PostgreSQL 16, schema versioned with Flyway |
+| Realtime | WebSocket push (`/ws`), authenticated by the same JWT cookie as REST |
+| Tests | JUnit 5 + Testcontainers (real Postgres); Vitest + Testing Library |
+| Email | JavaMail over SMTP (Mailpit locally) |
+| Optional | Redis (multi-replica scaling), Gemini (AI assistant), Cloudinary (photos) |
+
+## Quick start
+
+**Prerequisites:** Docker. (Java 17 + Node.js only for native development.)
+
+### One command, whole product
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Then open **http://localhost:3000** (app), http://localhost:8080/actuator/health
-(API health), and http://localhost:8025 (Mailpit — OTP codes land here). This
-mode builds container images, so iteration is slower than the native setup
-below; it exists for evaluation and smoke testing.
+Then open:
 
-### Native development (fast rebuilds)
+| URL | What |
+|---|---|
+| http://localhost:3000 | The app |
+| http://localhost:8080/actuator/health | API health |
+| http://localhost:8025 | Mailpit — OTP codes land here |
+
+No configuration needed. This mode builds images, so for day-to-day development
+the faster setup is:
 
 ```bash
-# 1. Start PostgreSQL + Mailpit
+# 1. Infrastructure only (Postgres on :5433 + Mailpit on :8025)
 cd backend-java && docker compose up -d
 
-# 2. Start the API (http://localhost:8080)
+# 2. API on :8080
 ./mvnw spring-boot:run
 
-# 3. Start the frontend (http://localhost:5173)
+# 3. Frontend on :5173
 cd ../frontend && npm ci && npm run dev
 ```
 
-Flyway applies all migrations on startup. Since there's no real mail server locally, OTP and notification emails are captured by [Mailpit](https://mailpit.axllent.org/) — read them at **http://localhost:8025**.
-
-Local defaults live in `application-dev.yml` and require no configuration. To enable the optional AI assistant locally:
-
-```bash
-AI_ENABLED=true GEMINI_API_KEY=your-key ./mvnw spring-boot:run
-```
+Dev defaults live in `backend-java/src/main/resources/application-dev.yml` — no
+`.env` required. Enable the AI assistant locally with
+`AI_ENABLED=true GEMINI_API_KEY=... ./mvnw spring-boot:run`.
 
 ## Testing
 
+Every check CI enforces runs locally too:
+
 ```bash
-# Backend: unit + integration tests against a real PostgreSQL container,
-# plus Spotless formatting checks and the JaCoCo coverage report
+# Backend: integration tests against a real PostgreSQL container,
+# Spotless formatting, JaCoCo coverage report (Docker must be running)
 cd backend-java && ./mvnw verify
 
-# Frontend: Vitest component/hook suite with coverage thresholds
+# Frontend: Vitest suite with coverage thresholds
 cd frontend && npm test
 
-# Formatting (frontend)
-cd frontend && npm run format:check   # or `npm run format` to fix
+# Formatting
+cd frontend && npm run format:check     # `npm run format` to fix
+cd backend-java && ./mvnw spotless:apply # Java formatting to fix
 ```
 
-Backend tests run via Testcontainers, so **Docker must be running**. They apply
-the actual Flyway migrations with `ddl-auto: validate` on — a JPA entity
-drifting from a migration fails the build. Coverage focuses on the invariants
-that matter most:
+Backend tests boot the actual Flyway migrations with `ddl-auto: validate`, so an
+entity drifting from its migration fails the build. Coverage concentrates on the
+invariants worth breaking builds over: credit transfers happen exactly once and
+stay balanced, role/suspension boundaries hold, and scheduling survives
+cross-timezone cases.
 
-- **Credit ledger** — transfers happen exactly once and stay balanced.
-- **Access control** — role boundaries, suspension, and cookie flags.
-- **Scheduling** — availability and double-booking, including the cross-timezone cases that look correct when everyone is tested in UTC and break in production.
+CI additionally gates on `npm audit` (critical), an OWASP dependency-check scan
+(CVSS ≥ 9 fails the build), an explicit Flyway migrate+validate pass against a
+scratch database, lint, tests, coverage floors, formatting, and Docker image builds.
 
-## Production Deployment
+## Production deployment
 
 ```bash
 cp .env.example .env      # fill in real values
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-This builds both images and starts Postgres, the API, and the nginx-served frontend. Postgres is not published to the host — it's reachable only on the internal compose network.
+Starts Postgres (internal-only networking), the API, and the nginx-served
+frontend. **Put a TLS-terminating reverse proxy in front** — production forces
+`Secure` cookies and will not work over plaintext HTTP.
 
-**Put a TLS-terminating reverse proxy in front of it.** Production forces `Secure` cookies, so the app will not work over plaintext HTTP.
+The backend refuses unsafe startup rather than booting insecurely: missing or
+weak `JWT_SECRET`, leftover dev secrets, missing database password, or wildcard
+CORS all abort boot. Every variable is documented in `.env.example`.
 
-The backend refuses to start when production config is unsafe rather than booting insecurely. It will exit on a missing or weak `JWT_SECRET`, a leftover development secret, a missing database password, or a wildcard/plaintext CORS origin. All required variables are documented in `.env.example`.
+Worth knowing:
 
-A few things worth knowing:
+- `VITE_API_BASE_URL` is baked into the bundle at build time — changing it means
+  rebuilding the web image.
+- `COOKIE_SAME_SITE=Lax` fits frontend and API sharing a registrable domain;
+  use `None` only across genuinely different domains.
+- Your reverse proxy must forward WebSocket upgrades to `/ws`, or chat silently
+  falls back to polling.
+- Set `ADMIN_BOOTSTRAP_EMAIL` to a registered account; it is promoted to ADMIN
+  on next start.
 
-- `VITE_API_BASE_URL` is baked into the frontend bundle at **build** time, so changing it requires a rebuild, not just a restart.
-- `COOKIE_SAME_SITE` defaults to `Lax`, which is correct when the frontend and API share a registrable domain (`app.example.com` + `api.example.com`). Set it to `None` only if they're on genuinely different domains.
-- **Your reverse proxy must forward WebSocket upgrades** to `/ws` (`Upgrade` and `Connection` headers). Without that, chat silently falls back to polling — it keeps working, just not instantly.
-- Set `ADMIN_BOOTSTRAP_EMAIL` to an account that has already registered; it is granted ADMIN on the next start. Leaving it set is harmless once applied.
+Running more than one replica? Set `REDIS_ENABLED=true` and start with
+`--profile scale` — Redis shares rate-limit buckets and WebSocket fan-out that
+would otherwise be per-process. Health probes are exposed at
+`/actuator/health/{liveness,readiness}`.
 
-### Running more than one API replica
-
-Set `REDIS_ENABLED=true` and start the stack with the `scale` profile:
-
-```bash
-docker compose -f docker-compose.prod.yml --profile scale up -d --build
-```
-
-Redis is genuinely optional below that point, and enabling it on a single instance buys nothing. Above it, it is required for two reasons:
-
-- **Rate limits** are otherwise per-process, so the effective limit multiplies by the replica count — five replicas turn a 5/hour OTP limit into 25/hour.
-- **WebSocket delivery** is otherwise per-process. A load balancer will rarely put the sender's HTTP request and the recipient's socket on the same replica, so pushes would be silently dropped for most users while appearing to work in single-instance testing.
-
-If Redis becomes unreachable at runtime the app degrades to per-instance behaviour and logs it, rather than failing requests outright — a cache outage should not become an authentication outage.
-
-Container health is exposed at `/actuator/health` (with `/readiness` and `/liveness` probes) for orchestrators.
-
-## Project Structure
+## Project structure
 
 ```
 frontend/                   React SPA (Vite) + nginx config + Dockerfile
-backend-java/               Spring Boot API + Dockerfile
+  src/lib/                    logger, zod validation schemas
+  src/contexts/               state + API access per domain
+  src/components/             shared UI (ErrorBanner, skills, profile)
+backend-java/
   src/main/java/com/skillswap/backend/
-    auth/                     registration, login, JWT, OTP
-    profile/                  profile updates, public profiles, photo upload
-    skill/                    skill catalog, offered/wanted skills
-    matching/                 matching engine, match requests
-    availability/             weekly availability + timezone-aware overlap
-    session/                  session scheduling
-    realtime/                 WebSocket push (local and Redis-backed)
-    wallet/                   credit wallet & transaction ledger
-    review/                   ratings & reviews
-    messaging/                conversations & messages
-    notification/             in-app + email notifications
-    dashboard/                aggregated dashboard summary
-    ai/                       Gemini study assistant
-    admin/ report/            admin panel and user reports
-    common/                   rate limiting, logging, mail, error handling
-  src/main/resources/db/migration/   Flyway SQL migrations
-  src/test/                   integration tests (Testcontainers)
+    auth/                       registration, login, JWT, OTP
+    profile/ skill/ matching/   profiles, catalog, matching engine
+    availability/ session/      timezone-aware windows, scheduling
+    wallet/ review/             credit ledger, ratings
+    messaging/ notification/    WebSocket chat, dispatch
+    realtime/ dashboard/ ai/ admin/ report/
+    common/                     rate limiting, request ids, mail, errors
+  src/main/resources/db/migration/   Flyway SQL (+ lineage README)
+  src/test/                          Testcontainers integration suite
+docker-compose.dev.yml      zero-config full stack for evaluation
 docker-compose.prod.yml     production stack
-.env.example                every supported environment variable
+.github/workflows/ci.yml    lint, tests, coverage, audits, migrations, images
 ```
 
-## Known Limitations
+## Roadmap
 
-- Session reminders are not sent; notifications fire on events (match, booking, message, review), not ahead of a scheduled session.
-- Availability is a weekly recurring pattern only. There is no way to block out a one-off date, so a user going on holiday has to clear the affected windows.
-- Skill search is a plain `LIKE` over name and email in the admin panel; there is no full-text or fuzzy search over the skill catalogue.
-- Deleting an account is not exposed in the UI.
+- Session reminder notifications ahead of scheduled times
+- One-off availability exceptions (holidays) alongside weekly patterns
+- Full-text search over the skill catalog
+- Account deletion flow
+- Incremental adoption of the React Compiler rules currently warn-gated
+
+Known limitations are tracked honestly rather than hidden; see the release notes
+and `CHANGELOG.md`.
+
+## Contributing
+
+PRs welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers
+environment setup, every check your change must pass, commit conventions
+(one concern + its tests), and database-change rules. Security-relevant bugs:
+please open an issue rather than a public PR if the detail is sensitive.
+
+## License
+
+Released under the [MIT License](LICENSE).

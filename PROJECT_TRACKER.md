@@ -1,8 +1,10 @@
 # SkillSwap — Project Tracker
 
-Gap analysis between `SkillSwap_Synopsis_MCSP232_Revised.docx` (IGNOU MCSP-232 synopsis) and the current repository state, plus the work plan to close the gap. Generated 2026-08-15.
+Gap analysis between `SkillSwap_Synopsis_MCSP232_Revised.docx` (IGNOU MCSP-232 synopsis) and the repository, written 2026-08-15 to plan the rewrite.
 
-**Decision on record:** the synopsis's stack (Spring Boot / Java / PostgreSQL) is the target. The current backend (Node.js + Express + MongoDB) does not match the synopsis and will be rewritten. React.js frontend matches the synopsis and is largely kept, with its API layer repointed at the new backend. Full phased roadmap: `C:\Users\shyan\.claude\plans\linked-floating-shell.md`.
+**STATUS: COMPLETE (2026-08-24).** Every module and checklist item below has since shipped, plus hardening beyond the synopsis: WebSocket realtime, availability module with timezone-aware scheduling, Testcontainers test suite, CI-enforced formatting/coverage/dependency audits, production container stack, and a zero-config evaluation stack. This file is preserved as the planning record; for what changed when, read [CHANGELOG.md](CHANGELOG.md).
+
+**Decision on record:** the synopsis's stack (Spring Boot / Java / PostgreSQL) is the target. The original Node.js + Express + MongoDB backend was rewritten accordingly. React.js frontend matched the synopsis and survived with its API layer repointed at the new backend.
 
 ## Progress (2026-08-15): ALL 10 SYNOPSIS MODULES COMPLETE
 
