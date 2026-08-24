@@ -25,7 +25,9 @@ spring:
       connect-timeout: 1s
 
 server:
-  port: ${SERVER_PORT:8080}
+  # Container platforms (Render, Heroku, Cloud Run) inject PORT and expect
+  # the app to bind it; SERVER_PORT still wins where operators set it.
+  port: ${SERVER_PORT:${PORT:8080}}
   shutdown: graceful
   # Correct client IPs behind a reverse proxy / load balancer. Without this,
   # rate limiting would bucket every request under the proxy's IP.
