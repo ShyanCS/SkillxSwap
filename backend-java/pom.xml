@@ -41,6 +41,12 @@
 		  this override when the Boot BOM moves past the fix.
 		-->
 		<netty.version>4.2.17.Final</netty.version>
+		<!--
+		  Above the BOM's 11.0.22: CVE-2026-55276 / CVE-2026-53434 /
+		  CVE-2026-59083 / CVE-2026-59084 (all 9.1) against the embedded
+		  servlet container are addressed in the 11.0.23+ line.
+		-->
+		<tomcat.version>11.0.25</tomcat.version>
 	</properties>
 
 	<dependencyManagement>
@@ -117,12 +123,6 @@
 			<version>8.1</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
