@@ -16,6 +16,175 @@ import {
 import ErrorBanner from '../components/common/ErrorBanner';
 import logger from '../lib/logger';
 
+/**
+ * One reciprocal-match suggestion.
+ *
+ * Deliberately defined at module scope: when this lived inside the page
+ * component, every parent state change remounted the card and reset its
+ * local "already requested" state right after a successful send.
+ */
+function MatchCard({ match, hasAlreadyRequested, onSend }) {
+  const [sending, setSending] = useState(false);
+  const [alreadyRequested, setAlreadyRequested] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    hasAlreadyRequested(match.user.id)
+      .then((result) => {
+        if (!cancelled) setAlreadyRequested(result);
+      })
+      .catch(() => {
+        // A failed check must not lock the card; the send itself is the guard.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [match.user.id, hasAlreadyRequested]);
+
+  const handleSendRequest = async () => {
+    setSending(true);
+    try {
+      await onSend(match);
+      setAlreadyRequested(true);
+    } catch {
+      // Failure feedback is owned by the page-level banner.
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all duration-200">
+      {/* Compatibility Score Badge */}
+      <div className="flex justify-between items-start mb-4">
+        <div
+          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+            match.compatibilityScore >= 90
+              ? 'bg-green-100 text-green-800'
+              : match.compatibilityScore >= 80
+                ? 'bg-blue-100 text-blue-800'
+                : match.compatibilityScore >= 70
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-gray-100 text-gray-800'
+          }`}
+        >
+          <Zap className="w-4 h-4" />
+          {match.compatibilityScore}% Match
+        </div>
+        <span className="text-sm text-gray-500">{match.lastActive}</span>
+      </div>
+
+      {/* User Info */}
+      <div className="flex items-start gap-4 mb-4">
+        <img
+          src={match.user.profilePictureUrl}
+          alt={match.user.name}
+          className="w-16 h-16 rounded-full object-cover"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900">{match.user.name}</h3>
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+              <span className="text-sm text-gray-600">{match.user.rating}</span>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{match.user.bio}</p>
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              <span>{match.user.region}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>{match.user.timezone}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" />
+              <span>
+                {match.user.sessionsCompleted === 1
+                  ? '1 session'
+                  : `${match.user.sessionsCompleted} sessions`}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Skills */}
+      <div className="border-t border-gray-100 pt-4 mb-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          {match.skillsOffered.map((skill, i) => (
+            <div key={`o-${i}`} className="bg-green-50 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-800">They Offer</span>
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
+              <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                {skill.proficiencyLevel}
+              </span>
+            </div>
+          ))}
+          {match.skillsRequested.map((skill, i) => (
+            <div key={`r-${i}`} className="bg-blue-50 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-800">They Want</span>
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
+              <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                Target: {skill.desiredProficiency}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mutual Interests */}
+      {(match.mutualInterests?.length ?? 0) > 0 && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-700 mb-2">Mutual Interests:</p>
+          <div className="flex flex-wrap gap-2">
+            {match.mutualInterests.map((interest, index) => (
+              <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                {interest}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Link
+          to={`/profile/${match.user.id}`}
+          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium text-center transition-colors"
+        >
+          View Profile
+        </Link>
+        <button
+          disabled={alreadyRequested || sending}
+          onClick={handleSendRequest}
+          aria-label={
+            alreadyRequested ? `Request already sent to ${match.user.name}` : `Send request to ${match.user.name}`
+          }
+          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+            alreadyRequested
+              ? 'bg-gray-300 cursor-not-allowed text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
+        >
+          <MessageCircle className="w-4 h-4" />
+          {alreadyRequested ? 'Request Sent' : sending ? 'Sending...' : 'Send Request'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const MatchingPage = () => {
   const { getMatches, sendMatchRequest, hasAlreadyRequested } = useMatch();
   const [filters, setFilters] = useState({
@@ -58,163 +227,20 @@ const MatchingPage = () => {
     });
   };
 
-  const MatchCard = ({ match }) => {
-    const [sending, setSending] = useState(false);
-    const [alreadyRequested, setAlreadyRequested] = useState(false);
-
-    useEffect(() => {
-      const checkAlready = async () => {
-        const result = await hasAlreadyRequested(match.user.id);
-        setAlreadyRequested(result);
-      };
-      checkAlready();
-    }, [match.user.id]);
-
-    const handleSendRequest = async () => {
-      try {
-        setSending(true);
-        await sendMatchRequest(
-          match.user.id,
-          match.skillsOffered.map((skill) => skill.id || skill.userSkillId),
-          match.skillsRequested.map((skill) => skill.id || skill.userSkillId),
-        );
-        setNotice({ tone: 'success', text: `Match request sent to ${match.user.name}!` });
-        setAlreadyRequested(true);
-      } catch (err) {
-        logger.error('Failed to send match request:', err);
-        setNotice({ tone: 'error', text: err.message || 'Failed to send request' });
-      } finally {
-        setSending(false);
-      }
-    };
-
-    return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition-all duration-200">
-        {/* Compatibility Score Badge */}
-        <div className="flex justify-between items-start mb-4">
-          <div
-            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-              match.compatibilityScore >= 90
-                ? 'bg-green-100 text-green-800'
-                : match.compatibilityScore >= 80
-                  ? 'bg-blue-100 text-blue-800'
-                  : match.compatibilityScore >= 70
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-gray-100 text-gray-800'
-            }`}
-          >
-            <Zap className="w-4 h-4" />
-            {match.compatibilityScore}% Match
-          </div>
-          <span className="text-sm text-gray-500">{match.lastActive}</span>
-        </div>
-
-        {/* User Info */}
-        <div className="flex items-start gap-4 mb-4">
-          <img
-            src={match.user.profilePictureUrl}
-            alt={match.user.name}
-            className="w-16 h-16 rounded-full object-cover"
-          />
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-semibold text-gray-900">{match.user.name}</h3>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                <span className="text-sm text-gray-600">{match.user.rating}</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{match.user.bio}</p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                <span>{match.user.region}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>{match.user.timezone}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                <span>
-                  {match.user.sessionsCompleted === 1
-                    ? '1 session'
-                    : `${match.user.sessionsCompleted} sessions`}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="border-t border-gray-100 pt-4 mb-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            {match.skillsOffered.map((skill, i) => (
-              <div key={i} className="bg-green-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-green-800">They Offer</span>
-                </div>
-                <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
-                <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                  {skill.proficiencyLevel}
-                </span>
-              </div>
-            ))}
-            {match.skillsRequested.map((skill, id) => (
-              <div key={id} className="bg-blue-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-blue-800">They Want</span>
-                </div>
-                <h4 className="font-medium text-gray-900 mb-1">{skill.name}</h4>
-                <p className="text-sm text-gray-600 mb-2">{skill.description}</p>
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                  Target: {skill.desiredProficiency}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mutual Interests */}
-        {match.mutualInterests.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Mutual Interests:</p>
-            <div className="flex flex-wrap gap-2">
-              {match.mutualInterests.map((interest, index) => (
-                <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                  {interest}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Link
-            to={`/profile/${match.user.id}`}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium text-center transition-colors"
-          >
-            View Profile
-          </Link>
-          <button
-            disabled={alreadyRequested || sending}
-            onClick={handleSendRequest}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-              alreadyRequested
-                ? 'bg-gray-300 cursor-not-allowed text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4" />
-            {alreadyRequested ? 'Request Sent' : sending ? 'Sending...' : 'Send Request'}
-          </button>
-        </div>
-      </div>
-    );
+  const handleSendRequest = async (match) => {
+    try {
+      await sendMatchRequest(
+        match.user.id,
+        match.skillsOffered.map((skill) => skill.id || skill.userSkillId),
+        match.skillsRequested.map((skill) => skill.id || skill.userSkillId),
+      );
+      setNotice({ tone: 'success', text: `Match request sent to ${match.user.name}!` });
+    } catch (err) {
+      logger.error('Failed to send match request:', err);
+      setNotice({ tone: 'error', text: err.message || 'Failed to send request' });
+      // Re-throw so the card stays actionable instead of flipping to "sent".
+      throw err;
+    }
   };
 
   return (
@@ -367,7 +393,14 @@ const MatchingPage = () => {
         {/* Matches */}
         <div className="grid gap-6 mb-8">
           {matches.length > 0 ? (
-            matches.map((match) => <MatchCard key={match.id} match={match} />)
+            matches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                hasAlreadyRequested={hasAlreadyRequested}
+                onSend={handleSendRequest}
+              />
+            ))
           ) : (
             <div className="text-center py-12 bg-white rounded-xl shadow-sm">
               <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -377,10 +410,9 @@ const MatchingPage = () => {
               </p>
               <Link
                 to="/skills"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium inline-flex items-center gap-2"
+                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium"
               >
-                <Users className="w-4 h-4" />
-                Manage Skills
+                Add Skills
               </Link>
             </div>
           )}
